@@ -1,0 +1,8 @@
+pip install pandas
+pip install numpy
+pip install tushare
+pip install paho.mqtt
+pip install threadpool
+pip install apscheduler
+pip install prompt-toolkit
+pip install paramiko
