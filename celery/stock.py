@@ -59,7 +59,7 @@ def download_kdata(codes, full=False, start=None, end=None):
         
         ### 写数据库
         db.insert_stock_basic(code, basic)
-        db.insert_stock_kdata(code, kdata)
+        db.insert_stock_kdata(code, kdata, kdata.index)
         success_list.append(code)
         
     return success_list

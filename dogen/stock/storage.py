@@ -22,7 +22,7 @@ class DbMongo():
             traceback.print_exc()
         pass
 
-    def insert_stock_basic(self, code, basic):
+    def insert_stock_basic(self, code, basic, field='_id'):
         """ 插入股票基本数据, tushare下载basics数据timeToMarket类型不能为object
         """
         if self.database is None:
@@ -30,7 +30,7 @@ class DbMongo():
 
         ### Series数据转dict存储
         data = basic.to_dict()
-        data['_id'] = code
+        data[field] = code
 
         ### 先删除后添加
         self.delete_stock_basic(code)
@@ -39,7 +39,7 @@ class DbMongo():
         base.insert_one(data)
         return None
     
-    def delete_stock_basic(self, code=None):
+    def delete_stock_basic(self, code=None, field='_id'):
         """ 删除股票基本数据
         """
         if self.database is None:
@@ -47,22 +47,22 @@ class DbMongo():
 
         cond = {}
         if code is not None:
-            cond['_id'] = code
+            cond[field] = code
             
         base = self.database[self.BASICS]
         base.delete_many(cond)
         return None
 
-    def lookup_stock_basic(self, code):
+    def lookup_stock_basic(self, code, field='_id'):
         """ 获取股票元数据
         """
         if self.database is None:
             return None
             
-        cond = {'_id': code}
+        cond = {field: code}
         base = self.database[self.BASICS]
         for data in base.find(cond):
-            del data['_id']
+            del data[field]
             
             ### dict转Series返回
             data = pandas.Series(data)
@@ -77,14 +77,14 @@ class DbMongo():
         """
         return self.KDATA+'_'+code
     
-    def insert_stock_kdata(self, code, kdata):
+    def insert_stock_kdata(self, code, kdata, key_index, key_field='_id'):
         """ 插入股票日线数据
         """
         if self.database is None:
             return None
         
         ### dataframe数据处理
-        kdata.insert(0, '_id', kdata.index)
+        kdata.insert(0, key_field, key_index)
         data = kdata.to_dict(orient='records')
         
         ### 插入数据（索引丢失）
@@ -102,7 +102,7 @@ class DbMongo():
         coll.drop()
         return None
     
-    def lookup_stock_kdata(self, code, start=None, end=None):
+    def lookup_stock_kdata(self, code, start=None, end=None, key='_id'):
         """ 读取股票交易数据
         """
         if self.database is None:
@@ -115,7 +115,7 @@ class DbMongo():
         if end is not None:
             cond['$lte'] = end
         if start is not None or end is not None:
-            cond = {'_id': cond}
+            cond = {key: cond}
         
         ### 提取字典数据
         data = []
@@ -125,10 +125,10 @@ class DbMongo():
         
         ### 字典数据转换为DataFrame
         data = pandas.DataFrame.from_dict(data, orient='columns')
-        data.set_index('_id', inplace=True)
+        data.set_index(key, inplace=True)
         return data
     
-    def lookup_stock_kdata_last(self, code):
+    def lookup_stock_kdata_last(self, code, key='_id'):
         """ 获取最后一个交易日区间
         """ 
         if self.database is None:
@@ -138,16 +138,16 @@ class DbMongo():
         
         ### 获取最早数据
         from_data = None
-        for x in coll.find().sort('_id', pymongo.ASCENDING).limit(1):
+        for x in coll.find().sort(key, pymongo.ASCENDING).limit(1):
             from_data = x
         
         ### 获取最晚数据
         last_data = None
-        for x in coll.find().sort('_id', pymongo.DESCENDING).limit(1):
+        for x in coll.find().sort(key, pymongo.DESCENDING).limit(1):
             last_data = x
         
         if from_data is not None and last_data is not None:
-            return (from_data['_id'], last_data['_id'])
+            return (from_data[key], last_data[key])
             
         return (None, None)
     
