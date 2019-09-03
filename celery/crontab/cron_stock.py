@@ -10,8 +10,10 @@ from celery.task.schedules import crontab
 from celery.decorators import periodic_task
 
 
+app = Celery(__name__)
+
 @periodic_task(run_every=crontab(day_of_week='1-6', hour='01'))
-def download_kdata():
+def stock_daily_update():
     """ 周期性执行从网络侧更新股票数据的任务
     """
     try:
