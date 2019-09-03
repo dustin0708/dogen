@@ -197,14 +197,8 @@ class DbMongo():
             data = []
             coll = self.database[self._return_stock_collection(code)]
 
-            if max_items <= 0:
-                for x in coll.find(cond):
-                    data.append(x)
-                pass
-            else:
-                for x in coll.find(cond).limit(max_items):
-                    data.append(x)
-                pass
+            for x in coll.find(cond):
+                data.append(x)
             
             ### 字典数据转换为DataFrame
             data = pandas.DataFrame.from_dict(data, orient='columns')
