@@ -168,14 +168,13 @@ class DbMongo():
             
         return None
     
-    def lookup_stock_kdata(self, code, start=None, end=None, max_items=0, key_field='_id'):
+    def lookup_stock_kdata(self, code, start=None, end=None, key_field='_id'):
         """ 读取股票交易数据
 
             参数说明：
                 code - 股票代码
                 start - 起始交易日
                 end - 截止交易日
-                max_items - 限制返回多少条数据
                 key_field - 键值标识，必须与保存时一致
 
             返回结果：
