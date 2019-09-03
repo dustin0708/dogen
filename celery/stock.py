@@ -11,7 +11,17 @@ app = Celery(__name__, broker='pyamqp://127.0.0.1')
 
 @app.task
 def download_kdata(codes, full=False, start=None, end=None):
-    
+    """ 从网络侧更新股票数据
+
+        参数说明：
+            codes - 更新股票列表
+            full - 是否进行全量更新
+            start - 起始交易日
+            end - 截止交易日
+        
+        返回结果：
+            成功更新数据列表
+    """
     try:
         db = dogen.DbMongo()
     except Exception:

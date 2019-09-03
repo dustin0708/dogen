@@ -6,19 +6,15 @@ import tushare
 
 from dogen.stock.constant import *
 
-def __process_mean(kdata, column):
-    """计算平均值
-    """
-    sum = 0
-    if (kdata.index.size <= 0):
-        return 0
-        
-    for i in range(0, kdata.index.size):
-        sum += kdata.iloc[i].loc[column]
-    return round(sum/kdata.index.size, 2)
-
 def __process_kdata(basic, kdata):
-    """加工交易数据
+    """ 加工交易数据, 计算涨停价、跌停价、涨幅、振幅、MA5、MA10、MA20等参数
+
+        参数说明：
+            basic - 股票基本信息数据，Series类型
+            kdata - 股票交易日线数据
+
+        返回结果：
+            股票交易日线数据（拓展了列参数）
     """
     colum = []
     colum.append(DATE)
@@ -61,9 +57,9 @@ def __process_kdata(basic, kdata):
         amplitude  = (high - low)/last_close
         R_amp      = round(100 * amplitude, 2)
         
-        ma5  = __process_mean(kdata[i:(i+5 )], P_CLOSE)
-        ma10 = __process_mean(kdata[i:(i+10)], P_CLOSE)
-        ma20 = __process_mean(kdata[i:(i+20)], P_CLOSE)
+        ma5  = round(kdata[i:(i+5 )][P_CLOSE].mean(), 2)
+        ma10 = round(kdata[i:(i+10)][P_CLOSE].mean(), 2)
+        ma20 = round(kdata[i:(i+20)][P_CLOSE].mean(), 2)
 
         value = []
         value.append(date)
@@ -86,7 +82,10 @@ def __process_kdata(basic, kdata):
     return ndata
 
 def download_basics():
-    """下载A股股票基本信息
+    """ 下载A股股票基本信息
+        
+        返回结果：
+            源自tushare，只是针对部分数据类型做改动，未增减字段；失败返回None
     """
     try:
         basics = tushare.get_stock_basics()
@@ -96,7 +95,15 @@ def download_basics():
     return basics
 
 def download_kdata(basic, start='', end=''):
-    """下载K线数据
+    """ 下载指定股票交易日线数据
+
+        参数说明：
+            basic - 指定股票基本信息
+            start - 起始交易日
+            end - 截止交易日
+
+        返回结果：
+            加工后日线交易数据，失败返回None
     """
     try:
         kdata = tushare.get_k_data(basic.name, start, end)

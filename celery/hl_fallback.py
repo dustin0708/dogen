@@ -67,7 +67,7 @@ def policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls)
     return [basic.name, kdata.index[take_index]]
 
 @app.task
-def execute(codes, start=None, end=None, save_result=True, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
+def execute(codes, start=None, end=None, max_items=30, save_result=True, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
     """ 涨停回调策略, 有如下特征：
             * 涨停在$maxi_trade个交易日之内;
             * 涨停后紧接着最多上涨一天, 若上涨必须放量$mini_scale倍;
@@ -75,8 +75,9 @@ def execute(codes, start=None, end=None, save_result=True, take_valid=0, maxi_tr
             * 最后一日MA5上涨;
 
         参数说明：
-            start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)
+            start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取$max_items交易日数据
             end - 样本截止交易日(数据库样本可能早于该日期, 如停牌)
+            max_items - 若start取有效值，该字段无效
             save_result - 保存命中结果
             take_valid - 命中交易日有效期, 0表示最后一天命中有效
             maxi_trade - 最后一个涨停有效交易日数
@@ -84,7 +85,7 @@ def execute(codes, start=None, end=None, save_result=True, take_valid=0, maxi_tr
             mini_falls - 回调最小幅度，单位1%
         
         返回结果：
-            列表数据[[item-1], [item-2], ..., [item-n]]
+            列表数据如[[item-1], [item-2], ..., [item-n]]，根据股票的流通市值、收盘价、成交量、涨跌幅等数据决策。
     """
     try:
         db = dogen.DbMongo()
@@ -100,7 +101,9 @@ def execute(codes, start=None, end=None, save_result=True, take_valid=0, maxi_tr
             basic = db.lookup_stock_basic(code)
 
             ### 从数据库读取日线数据，必须按索引（日期）降序排列
-            kdata = db.lookup_stock_kdata(code, start=start, end=end)
+            if start is not None:
+                max_items = 0
+            kdata = db.lookup_stock_kdata(code, start=start, end=end, max_items=max_items)
             kdata.sort_index(ascending=False, inplace=True)
             
             ### 策略分析
