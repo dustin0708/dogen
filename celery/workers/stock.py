@@ -6,6 +6,10 @@ import pymongo
 import traceback
 
 from celery import Celery
+from celery.utils.log import get_task_logger
+
+### 日志句柄
+logger = get_task_logger(__name__)
 
 app = Celery(__name__, broker='pyamqp://127.0.0.1')
 
@@ -25,8 +29,8 @@ def download_kdata(codes, full=False, start=None, end=None):
     try:
         db = dogen.DbMongo()
     except Exception:
-        traceback.print_exc()
-        return traceback.format_exc()
+        logger.error(traceback.format_exc())
+        return None
 
     ### 设置截止日期
     if end is None:
@@ -74,6 +78,7 @@ def download_kdata(codes, full=False, start=None, end=None):
             db.insert_stock_kdata(code, kdata, kdata.index)
             success_list.append(code)
         except Exception:
+            logger.error(traceback.format_exc())
             continue
         pass
         

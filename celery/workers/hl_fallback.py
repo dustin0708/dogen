@@ -3,10 +3,13 @@
 import sys
 import dogen
 import pymongo
-import logging
 import traceback
 
 from celery import Celery
+from celery.utils.log import get_task_logger
+
+### 日志句柄
+logger = get_task_logger(__name__)
 
 app = Celery(__name__, broker='pyamqp://127.0.0.1')
 
@@ -14,26 +17,26 @@ def policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls)
     ### 特征一校验
     index = dogen.get_highlimit_trades(kdata, eIdx=maxi_trade)
     if index.size != 1:
-        logging.debug("Don't match highlimit trades")
+        logger.debug("Don't match highlimit trades")
         return None
     else:
         pick_trade = index[0]        
         ### 若最后一天涨停忽略
         pick_index = kdata.index.get_loc(pick_trade)
         if pick_index == 0:
-            logging.debug("Fallback didn't occur")
+            logger.debug("Fallback didn't occur")
             return None
         pass
     
     ### 特征二校验
     if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
         if (kdata.iloc[pick_index][dogen.VOLUME] * mini_scale) > kdata.iloc[pick_index-1][dogen.VOLUME]:
-            logging.debug("Too small volume at " + kdata.index[pick_index-1])
+            logger.debug("Too small volume at " + kdata.index[pick_index-1])
             return None
         ### 更正pick_index
         pick_index = pick_index-1
         if pick_index == 0:
-            logging.debug("Fallback didn't occur")
+            logger.debug("Fallback didn't occur")
             return None
         pass
     
@@ -54,12 +57,12 @@ def policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls)
             take_index = this_index
         pass
     if take_index is None or take_index > take_valid:
-        logging.debug("Don't match valid fallback trade")
+        logger.debug("Don't match valid fallback trade")
         return None
     
     ### 特征四校验
     if kdata.iloc[take_index+1][dogen.MA5] >= kdata.iloc[take_index][dogen.MA5]:
-        logging.debug("Don't match valid MA5 at " + kdata.index[take_index])
+        logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
         return None
     
     ### 结果最后排它校验
@@ -90,8 +93,8 @@ def execute(codes, start=None, end=None, max_items=30, save_result=True, take_va
     try:
         db = dogen.DbMongo()
     except Exception:
-        traceback.print_exc()
-        return traceback.format_exc()
+        logger.error(traceback.format_exc())
+        return None
     
     ### 依次策略检查
     success_list = []
@@ -116,6 +119,7 @@ def execute(codes, start=None, end=None, max_items=30, save_result=True, take_va
             if save_result:
                 pass
         except Exception:
+            logger.error(traceback.format_exc())
             continue
         pass
         
