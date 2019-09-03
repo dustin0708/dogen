@@ -78,7 +78,6 @@ def download_kdata(codes, full=False, start=None, end=None):
             db.insert_stock_kdata(code, kdata, kdata.index)
             success_list.append(code)
         except Exception:
-            logger.error(traceback.format_exc())
             continue
         pass
         

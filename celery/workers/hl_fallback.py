@@ -121,7 +121,6 @@ def execute(codes, start=None, end=None, max_days=60, save_result=True, take_val
             if save_result:
                 pass
         except Exception:
-            logger.error(traceback.format_exc())
             continue
         pass
         
