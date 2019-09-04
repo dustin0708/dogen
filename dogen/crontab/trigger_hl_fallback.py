@@ -18,11 +18,11 @@ from celery_dogen import app
 logger = get_task_logger(__name__)
 
 @app.task
-def dispatch_tasks_of_daily_pull(slice=1000):
-    """ 周期性执行从网络侧更新股票数据的任务
+def dispatch_tasks_of_hl_fallback(slice=1000):
+    """ 运行涨停回调策略
     """
     ### 任务启动打印
-    logger.info("Start to update stocks' kdata.")
+    logger.info("Start to dispatch policy-hl_fallback tasks.")
 
     try:
         db = dogen.DbMongo()
@@ -40,14 +40,14 @@ def dispatch_tasks_of_daily_pull(slice=1000):
     for i in range(0, tasks):
         reply.append(dogen.kdata.daily_pull.update_stock_kdata_from_network.delay(code_all[i*slice:(i+1)*slice]))
 
-    code_rst = []
+    result = []
     for i in len(reply):
         while not reply[i].ready():
             continue
-        code_rst.append(reply[i].get())
+        result.append(reply[i].get())
 
     ### 任务结束打印结果
-    logger.info("Success in updating %d/%d stocks' kdata." % (len(code_rst), len(code_all)))
+    logger.info("Success in policy-hl_fallback with result: " + str(result))
 
     return None
 
