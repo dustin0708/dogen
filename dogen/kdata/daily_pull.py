@@ -8,10 +8,11 @@ import traceback
 from celery import Celery
 from celery.utils.log import get_task_logger
 
+### 从外部程序导入
+from celery_dogen import app
+
 ### 日志句柄
 logger = get_task_logger(__name__)
-
-app = Celery('dogen.kdata.'+__name__, broker='pyamqp://127.0.0.1')
 
 @app.task
 def update_stock_kdata_from_network(codes, full=False, start=None, end=None):
