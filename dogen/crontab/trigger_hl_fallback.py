@@ -41,7 +41,7 @@ def dispatch_tasks_of_hl_fallback(slice=1000):
         reply.append(dogen.kdata.daily_pull.update_stock_kdata_from_network.delay(code_all[i*slice:(i+1)*slice]))
 
     result = []
-    for i in len(reply):
+    for i in range(0, len(reply)):
         while not reply[i].ready():
             continue
         result.append(reply[i].get())
