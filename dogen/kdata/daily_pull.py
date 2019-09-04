@@ -11,10 +11,10 @@ from celery.utils.log import get_task_logger
 ### 日志句柄
 logger = get_task_logger(__name__)
 
-app = Celery('celery_workers.'+__name__, broker='pyamqp://127.0.0.1')
+app = Celery('dogen.kdata.'+__name__, broker='pyamqp://127.0.0.1')
 
 @app.task
-def download_kdata(codes, full=False, start=None, end=None):
+def update_stock_kdata_from_network(codes, full=False, start=None, end=None):
     """ 从网络侧更新股票数据
 
         参数说明：

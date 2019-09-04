@@ -3,9 +3,6 @@
 import os
 import sys
 import math
-
-### 测试用
-sys.path.append(os.getcwd())
 import dogen
 import pymongo
 import traceback
@@ -15,23 +12,21 @@ from celery import Celery
 from celery.task.schedules import crontab 
 from celery.utils.log import get_task_logger
 
-from celery_workers import stock
-
 ### 日志句柄
 logger = get_task_logger(__name__)
 
-app = Celery('celery_crontab.'+__name__, broker='pyamqp://127.0.0.1')
+app = Celery('dogen.crontab.'+__name__, broker='pyamqp://127.0.0.1')
 
 
 @app.on_after_configure.connect
-def startup_stock_daily_update(sender, **kwargs):
+def startup_dispatch_tasks_of_pulling_stock_kdata(sender, **kwargs):
     """ 启动周期任务
     """
-    sender.add_periodic_task(crontab(day_of_week='1-6', hour='5', minute='0'), stock_daily_update(), )
+    sender.add_periodic_task(crontab(day_of_week='1-6', hour='5', minute='0'), dispatch_tasks_of_pulling_stock_kdata(), )
     return None
 
 @app.task
-def stock_daily_update(slice=1000):
+def dispatch_tasks_of_pulling_stock_kdata(slice=1000):
     """ 周期性执行从网络侧更新股票数据的任务
     """
     ### 任务启动打印
@@ -51,7 +46,7 @@ def stock_daily_update(slice=1000):
     tasks = math.ceil(len(code_all)/slice)
     code_rst = []
     for i in range(0, tasks):
-        code_rst.append(stock.download_kdata(code_all[i*slice:(i+1)*slice]))
+        code_rst.append(dogen.kdata.daily_pull.update_stock_kdata_from_network(code_all[i*slice:(i+1)*slice]))
     
     ### 任务结束打印结果
     logger.info("Success in updating %d/%d stocks' kdata." % (len(code_rst), len(code_all)))
