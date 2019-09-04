@@ -38,7 +38,7 @@ def dispatch_tasks_of_daily_pull(slice=1000):
     tasks = math.ceil(len(code_all)/slice)
     reply = []
     for i in range(0, tasks):
-        reply.append(dogen.kdata.daily_pull.update_stock_kdata_from_network.delay(code_all[i*slice:(i+1)*slice]))
+        reply.append(dogen.kdata.daily_pull.update_stock_kdata_from_network_decorator.delay(code_all[i*slice:(i+1)*slice]))
 
     code_rst = []
     for i in range(0, len(reply)):

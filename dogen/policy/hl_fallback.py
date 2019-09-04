@@ -14,7 +14,7 @@ from celery_dogen import app
 ### 日志句柄
 logger = get_task_logger(__name__)
 
-def policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls):
+def __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls):
     ### 特征一校验
     index = dogen.get_highlimit_trades(kdata, eIdx=maxi_trade)
     if index.size != 1:
@@ -70,8 +70,7 @@ def policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls)
         
     return [basic.name, kdata.index[take_index]]
 
-@app.task
-def execute(codes, start=None, end=None, max_days=60, save_result=True, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
+def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
     """ 涨停回调策略, 有如下特征：
             * 涨停在$maxi_trade个交易日之内;
             * 涨停后紧接着最多上涨一天, 若上涨必须放量$mini_scale倍;
@@ -113,7 +112,7 @@ def execute(codes, start=None, end=None, max_days=60, save_result=True, take_val
             kdata.sort_index(ascending=False, inplace=True)
             
             ### 策略分析
-            match = policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls)
+            match = __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls)
             if match is None:
                 continue
             
@@ -126,6 +125,10 @@ def execute(codes, start=None, end=None, max_days=60, save_result=True, take_val
         pass
         
     return success_list
+
+@app.task
+def match_decorator(codes, start=None, end=None, max_days=60, save_result=True, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
+    return match(codes, start=start, end=end, max_days=max_days, save_result=save_result, take_valid=take_valid, maxi_trade=maxi_trade, mini_scale=mini_scale, mini_falls=mini_falls)
 
 if __name__ == "__main__":
     print("Welcome to " +  sys.argv[0] + " package.") 
