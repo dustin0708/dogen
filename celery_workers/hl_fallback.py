@@ -11,7 +11,7 @@ from celery.utils.log import get_task_logger
 ### 日志句柄
 logger = get_task_logger(__name__)
 
-app = Celery(__name__, broker='pyamqp://127.0.0.1')
+app = Celery('celery_workers.'+__name__, broker='pyamqp://127.0.0.1')
 
 def policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls):
     ### 特征一校验
