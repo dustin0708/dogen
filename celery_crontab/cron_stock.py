@@ -20,7 +20,7 @@ app = Celery(__name__, broker='pyamqp://127.0.0.1')
 
 
 @app.on_after_configure.connect
-def startup_stock_daily_update():
+def startup_stock_daily_update(sender, **kwargs):
     """ 启动周期任务
     """
     sender.add_periodic_task(crontab(day_of_week='1-6', hour='5', minute='0'), stock_daily_update(), )
