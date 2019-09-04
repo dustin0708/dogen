@@ -17,7 +17,6 @@ from celery_dogen import app
 ### 日志句柄
 logger = get_task_logger(__name__)
 
-@app.task
 def dispatch_tasks_of_daily_pull(slice=1000):
     """ 周期性执行从网络侧更新股票数据的任务
     """
@@ -49,7 +48,11 @@ def dispatch_tasks_of_daily_pull(slice=1000):
     ### 任务结束打印结果
     logger.info("Success in updating %d/%d stocks' kdata." % (len(code_rst), len(code_all)))
 
-    return None
+    return code_rst
+
+@app.task
+def dispatch_tasks_of_daily_pull_decorator(slice=1000):
+    return dispatch_tasks_of_daily_pull(slice=slice)
 
 if __name__ == "__main__":
     print("Welcome to " +  sys.argv[0] + " package.") 

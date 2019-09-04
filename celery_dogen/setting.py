@@ -31,7 +31,7 @@ beat_schedule = {
     },
 
     'exec-policy-hl-fallback': {
-        'task': 'dogen.crontab.trigger_hl_fallback.dispatch_tasks_of_hl_fallback',
+        'task': 'dogen.crontab.trigger_hl_fallback.dispatch_tasks_of_hl_fallback_decorator',
         'schedule': crontab(day_of_week='1-6', hour='5', minute='0')
     }
 }

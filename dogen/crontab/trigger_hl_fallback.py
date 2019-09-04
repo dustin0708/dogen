@@ -17,7 +17,6 @@ from celery_dogen import app
 ### 日志句柄
 logger = get_task_logger(__name__)
 
-@app.task
 def dispatch_tasks_of_hl_fallback(slice=1000):
     """ 运行涨停回调策略
     """
@@ -47,9 +46,13 @@ def dispatch_tasks_of_hl_fallback(slice=1000):
         result.append(reply[i].get())
 
     ### 任务结束打印结果
-    logger.info("Success in policy-hl_fallback with result: " + str(result))
+    logger.info("Success in policy-hl_fallback")
 
-    return None
+    return result
+
+@app.task
+def dispatch_tasks_of_hl_fallback_decorator(slice=1000):
+    return dispatch_tasks_of_hl_fallback(slice=slice)
 
 if __name__ == "__main__":
     print("Welcome to " +  sys.argv[0] + " package.") 
