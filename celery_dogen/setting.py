@@ -26,7 +26,7 @@ imports = (
 
 beat_schedule = {
     'exec-kdata-daily-pull': {
-        'task': 'dogen.crontab.trigger_daily_pull.dispatch_tasks_of_daily_pull',
+        'task': 'dogen.crontab.trigger_daily_pull.dispatch_tasks_of_daily_pull_decorator',
         'schedule': crontab(day_of_week='1-6', hour='0', minute='30')
     },
 
