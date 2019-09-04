@@ -27,11 +27,11 @@ imports = (
 beat_schedule = {
     'exec-kdata-daily-pull': {
         'task': 'dogen.crontab.trigger_daily_pull.dispatch_tasks_of_daily_pull_decorator',
-        'schedule': crontab(day_of_week='1-6', hour='0', minute='30')
+        'schedule': crontab(day_of_week='1-6', hour='0', minute='01')
     },
 
     'exec-policy-hl-fallback': {
         'task': 'dogen.crontab.trigger_hl_fallback.dispatch_tasks_of_hl_fallback_decorator',
-        'schedule': crontab(day_of_week='1-6', hour='5', minute='0')
+        'schedule': crontab(day_of_week='1-6', hour='5', minute='11')
     }
 }

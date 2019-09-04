@@ -1,0 +1,4 @@
+在当前目录下执行下面命令，以后台启动任务：
+    setsid  celery worker -B -A celery_dogen --autoscale=4,1 -l info
+
+任务配置由celery_dogen/setting.py指定
