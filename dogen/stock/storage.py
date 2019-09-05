@@ -282,7 +282,7 @@ class DbMongo():
         coll = self.database[self._return_policy_collection(policy)]
 
         try:
-            pass
+            coll.insert_many(result)
         except Exception:
             pass
         return False
