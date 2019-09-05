@@ -2,18 +2,7 @@
 
 import sys
 import dogen
-import pymongo
 import traceback
-
-from celery import Celery
-from celery.utils.log import get_task_logger
-
-### 从外部程序导入
-from celery_dogen import app
-
-### 日志句柄
-logger = get_task_logger(__name__)
-
 
 def update_stock_kdata_from_network(codes, full=False, start=None, end=None):
     """ 从网络侧更新股票数据
@@ -30,7 +19,7 @@ def update_stock_kdata_from_network(codes, full=False, start=None, end=None):
     try:
         db = dogen.DbMongo()
     except Exception:
-        logger.error(traceback.format_exc())
+        dogen.logger.error(traceback.format_exc())
         return None
 
     ### 设置截止日期
@@ -83,10 +72,6 @@ def update_stock_kdata_from_network(codes, full=False, start=None, end=None):
         pass
         
     return success_list
-
-@app.task
-def update_stock_kdata_from_network_decorator(codes, full=False, start=None, end=None):
-    return update_stock_kdata_from_network(codes, full=full, start=start, end=end)
 
 if __name__ == "__main__":
     print("Welcome to " +  sys.argv[0] + " package.") 

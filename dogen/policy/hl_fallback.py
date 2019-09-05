@@ -2,42 +2,32 @@
 
 import sys
 import dogen
-import pymongo
 import traceback
-
-from celery import Celery
-from celery.utils.log import get_task_logger
-
-### 从外部程序导入
-from celery_dogen import app
-
-### 日志句柄
-logger = get_task_logger(__name__)
 
 def __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls):
     ### 特征一校验
     index = dogen.get_highlimit_trades(kdata, eIdx=maxi_trade)
     if index.size != 1:
-        logger.debug("Don't match highlimit trades")
+        dogen.logger.debug("Don't match highlimit trades")
         return None
     else:
         pick_trade = index[0]        
         ### 若最后一天涨停忽略
         pick_index = kdata.index.get_loc(pick_trade)
         if pick_index == 0:
-            logger.debug("Fallback didn't occur")
+            dogen.logger.debug("Fallback didn't occur")
             return None
         pass
     
     ### 特征二校验
     if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
         if (kdata.iloc[pick_index][dogen.VOLUME] * mini_scale) > kdata.iloc[pick_index-1][dogen.VOLUME]:
-            logger.debug("Too small volume at " + kdata.index[pick_index-1])
+            dogen.logger.debug("Too small volume at " + kdata.index[pick_index-1])
             return None
         ### 更正pick_index
         pick_index = pick_index-1
         if pick_index == 0:
-            logger.debug("Fallback didn't occur")
+            dogen.logger.debug("Fallback didn't occur")
             return None
         pass
     
@@ -58,12 +48,12 @@ def __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_fall
             take_index = this_index
         pass
     if take_index is None or take_index > take_valid:
-        logger.debug("Don't match valid fallback trade")
+        dogen.logger.debug("Don't match valid fallback trade")
         return None
     
     ### 特征四校验
     if kdata.iloc[take_index+1][dogen.MA5] >= kdata.iloc[take_index][dogen.MA5]:
-        logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
+        dogen.logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
         return None
     
     ### 结果最后排它校验
@@ -93,7 +83,7 @@ def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid
     try:
         db = dogen.DbMongo()
     except Exception:
-        logger.error(traceback.format_exc())
+        dogen.logger.error(traceback.format_exc())
         return None
     
     ### 依次策略检查
@@ -125,10 +115,6 @@ def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid
         pass
         
     return success_list
-
-@app.task
-def match_decorator(codes, start=None, end=None, max_days=60, save_result=True, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
-    return match(codes, start=start, end=end, max_days=max_days, save_result=save_result, take_valid=take_valid, maxi_trade=maxi_trade, mini_scale=mini_scale, mini_falls=mini_falls)
 
 if __name__ == "__main__":
     print("Welcome to " +  sys.argv[0] + " package.") 
