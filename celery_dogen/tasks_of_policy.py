@@ -1,6 +1,7 @@
 #-*-coding:utf-8-*-
 
 import sys
+import time
 import math
 import dogen
 import celery_dogen
@@ -51,6 +52,7 @@ def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_resul
     result = []
     for i in range(0, len(reply)):
         while not reply[i].ready():
+            time.sleep(0.05)
             continue
         result.extend(reply[i].result)
 

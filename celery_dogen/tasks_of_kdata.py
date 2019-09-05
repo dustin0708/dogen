@@ -1,6 +1,7 @@
 #-*-coding:utf-8-*-
 
 import sys
+import time
 import math
 import dogen
 import celery_dogen
@@ -39,6 +40,7 @@ def dispatcher_of_daily_pull_update_kdata(full=False, start=None, end=None, slic
     result = []
     for i in range(0, len(reply)):
         while not reply[i].ready():
+            time.sleep(0.05)
             continue
         result.extend(reply[i].result)
         
