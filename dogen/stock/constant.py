@@ -19,3 +19,6 @@ VOLUME      = 'volume'
 MA5         = 'ma5'
 MA10        = 'ma10'
 MA20        = 'ma20'
+
+
+OUTSTANDING = 'outstanding'

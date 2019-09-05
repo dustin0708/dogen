@@ -60,8 +60,20 @@ def __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_fall
         return None
     
     ### 结果最后排它校验
-        
-    return [basic.name, kdata.index[take_index]]
+
+    ### 打分
+
+    ### 构造结果
+    result = {}
+    result['code'] = basic.name # 股票代码
+    result['name'] = basic[dogen.NAME] #  证券简写
+    result['score'] = 0 # 估分
+    result['take-trade'] = kdata.index[take_index] # 命中交易日
+    result['last-close'] = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
+    result['outstanding'] = round(result['last-close'] * basic[dogen.OUTSTANDING], 2) # 流通市值
+    result['match-time'] = dogen.datetime_now() # 选中时间
+
+    return result
 
 def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
     """ 涨停回调策略, 有如下特征：
@@ -90,7 +102,7 @@ def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid
         return None
     
     ### 依次策略检查
-    success_list = []
+    match_list = []
     for code in codes:
         try:
             ### 从数据库读取basic数据
@@ -110,12 +122,14 @@ def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid
                 continue
             
             ### 输出结果
-            success_list.append(match)
-            if save_result:
-                pass
+            match_list.append(match)
         except Exception:
             continue
         pass
-        
-    return success_list
+    
+    ### 保存结果到数据库
+    if save_result and len(match_list) > 0:
+        db.insert_policy_result(__name__, match_list)
+
+    return match_list
 

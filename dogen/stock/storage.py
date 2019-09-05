@@ -7,10 +7,9 @@ import pymongo
 
 class DbMongo():
 
-    BASICS   = "basics"
-    METADATA = "metadata"
-    KDATA    = "kdata"
-
+    TBL_BASICS = "basics"
+    TBL_KDATA_PREFIX = "kdata"
+    TBL_POLICY_PREFIX = 'policy'
     
     def __init__(self, uri="mongodb://127.0.0.1:27017", database="Dogen"):
         """ 初始化函数
@@ -50,7 +49,7 @@ class DbMongo():
         self.delete_stock_basic(code)
                
         try:
-            base = self.database[self.BASICS]
+            base = self.database[self.TBL_BASICS]
             base.insert_one(data)
             return True
         except Exception:
@@ -76,7 +75,7 @@ class DbMongo():
             cond[field] = code
         
         try:
-            base = self.database[self.BASICS]
+            base = self.database[self.TBL_BASICS]
             base.delete_many(cond)
         except Exception:
             pass
@@ -99,7 +98,7 @@ class DbMongo():
         cond = {field: code}
         
         try:
-            base = self.database[self.BASICS]
+            base = self.database[self.TBL_BASICS]
             for data in base.find(cond):
                 del data[field]
                 
@@ -128,17 +127,17 @@ class DbMongo():
 
         try:
             code = []
-            base = self.database[self.BASICS]
+            base = self.database[self.TBL_BASICS]
             for data in base.find({}, {field:1}):
                 code.append(data[field])
         except Exception:
             pass
         return code
 
-    def _return_stock_collection(self, code):
+    def _return_kdata_collection(self, code):
         """ 返回股票k线数据集合
         """
-        return self.KDATA+'_'+code
+        return self.TBL_KDATA_PREFIX+'_'+code
     
     def insert_stock_kdata(self, code, kdata, key_index, key_field='_id'):
         """ 保存股票日线数据，每只股票单独存储一个collection，以“prefix_code”为集合标识
@@ -161,7 +160,7 @@ class DbMongo():
         
         try:
             ### 插入数据（索引丢失）
-            coll = self.database[self._return_stock_collection(code)]
+            coll = self.database[self._return_kdata_collection(code)]
             coll.insert_many(data)
             return True
         except Exception:
@@ -182,7 +181,7 @@ class DbMongo():
             return None
         
         try:
-            coll = self.database[self._return_stock_collection(code)]
+            coll = self.database[self._return_kdata_collection(code)]
             coll.drop()
         except Exception:
             pass
@@ -216,7 +215,7 @@ class DbMongo():
         try:
             ### 提取字典数据
             data = []
-            coll = self.database[self._return_stock_collection(code)]
+            coll = self.database[self._return_kdata_collection(code)]
 
             for x in coll.find(cond):
                 data.append(x)
@@ -242,7 +241,7 @@ class DbMongo():
         if self.database is None:
             return None
         
-        coll = self.database[self._return_stock_collection(code)]
+        coll = self.database[self._return_kdata_collection(code)]
         
         try:
             ### 获取最早数据
@@ -261,4 +260,29 @@ class DbMongo():
             pass
             
         return (None, None)
-        
+
+    def _return_policy_collection(self, policy):
+        """ 返回策略数据集合
+        """
+        return self.TBL_POLICY_PREFIX+'_'+policy
+
+    def insert_policy_result(self, policy, result):
+        """ 保存策略结果到数据库
+
+            参数说明：
+                policy - 策略名
+                result - 结果列表
+            
+            返回结果：
+                成功返回True，否则返回False
+        """
+        if self.database is None:
+            return False
+
+        coll = self.database[self._return_policy_collection(policy)]
+
+        try:
+            pass
+        except Exception:
+            pass
+        return False
