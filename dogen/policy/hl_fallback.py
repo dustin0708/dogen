@@ -75,7 +75,7 @@ def __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_fall
 
     return result
 
-def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
+def match(codes, start=None, end=None, max_days=60, save_result=False, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
     """ 涨停回调策略, 有如下特征：
             * 涨停在$maxi_trade个交易日之内;
             * 涨停后紧接着最多上涨一天, 若上涨必须放量$mini_scale倍;
@@ -93,7 +93,7 @@ def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid
             mini_falls - 回调最小幅度，单位1%
         
         返回结果：
-            列表数据如[[item-1], [item-2], ..., [item-n]]，根据股票的流通市值、收盘价、成交量、涨跌幅等数据决策。
+            列表数据如[{item-1}, {item-2}, ..., {item-n}]，根据股票的流通市值、收盘价、成交量、涨跌幅等数据决策。
     """
     try:
         db = dogen.DbMongo()

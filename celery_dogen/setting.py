@@ -28,6 +28,7 @@ beat_schedule = {
 
     'exec-policy-hl-fallback': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_fallback_match',
-        'schedule': crontab(day_of_week='1-6', hour='5', minute='11')
+        'schedule': crontab(day_of_week='1-6', hour='5', minute='11'),
+        'args': {'save_result': True}
     }
 }
