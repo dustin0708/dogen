@@ -1,6 +1,7 @@
 #-*-coding:utf-8-*-
 
 import sys
+import copy
 import pandas
 import traceback
 import pymongo
@@ -282,7 +283,7 @@ class DbMongo():
         coll = self.database[self._return_policy_collection(policy)]
 
         try:
-            coll.insert_many(result.deepcopy())
+            coll.insert_many(copy.deepcopy(result))
         except Exception:
             pass
         return False
