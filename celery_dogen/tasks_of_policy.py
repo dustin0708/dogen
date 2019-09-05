@@ -1,6 +1,7 @@
 #-*-coding:utf-8-*-
 
 import sys
+import math
 import dogen
 
 ### 导入当前模块app
