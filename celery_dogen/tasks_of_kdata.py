@@ -3,6 +3,7 @@
 import sys
 import math
 import dogen
+import celery_dogen
 
 ### 导入当前模块app
 from . import app
