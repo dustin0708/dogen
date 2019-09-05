@@ -4,30 +4,33 @@ import sys
 import dogen
 import traceback
 
+### 导入日志句柄
+from dogen import logger
+
 def __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls):
     ### 特征一校验
     index = dogen.get_highlimit_trades(kdata, eIdx=maxi_trade)
     if index.size != 1:
-        dogen.logger.debug("Don't match highlimit trades")
+        logger.debug("Don't match highlimit trades")
         return None
     else:
         pick_trade = index[0]        
         ### 若最后一天涨停忽略
         pick_index = kdata.index.get_loc(pick_trade)
         if pick_index == 0:
-            dogen.logger.debug("Fallback didn't occur")
+            logger.debug("Fallback didn't occur")
             return None
         pass
     
     ### 特征二校验
     if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
         if (kdata.iloc[pick_index][dogen.VOLUME] * mini_scale) > kdata.iloc[pick_index-1][dogen.VOLUME]:
-            dogen.logger.debug("Too small volume at " + kdata.index[pick_index-1])
+            logger.debug("Too small volume at " + kdata.index[pick_index-1])
             return None
         ### 更正pick_index
         pick_index = pick_index-1
         if pick_index == 0:
-            dogen.logger.debug("Fallback didn't occur")
+            logger.debug("Fallback didn't occur")
             return None
         pass
     
@@ -48,12 +51,12 @@ def __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_fall
             take_index = this_index
         pass
     if take_index is None or take_index > take_valid:
-        dogen.logger.debug("Don't match valid fallback trade")
+        logger.debug("Don't match valid fallback trade")
         return None
     
     ### 特征四校验
     if kdata.iloc[take_index+1][dogen.MA5] >= kdata.iloc[take_index][dogen.MA5]:
-        dogen.logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
+        logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
         return None
     
     ### 结果最后排它校验
@@ -83,7 +86,7 @@ def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid
     try:
         db = dogen.DbMongo()
     except Exception:
-        dogen.logger.error(traceback.format_exc())
+        logger.error(traceback.format_exc())
         return None
     
     ### 依次策略检查
@@ -116,6 +119,3 @@ def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid
         
     return success_list
 
-if __name__ == "__main__":
-    print("Welcome to " +  sys.argv[0] + " package.") 
-    

@@ -5,13 +5,15 @@ import math
 import dogen
 import celery_dogen
 
-### 导入当前模块app
+### 导入当前模块变量
 from . import app
+from . import logger
 
 @app.task
 def daily_pull_update_kdata(codes, full=False, start=None, end=None):
     """ 执行股票数据更新
     """
+    logger.info("%s called with arguments: len(codes)=%d, full=%s, start=%s, end=%s" % ('daily_pull_update_kdata', len(codes), full, start, end))
     return dogen.daily_pull.update_kdata(codes, full=full, start=start, end=end)
 
 @app.task
@@ -36,6 +38,6 @@ def dispatcher_of_daily_pull_update_kdata(full=False, start=None, end=None, slic
     for i in range(0, len(reply)):
         while not reply[i].ready():
             continue
-        codes.extend(reply[i].result)
+        result.extend(reply[i].result)
         
     return "Success update %d/%d" % (len(result), len(codes))

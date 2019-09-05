@@ -4,6 +4,9 @@ import sys
 import dogen
 import traceback
 
+### 导入日志句柄
+from dogen import logger
+
 def update_kdata(codes, full=False, start=None, end=None):
     """ 从网络侧更新股票数据
 
@@ -19,7 +22,7 @@ def update_kdata(codes, full=False, start=None, end=None):
     try:
         db = dogen.DbMongo()
     except Exception:
-        dogen.logger.error(traceback.format_exc())
+        logger.error(traceback.format_exc())
         return None
 
     ### 设置截止日期
@@ -72,7 +75,4 @@ def update_kdata(codes, full=False, start=None, end=None):
         pass
         
     return success_list
-
-if __name__ == "__main__":
-    print("Welcome to " +  sys.argv[0] + " package.") 
     

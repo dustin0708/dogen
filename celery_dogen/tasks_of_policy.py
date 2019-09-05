@@ -5,13 +5,15 @@ import math
 import dogen
 import celery_dogen
 
-### 导入当前模块app
+### 导入当前模块变量
 from . import app
+from . import logger
 
 @app.task
 def hl_fallback_match(codes, start=None, end=None, max_days=60, save_result=True, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
     """ 调用hl_fallback策略
     """
+    logger.info("%s called with arguments: len(codes)=%d, start=%s, end=%s, max_days=%d" % ('hl_fallback_match', len(codes), start, end, max_days))
     return dogen.hl_fallback.match(codes, start=start, end=end, max_days=max_days, save_result=save_result, take_valid=take_valid, maxi_trade=maxi_trade, mini_scale=mini_scale, mini_falls=mini_falls)
 
 @app.task

@@ -63,7 +63,3 @@ def time_diff(t1, t2):
     tmp1 = time.strptime(t1,"%H:%M:%S")
     tmp2 = time.strptime(t2,"%H:%M:%S")
     return int(time.mktime(tmp1) - time.mktime(tmp2))
-
-
-if __name__ == "__main__":
-    print("Welcome to " +  sys.argv[0] + " package.")

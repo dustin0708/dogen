@@ -80,6 +80,3 @@ class Excel(ShowBase):
         pathname = self.path + '/' + self.name
         self.table.to_excel(pathname, index=False)
         
-
-if __name__ == "__main__":
-    print("Welcome to " +  sys.argv[0] + " package.")

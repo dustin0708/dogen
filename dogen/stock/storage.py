@@ -261,6 +261,4 @@ class DbMongo():
             pass
             
         return (None, None)
-    
-if __name__ == "__main__":
-    print("Welcome to " +  sys.argv[0] + " package.")
+        

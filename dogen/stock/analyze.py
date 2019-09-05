@@ -246,6 +246,3 @@ def get_highlimit_trades(kdata, sIdx=0, eIdx=None):
     ktemp = ktemp[ktemp[P_CLOSE] >= ktemp[L_HIGH]]
     return ktemp.index
         
-
-if __name__ == "__main__":
-    print("Welcome to " +  sys.argv[0] + " package.")

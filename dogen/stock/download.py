@@ -114,6 +114,3 @@ def download_kdata(basic, start='', end=''):
 
     kdata.set_index('date', inplace=True)
     return __process_kdata(basic, kdata)
-
-if __name__ == "__main__":
-    print("Welcome to " +  sys.argv[0] + " package.")
