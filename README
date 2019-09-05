@@ -16,7 +16,7 @@ step2. 启动RabbitMQ：
 
 step3. 启动后台任务：
     a. 若未安装可在源码顶层目录下执行下面命令：
-        setsid  celery worker -B -A celery_dogen --autoscale=4,1 -l info
+        setsid  celery worker -B -A celery_dogen --autoscale=100,1 -l info
 
     b. 若以安装在任意路径下执行上述命令即可。
 
@@ -25,3 +25,4 @@ Shell工具下执行下面命令进入操作终端（python环境）：
     # celery shell
     >>> import celery_dogen
     >>> help(celery_dogen)
+

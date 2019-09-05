@@ -5,8 +5,11 @@ from celery.task.schedules import crontab
 ### 中间件, Rabbitmq
 broker_url = "pyamqp://127.0.0.1:5672"
 
-### 任务结果保存数据库地址
-result_backend = ''
+### 存放执行结果的数据库地址
+result_backend = "mongodb://127.0.0.1:27017"
+
+### 结果序列化方式
+result_serializer = 'json'
 
 ### 时区
 timezone = 'Asia/Shanghai'
@@ -28,6 +31,3 @@ beat_schedule = {
         'schedule': crontab(day_of_week='1-6', hour='5', minute='11')
     }
 }
-
-### 存放执行结果的数据库地址
-result_backend = "mongodb://127.0.0.1:27017"

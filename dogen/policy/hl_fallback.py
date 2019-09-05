@@ -129,7 +129,7 @@ def match(codes, start=None, end=None, max_days=60, save_result=True, take_valid
     
     ### 保存结果到数据库
     if save_result and len(match_list) > 0:
-        db.insert_policy_result(__name__, match_list)
+        db.insert_policy_result(__name__, match_list.copy())
 
     return match_list
 
