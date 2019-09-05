@@ -4,7 +4,7 @@ import sys
 import dogen
 import traceback
 
-def update_stock_kdata_from_network(codes, full=False, start=None, end=None):
+def update_kdata(codes, full=False, start=None, end=None):
     """ 从网络侧更新股票数据
 
         参数说明：

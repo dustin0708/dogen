@@ -12,7 +12,6 @@ result_backend = ''
 timezone = 'Asia/Shanghai'
 
 imports = (
-    'celery_dogen.tasks_of_dispatcher',     # 子任务拆分模块
     'celery_dogen.tasks_of_kdata',     # 股票数据更新
     'celery_dogen.tasks_of_policy'  # 股票匹配策略
 )
@@ -20,12 +19,12 @@ imports = (
 
 beat_schedule = {
     'exec-kdata-daily-pull': {
-        'task': 'celery_dogen.tasks_of_dispatcher.dispatch_tasks_of_daily_pull',
+        'task': 'celery_dogen.tasks_of_kdata.dispatcher_of_daily_pull_update_kdata',
         'schedule': crontab(day_of_week='1-6', hour='0', minute='01')
     },
 
     'exec-policy-hl-fallback': {
-        'task': 'celery_dogen.tasks_of_dispatcher.dispatch_tasks_of_hl_fallback',
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_fallback_match',
         'schedule': crontab(day_of_week='1-6', hour='5', minute='11')
     }
 }

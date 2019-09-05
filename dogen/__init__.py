@@ -16,4 +16,4 @@ from dogen.utils.datetime   import *
 
 from dogen.policy           import *
 
-from dogen.kdata.daily_pull import *
+from dogen.kdata            import *

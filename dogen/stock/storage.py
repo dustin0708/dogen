@@ -114,6 +114,27 @@ class DbMongo():
             pass
         return None
     
+    def lookup_stock_codes(self, field='_id'):
+        """ 返回数据库中股票代码列表
+
+            参数说明：
+                field - 键值标识，必须与保存时一致
+            
+             返回值：
+                成功返回代码列表，否则返回None
+        """
+        if self.database is None:
+            return None
+
+        try:
+            code = []
+            base = self.database[self.BASICS]
+            for data in base.find({}, {field:1}):
+                code.append(data[field])
+        except Exception:
+            pass
+        return code
+
     def _return_stock_collection(self, code):
         """ 返回股票k线数据集合
         """
