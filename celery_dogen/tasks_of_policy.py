@@ -33,6 +33,8 @@ def dispatcher_of_hl_fallback_match(codes=None, slice=1000):
 
     ### 拆分任务
     tasks = (int)(math.ceil(len(codes)/slice))
+    logger.info('%s called to dispatch %d codes into %d sub-task' % ('dispatcher_of_hl_fallback_match', len(codes), tasks))
+    
     reply = []
     for i in range(0, tasks):
         reply.append(celery_dogen.hl_fallback_match.delay(codes[i*slice:(i+1)*slice]))

@@ -30,6 +30,8 @@ def dispatcher_of_daily_pull_update_kdata(full=False, start=None, end=None, slic
 
     ### 分配任务, 聚合结果
     tasks = (int)(math.ceil(len(codes)/slice))
+    logger.info('%s called to dispatch %d codes into %d sub-task' % ('dispatcher_of_daily_pull_update_kdata', len(codes), tasks))
+
     reply = []
     for i in range(0, tasks):
         reply.append(celery_dogen.daily_pull_update_kdata.delay(codes[i*slice:(i+1)*slice], full=full, start=start, end=end))
