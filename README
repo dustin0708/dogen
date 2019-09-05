@@ -1,4 +1,27 @@
-在当前目录下执行下面命令，以后台启动任务：
-    setsid  celery worker -B -A celery_dogen --autoscale=4,1 -l info
+【依赖】
+1. pip install celery
+2. docker pull rebbitmq
+3. yum install mongodb
 
-任务配置由celery_dogen/setting.py指定
+【部署】
+源码目录下执行'make'命令即可。
+
+【运行】
+step1. 启动mongoDB：
+    systemctl enable mongod
+    systemctl start mongod
+
+step2. 启动RabbitMQ：
+    docker run --restart=always -d -p 5672:5672 rabbitmq
+
+step3. 启动后台任务：
+    a. 若未安装可在源码顶层目录下执行下面命令：
+        setsid  celery worker -B -A celery_dogen --autoscale=4,1 -l info
+
+    b. 若以安装在任意路径下执行上述命令即可。
+
+【命令行操作】
+Shell工具下执行下面命令进入操作终端（python环境）：
+    # celery shell
+    >>> import celery_dogen
+    >>> help(celery_dogen)
