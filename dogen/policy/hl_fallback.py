@@ -32,9 +32,9 @@ def __score_analyze(basic, kdata, pick_index, take_index):
     elif (vary_volume > 1):
         score += (int)(math.ceil(10 * (vary_volume - 1)))
 
-    temp_kdata = kdata[0:pick_index][kdata[dogen.R_CLOSE]>-3]
+    temp_kdata = kdata[0:pick_index]
     if temp_kdata is not None:
-        score += temp_kdata.index.size * 2
+        score += temp_kdata[temp_kdata[dogen.R_CLOSE]>-3].index.size * 2
 
     return score
 
