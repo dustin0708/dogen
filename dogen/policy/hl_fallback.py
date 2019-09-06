@@ -1,11 +1,47 @@
 #-*-coding:utf-8-*-
 
 import sys
+import math
 import dogen
 import traceback
 
 ### 导入日志句柄
 from dogen import logger
+
+def __score_analyze(basic, kdata, pick_index, take_index):
+    """ 根据股票股价、市值、成交量等方面给股票打分:
+            * 基准分值60分，累积加分项；
+            * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
+            * 市值限高40亿，区间定为(40,36],(36,32],...,(4,0]，分值由1~10递增；
+            * 量变限低一倍，区间定为(1.0,1.1],(1.1,1.2],...,(1.9, +Inf)，分值由1~10递增；
+            * 收盘价限-3点，一个交易日2分
+    """
+    score = 60
+
+    take_price = kdata.iloc[take_index][dogen.P_CLOSE]
+    if (take_price < 50):
+        score += (10 - (int)(math.floor(take_price/5)))
+
+    take_value = take_price * basic[dogen.OUTSTANDING]
+    if (take_value < 40):
+        score += (10 - (int)(math.floor(take_value/4)))
+
+    vary_volume = kdata.iloc[take_index][dogen.VOLUME] / kdata.iloc[take_index+1][dogen.VOLUME]
+    if (vary_volume > 2):
+        score += 10
+    elif (vary_volume > 1):
+        score += (int)(math.ceil(10 * (vary_volume - 1)))
+
+    temp_kdata = kdata[0:pick_index][kdata[dogen.R_CLOSE]>-3]
+    if temp_kdata is not None:
+        score += temp_kdata.index.size * 2
+
+    return score
+
+def __exclude_analyze(basic, kdata, pick_index, take_index):
+    """ 根据日线做排除性校验
+    """
+    return False
 
 def __policy_analyze(basic, kdata, take_valid, hl_valid, mini_scale, mini_falls):
     ### 特征一校验
@@ -60,14 +96,15 @@ def __policy_analyze(basic, kdata, take_valid, hl_valid, mini_scale, mini_falls)
         return None
     
     ### 结果最后排它校验
-
-    ### 打分
+    if __exclude_analyze(basic, kdata, pick_index, take_index):
+        logger.debug("__exclude_analyze() return True")
+        return None
 
     ### 构造结果
     result = {}
     result['code'] = basic.name # 股票代码
     result['name'] = basic[dogen.NAME] #  证券简写
-    result['score'] = 0 # 估分
+    result['score'] = __score_analyze(basic, kdata, pick_index, take_index) # 打分
     result['industry'] = basic[dogen.INDUSTRY]
     result['take-trade'] = kdata.index[take_index] # 命中交易日
     result['last-close'] = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
@@ -112,7 +149,7 @@ def parse_policy_args(policy_args):
     try:
         mini_falls = policy_args['mini_falls']
     except Exception:
-        mini_falls = 4 
+        mini_falls = 3.99
 
     return  [maxi_days, take_valid, hl_valid, mini_scale, mini_falls]
 
