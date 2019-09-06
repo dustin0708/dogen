@@ -7,9 +7,9 @@ import traceback
 ### 导入日志句柄
 from dogen import logger
 
-def __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls):
+def __policy_analyze(basic, kdata, take_valid, hl_valid, mini_scale, mini_falls):
     ### 特征一校验
-    index = dogen.get_highlimit_trades(kdata, eIdx=maxi_trade)
+    index = dogen.get_highlimit_trades(kdata, eIdx=hl_valid+1)
     if index.size != 1:
         logger.debug("Don't match highlimit trades")
         return None
@@ -68,6 +68,7 @@ def __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_fall
     result['code'] = basic.name # 股票代码
     result['name'] = basic[dogen.NAME] #  证券简写
     result['score'] = 0 # 估分
+    result['industry'] = basic[dogen.INDUSTRY]
     result['take-trade'] = kdata.index[take_index] # 命中交易日
     result['last-close'] = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result['outstanding'] = round(result['last-close'] * basic[dogen.OUTSTANDING], 2) # 流通市值
@@ -75,7 +76,47 @@ def __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_fall
 
     return result
 
-def match(codes, start=None, end=None, max_days=60, save_result=False, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
+def parse_policy_args(policy_args):
+    """ 解析策略参数
+
+        参数说明：
+            policy_args - 策略参数，参数项有：
+                            * maxi_days: 自然日数（交易日和非交易日），若start取有效值，该字段无效
+                            * take_valid: 命中交易日有效期, 0表示最后一天命中有效
+                            * hl_valid: 最后一个涨停有效交易日数
+                            * mini_scale: 涨停后一交易日上涨时，放量最小倍数
+                            * mini_falls： 回调最小幅度，单位1%
+        
+        返回结果：
+            参数值列表：[maxi_days, take_valid, hl_valid, mini_scale, mini_falls]
+    """
+    try:
+        maxi_days = policy_args['maxi_days']
+    except Exception:
+        maxi_days=60
+    
+    try:
+        take_valid = policy_args['take_valid']
+    except Exception:
+        take_valid = 0
+
+    try:
+        hl_valid = policy_args['hl_valid']
+    except Exception:
+        hl_valid = 4
+    try:
+        mini_scale = policy_args['mini_scale']
+    except Exception:
+        mini_scale = 1.2
+    
+    try:
+        mini_falls = policy_args['mini_falls']
+    except Exception:
+        mini_falls = 4 
+
+    return  [maxi_days, take_valid, hl_valid, mini_scale, mini_falls]
+
+def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 涨停回调策略, 有如下特征：
             * 涨停在$maxi_trade个交易日之内;
             * 涨停后紧接着最多上涨一天, 若上涨必须放量$mini_scale倍;
@@ -85,22 +126,21 @@ def match(codes, start=None, end=None, max_days=60, save_result=False, take_vali
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
             end - 样本截止交易日(数据库样本可能早于该日期, 如停牌)
-            max_days - 自然日数（交易日和非交易日），若start取有效值，该字段无效
             save_result - 保存命中结果
-            take_valid - 命中交易日有效期, 0表示最后一天命中有效
-            maxi_trade - 最后一个涨停有效交易日数
-            mini_scale - 涨停后一交易日上涨时，放量最小倍数
-            mini_falls - 回调最小幅度，单位1%
         
         返回结果：
             列表数据如[{item-1}, {item-2}, ..., {item-n}]，根据股票的流通市值、收盘价、成交量、涨跌幅等数据决策。
     """
+    ### 数据库连接初始化
     try:
         db = dogen.DbMongo()
     except Exception:
         logger.error(traceback.format_exc())
         return None
     
+    ### 策略参数处理
+    [maxi_days, take_valid, hl_valid, mini_scale, mini_falls] = parse_policy_args(policy_args)
+
     ### 依次策略检查
     match_list = []
     for code in codes:
@@ -112,12 +152,12 @@ def match(codes, start=None, end=None, max_days=60, save_result=False, take_vali
             if end is None:
                 end = dogen.date_today()
             if start is None:
-                start = dogen.date_delta(end, -max_days)
+                start = dogen.date_delta(end, -maxi_days)
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             kdata.sort_index(ascending=False, inplace=True)
             
             ### 策略分析
-            match = __policy_analyze(basic, kdata, take_valid, maxi_trade, mini_scale, mini_falls)
+            match = __policy_analyze(basic, kdata, take_valid, hl_valid, mini_scale, mini_falls)
             if match is None:
                 continue
             

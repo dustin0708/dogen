@@ -4,6 +4,7 @@ import sys
 import time
 import math
 import dogen
+import traceback
 import celery_dogen
 
 ### 导入当前模块变量

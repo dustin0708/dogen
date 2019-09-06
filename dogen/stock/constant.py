@@ -21,4 +21,5 @@ MA10        = 'ma10'
 MA20        = 'ma20'
 
 
+INDUSTRY = 'industry'
 OUTSTANDING = 'outstanding'

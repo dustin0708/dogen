@@ -4,6 +4,7 @@ import sys
 import time
 import math
 import dogen
+import traceback
 import celery_dogen
 
 ### 导入当前模块变量
@@ -11,11 +12,11 @@ from . import app
 from . import logger
 
 @app.task
-def hl_fallback_match(codes, start=None, end=None, max_days=60, save_result=False, take_valid=0, maxi_trade=5, mini_scale=1.2, mini_falls=4):
+def hl_fallback_match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 调用hl_fallback策略
     """
-    logger.info("%s called with arguments: len(codes)=%d, start=%s, end=%s, max_days=%d, save_result=%s" % ('hl_fallback_match', len(codes), start, end, max_days, save_result))
-    return dogen.hl_fallback.match(codes, start=start, end=end, max_days=max_days, save_result=save_result, take_valid=take_valid, maxi_trade=maxi_trade, mini_scale=mini_scale, mini_falls=mini_falls)
+    logger.info("%s called with arguments: len(codes)=%d, start=%s, end=%s, save_result=%s, policy_args=%s" % ('hl_fallback_match', len(codes), start, end, save_result, policy_args))
+    return dogen.hl_fallback.match(codes, start=start, end=end, save_result=save_result, policy_args=policy_args)
 
 @app.task
 def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_result=False, slice=1000):
