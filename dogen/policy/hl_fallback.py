@@ -178,6 +178,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
     ### 策略参数处理
     [maxi_days, take_valid, hl_valid, mini_scale, mini_falls] = parse_policy_args(policy_args)
 
+    ### 股票代码过滤，如科创板
+    codes = dogen.drop_codes(codes)
+
     ### 依次策略检查
     match_list = []
     for code in codes:

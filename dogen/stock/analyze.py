@@ -2,6 +2,7 @@
 
 import sys
 import time
+import copy
 
 
 from dogen.stock.constant import *
@@ -17,6 +18,17 @@ def drop_basics(basics, inplace=True):
         if basics.iloc[i].loc['name'].startswith("*", 0) or basics.iloc[i].loc['name'].startswith("S", 0) or basics.index[i].startswith("68", 0):
             basics.drop(basics.index[i], inplace=True)
     return basics
+
+def drop_codes(codes, inplace=True):
+    """ 通过股票代码过滤科创板股票
+    """
+    if not inplace:
+        codes = copy.deepcopy(codes)
+
+    for code in codes:
+        if code.startswith("68", 0):
+            codes.remove(code)
+    return codes
 
 def drop_fresh_stock_trades(basic, kdata, inplace=True):
     """丢掉新股涨停板, kdata索引按降序排列
