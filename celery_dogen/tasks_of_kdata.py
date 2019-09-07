@@ -56,7 +56,7 @@ def daily_statistics_find_largerise_range(codes, start=None, end=None, save_resu
     return dogen.daily_statistics.find_largerise_range(codes=codes, start=start, end=end,  save_result=save_result, args=args)
 
 @app.task
-def dispatcher_of_daily_statistics_find_largerise_range(codes=None, start=None, end=None, save_result=False):
+def dispatcher_of_daily_statistics_find_largerise_range(codes=None, start=None, end=None, save_result=False, slice=1000):
     """ 拆分统计股票上涨区间任务
     """
     ### 数据库连接初始化
