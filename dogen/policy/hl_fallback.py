@@ -6,7 +6,38 @@ import dogen
 import traceback
 
 ### 导入日志句柄
-from dogen import logger
+from dogen import logger, mongo_server, mongo_database
+
+""" 参数说明：
+        * maxi_days: 自然日数（交易日和非交易日），若start取有效值，该字段无效
+        * take_valid: 命中交易日有效期, 0表示最后一天命中有效
+        * hl_valid: 最后一个涨停有效交易日数
+        * volume_scale: 涨停后一交易日上涨时，放量最小倍数
+        * mini_falls： 回调最小幅度，单位1%
+        * maxi_prerise: 涨停之前最大涨幅
+"""
+MAXI_DAYS   = 'maxi_days'
+TAKE_VALID  = 'take_valid'
+HL_VALID    = 'hl_valid'
+VOLUME_SCALE= 'volume_scale'
+MINI_FALLS  = 'mini_falls'
+MAXI_PRERISE= 'maxi_prerise'
+
+ARGS_DEAULT_VALUE = {
+    MAXI_DAYS: 60,      # 天
+    TAKE_VALID: 0,      # 
+    HL_VALID: 4,        #
+    VOLUME_SCALE: 1.2,  # 倍
+    MINI_FALLS: 3.99,   # 1%
+    MAXI_PRERISE: 30,   # 1%
+}
+
+def __parse_policy_args(policy_args, arg_name):
+    try:
+        arg_value = policy_args[arg_name]
+    except Exception:
+        arg_value = ARGS_DEAULT_VALUE[arg_name]
+    return arg_value
 
 def __score_analyze(basic, kdata, pick_index, take_index):
     """ 根据股票股价、市值、成交量等方面给股票打分:
@@ -38,12 +69,28 @@ def __score_analyze(basic, kdata, pick_index, take_index):
 
     return score
 
-def __exclude_analyze(basic, kdata, pick_index, take_index):
+def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
     """ 根据日线做排除性校验
     """
+    ### 检查区间最高涨幅
+    try:
+        [min_index, max_index, inc_close, get_lhigh] = dogen.get_last_rise_range(kdata, 30, max_fall=20)
+        if inc_close > maxi_prerise:
+            logger.debug("Too large rise-range from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
+            return True
+    except Exception:
+        pass
+
     return False
 
-def __policy_analyze(basic, kdata, take_valid, hl_valid, mini_scale, mini_falls):
+def __policy_analyze(basic, kdata, policy_args):
+    ### 策略参数处理
+    take_valid  = __parse_policy_args(policy_args, TAKE_VALID)
+    hl_valid    = __parse_policy_args(policy_args, HL_VALID)
+    volume_scale= __parse_policy_args(policy_args, VOLUME_SCALE)
+    mini_falls  = __parse_policy_args(policy_args, MINI_FALLS)
+    maxi_prerise= __parse_policy_args(policy_args, MAXI_PRERISE)
+
     ### 特征一校验
     index = dogen.get_highlimit_trades(kdata, eIdx=hl_valid+1)
     if index.size != 1:
@@ -60,7 +107,7 @@ def __policy_analyze(basic, kdata, take_valid, hl_valid, mini_scale, mini_falls)
     
     ### 特征二校验
     if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
-        if (kdata.iloc[pick_index][dogen.VOLUME] * mini_scale) > kdata.iloc[pick_index-1][dogen.VOLUME]:
+        if (kdata.iloc[pick_index][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index-1][dogen.VOLUME]:
             logger.debug("Too small volume at " + kdata.index[pick_index-1])
             return None
         ### 更正pick_index
@@ -96,7 +143,7 @@ def __policy_analyze(basic, kdata, take_valid, hl_valid, mini_scale, mini_falls)
         return None
     
     ### 结果最后排它校验
-    if __exclude_analyze(basic, kdata, pick_index, take_index):
+    if __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
         logger.debug("__exclude_analyze() return True")
         return None
 
@@ -112,46 +159,6 @@ def __policy_analyze(basic, kdata, take_valid, hl_valid, mini_scale, mini_falls)
     result['match-time'] = dogen.datetime_now() # 选中时间
 
     return result
-
-def parse_policy_args(policy_args):
-    """ 解析策略参数
-
-        参数说明：
-            policy_args - 策略参数，参数项有：
-                            * maxi_days: 自然日数（交易日和非交易日），若start取有效值，该字段无效
-                            * take_valid: 命中交易日有效期, 0表示最后一天命中有效
-                            * hl_valid: 最后一个涨停有效交易日数
-                            * mini_scale: 涨停后一交易日上涨时，放量最小倍数
-                            * mini_falls： 回调最小幅度，单位1%
-        
-        返回结果：
-            参数值列表：[maxi_days, take_valid, hl_valid, mini_scale, mini_falls]
-    """
-    try:
-        maxi_days = policy_args['maxi_days']
-    except Exception:
-        maxi_days=60
-    
-    try:
-        take_valid = policy_args['take_valid']
-    except Exception:
-        take_valid = 0
-
-    try:
-        hl_valid = policy_args['hl_valid']
-    except Exception:
-        hl_valid = 4
-    try:
-        mini_scale = policy_args['mini_scale']
-    except Exception:
-        mini_scale = 1.2
-    
-    try:
-        mini_falls = policy_args['mini_falls']
-    except Exception:
-        mini_falls = 3.99
-
-    return  [maxi_days, take_valid, hl_valid, mini_scale, mini_falls]
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 涨停回调策略, 有如下特征：
@@ -170,13 +177,10 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """
     ### 数据库连接初始化
     try:
-        db = dogen.DbMongo()
+        db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
     except Exception:
         logger.error(traceback.format_exc())
         return None
-    
-    ### 策略参数处理
-    [maxi_days, take_valid, hl_valid, mini_scale, mini_falls] = parse_policy_args(policy_args)
 
     ### 股票代码过滤，如科创板
     codes = dogen.drop_codes(codes)
@@ -192,12 +196,12 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             if end is None:
                 end = dogen.date_today()
             if start is None:
-                start = dogen.date_delta(end, -maxi_days)
+                start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAXI_DAYS)
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             kdata.sort_index(ascending=False, inplace=True)
             
             ### 策略分析
-            match = __policy_analyze(basic, kdata, take_valid, hl_valid, mini_scale, mini_falls)
+            match = __policy_analyze(basic, kdata, policy_args)
             if match is None:
                 continue
             

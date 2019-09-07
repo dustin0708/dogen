@@ -5,7 +5,7 @@ import dogen
 import traceback
 
 ### 导入日志句柄
-from dogen import logger
+from dogen import logger, mongo_server, mongo_database
 
 def update_kdata(codes, full=False, start=None, end=None):
     """ 从网络侧更新股票数据
@@ -20,7 +20,7 @@ def update_kdata(codes, full=False, start=None, end=None):
             成功更新数据列表
     """
     try:
-        db = dogen.DbMongo()
+        db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
     except Exception:
         logger.error(traceback.format_exc())
         return None
