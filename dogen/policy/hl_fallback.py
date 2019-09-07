@@ -196,7 +196,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             if end is None:
                 end = dogen.date_today()
             if start is None:
-                start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAXI_DAYS)
+                start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAXI_DAYS))
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             kdata.sort_index(ascending=False, inplace=True)
             
