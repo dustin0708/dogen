@@ -1,3 +1,3 @@
 #-*-coding:utf-8-*-
 
-__all__ = ['datetime']
+__all__ = ['dt']
