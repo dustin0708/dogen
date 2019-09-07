@@ -28,7 +28,7 @@ class DbMongo():
             traceback.print_exc()
         pass
     
-    def connect():
+    def connect(self):
         """ 连接数据库服务器
 
             返回结果:
