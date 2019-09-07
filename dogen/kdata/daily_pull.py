@@ -60,6 +60,7 @@ def update_kdata(codes, full=False, start=None, end=None):
             basic = basics.loc[code]
         
             ### 下载日线数据
+            logger.debug("Begin download %s's kdata from %s to %s." % (code, start, end))
             kdata = dogen.download_kdata(basic, start=start, end=end)
             
             ### 截取新增数据插入, 数据已存在会导致出错
@@ -70,6 +71,8 @@ def update_kdata(codes, full=False, start=None, end=None):
             db.insert_stock_basic(code, basic)
             db.insert_stock_kdata(code, kdata, kdata.index)
             success_list.append(code)
+
+            logger.debug("Success update %s with %d items." % (code, kdata.index.size))
         except Exception:
             continue
         pass
