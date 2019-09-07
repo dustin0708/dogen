@@ -18,14 +18,15 @@ def daily_pull_update_kdata(codes, full=False, start=None, end=None):
     return dogen.daily_pull.update_kdata(codes, full=full, start=start, end=end)
 
 @app.task
-def dispatcher_of_daily_pull_update_kdata(full=False, start=None, end=None, slice=1000):
+def dispatcher_of_daily_pull_update_kdata(codes=None, full=False, start=None, end=None, slice=1000):
     """ 拆分股票更新任务
     """
     try:
-        ### 下载股票代码数据
-        basics = dogen.download_basics()
-        codes = basics.index.tolist()
-        codes.sort()
+        if codes is None:
+            ### 下载股票代码数据
+            basics = dogen.download_basics()
+            codes = basics.index.tolist()
+            codes.sort()
     except Exception:
         traceback.print_exc()
         return None
