@@ -27,6 +27,22 @@ class DbMongo():
             self.database = None
             traceback.print_exc()
         pass
+    
+    def connect():
+        """ 连接数据库服务器
+
+            返回结果:
+                成功返回True，失败返回False
+        """
+        try:
+            self.client.admin.command('ismaster')
+        except Exception:
+            self.client = None
+            self.database = None
+            traceback.print_exc()
+            return False
+        return True
+
 
     def insert_stock_basic(self, code, basic, field='_id'):
         """ 保存股票基本数据，以股票代码为键值，tushare下载basics数据timeToMarket类型不能为object.

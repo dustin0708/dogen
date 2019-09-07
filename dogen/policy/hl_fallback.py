@@ -176,10 +176,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             列表数据如[{item-1}, {item-2}, ..., {item-n}]，根据股票的流通市值、收盘价、成交量、涨跌幅等数据决策。
     """
     ### 数据库连接初始化
-    try:
-        db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
-    except Exception:
-        logger.error(traceback.format_exc())
+    db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
+    if not db.connect():
+        logger.error("Cannot connect to mongo-server %s" % mongo_server)
         return None
 
     ### 股票代码过滤，如科创板

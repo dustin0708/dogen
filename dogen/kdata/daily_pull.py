@@ -19,10 +19,10 @@ def update_kdata(codes, full=False, start=None, end=None):
         返回结果：
             成功更新数据列表
     """
-    try:
-        db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
-    except Exception:
-        logger.error(traceback.format_exc())
+    ### 数据库连接初始化
+    db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
+    if not db.connect():
+        logger.error("Cannot connect to mongo-server %s" % mongo_server)
         return None
 
     ### 设置截止日期

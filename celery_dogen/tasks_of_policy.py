@@ -30,11 +30,10 @@ def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_resul
         返回结果：
             列表数据如[{item-1}, {item-2}, ..., {item-n}]，根据股票的流通市值、收盘价、成交量、涨跌幅等数据决策。
     """
-    ### 初始化本地数据库连接
-    try:
-        db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
-    except Exception:
-        traceback.print_exc()
+    ### 数据库连接初始化
+    db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
+    if not db.connect():
+        logger.error("Cannot connect to mongo-server %s" % mongo_server)
         return None
     
     ### 获取代码列表

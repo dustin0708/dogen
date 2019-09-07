@@ -28,7 +28,7 @@ def dispatcher_of_daily_pull_update_kdata(full=False, start=None, end=None, slic
         codes = basics.index.tolist().sort()
     except Exception:
         traceback.print_exc()
-        return None
+        return "Get exception in downloading basics from network"
 
     ### 分配任务, 聚合结果
     tasks = (int)(math.ceil(len(codes)/slice))
