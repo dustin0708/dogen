@@ -38,7 +38,8 @@ def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_resul
     
     ### 获取代码列表
     if codes is None:
-        codes = db.lookup_stock_codes().sort()
+        codes = db.lookup_stock_codes()
+        codes.sort()
 
     ### 拆分任务
     tasks = (int)(math.ceil(len(codes)/slice))
