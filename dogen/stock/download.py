@@ -48,8 +48,12 @@ def __process_kdata(basic, kdata):
         volume= kdata.iloc[ i ].loc[VOLUME]
         
         last_close = kdata.iloc[i+1].loc[P_CLOSE]
-        L_high     = round(1.1 * last_close, 2)
-        L_low      = round(0.9 * last_close, 2)
+        if basic.name.startswith('68',0):
+            L_high     = round(1.2 * last_close, 2)
+            L_low      = round(0.8 * last_close, 2)
+        else:
+            L_high     = round(1.1 * last_close, 2)
+            L_low      = round(0.9 * last_close, 2)
         
         diff_close = (close - last_close)/last_close
         R_close    = round(100 * diff_close, 2)
