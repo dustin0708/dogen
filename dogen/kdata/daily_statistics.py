@@ -40,7 +40,7 @@ def __statistics_analyze(basic, kdata, mini_rise, mini_hl):
         result['rise_rate'] = inc_close
         result['inc_hl'] = get_hl
         result['start-close'] = kdata.iloc[min_index][dogen.P_CLOSE] # 最后一日收盘价
-        result['outstanding'] = round(result['last-close'] * basic[dogen.OUTSTANDING], 2) # 流通市值
+        result['outstanding'] = round(result['start-close'] * basic[dogen.OUTSTANDING], 2) # 流通市值
         result['match-time'] = dogen.datetime_now() # 选中时间
 
         match.append(result)
