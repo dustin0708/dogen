@@ -92,6 +92,7 @@ def find_largerise_range(codes, start=None, end=None, save_result=False, args=[2
             ### 输出结果
             match_list.extend(match)
         except Exception:
+            traceback.print_exc()
             continue
         pass
     
