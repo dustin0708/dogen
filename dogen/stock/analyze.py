@@ -102,6 +102,9 @@ def get_last_rise_range(kdata, min_rise, max_fall=10.0, sIdx=0, eIdx=None):
         max_fall: 上涨过程允许最大跌幅
         sIdx: 起始索引
         eIdx: 截止索引
+    
+        返回结果：
+            [min_index, max_index, inc_close, get_lhigh, $next_index]
     """        
     if (eIdx is None) or (eIdx > kdata.index.size):
         eIdx = kdata.index.size
@@ -152,6 +155,10 @@ def get_last_rise_range(kdata, min_rise, max_fall=10.0, sIdx=0, eIdx=None):
             tmp_index = i
             break
         pass
+
+    ## 将最新遍历索引塞进结果, 方便循环遍历
+    if the_range is not None:
+        the_range.append(i)
 
     return the_range
 
@@ -205,6 +212,10 @@ def get_last_fall_range(kdata, min_fall, max_rise=10.0, sIdx=0, eIdx=None):
             tmp_index = i
             break
         pass
+
+    ## 将最新遍历索引塞进结果, 方便循环遍历
+    if the_range is not None:
+        the_range.append(i)
 
     return the_range
 

@@ -16,6 +16,8 @@ from dogen import logger, mongo_server, mongo_database
         * mini_falls： 回调最小幅度，单位1%
         * maxi_prerise: 涨停之前最大涨幅
 """
+
+### 策略参数名
 MAXI_DAYS   = 'maxi_days'
 TAKE_VALID  = 'take_valid'
 HL_VALID    = 'hl_valid'
@@ -23,8 +25,9 @@ VOLUME_SCALE= 'volume_scale'
 MINI_FALLS  = 'mini_falls'
 MAXI_PRERISE= 'maxi_prerise'
 
+### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 60,      # 天
+    MAXI_DAYS: 30,      # 天
     TAKE_VALID: 0,      # 
     HL_VALID: 4,        #
     VOLUME_SCALE: 1.2,  # 倍
