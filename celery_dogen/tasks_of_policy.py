@@ -2,7 +2,6 @@
 
 import sys
 import time
-import math
 import dogen
 import traceback
 import celery_dogen
@@ -41,13 +40,14 @@ def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_resul
         codes = db.lookup_stock_codes()
         codes.sort()
 
-    ### 拆分任务
-    tasks = (int)(math.ceil(len(codes)/slice))
-    logger.info('%s called to dispatch %d codes into %d sub-task' % ('dispatcher_of_hl_fallback_match', len(codes), tasks))
-    
+    ### 拆分任务, 聚合结果
+    logger.info('%s called to dispatch %d codes into sub-task with slice=%d' % ('dispatcher_of_hl_fallback_match', len(codes), slice))
     reply = []
-    for i in range(0, tasks):
-        reply.append(celery_dogen.hl_fallback_match.delay(codes[i*slice:(i+1)*slice], start=start, end=end, save_result=save_result))
+    while True:
+        tasks = len(reply)
+        if (tasks * slice) >= len(codes):
+            break
+        reply.append(celery_dogen.hl_fallback_match.delay(codes[tasks*slice:(tasks+1)*slice], start=start, end=end, save_result=save_result))
 
     ### 聚合子任务结果
     result = []

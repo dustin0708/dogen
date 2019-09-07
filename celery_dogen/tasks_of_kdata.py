@@ -2,7 +2,6 @@
 
 import sys
 import time
-import math
 import dogen
 import traceback
 import celery_dogen
@@ -32,12 +31,13 @@ def dispatcher_of_daily_pull_update_kdata(full=False, start=None, end=None, slic
         return "Get exception in downloading basics from network"
 
     ### 分配任务, 聚合结果
-    tasks = (int)(math.ceil(len(codes)/slice))
-    logger.info('%s called to dispatch %d codes into %d sub-task' % ('dispatcher_of_daily_pull_update_kdata', len(codes), tasks))
-
+    logger.info('%s called to dispatch %d codes into sub-task with slice=%d' % ('dispatcher_of_daily_pull_update_kdata', len(codes), slice))
     reply = []
-    for i in range(0, tasks):
-        reply.append(celery_dogen.daily_pull_update_kdata.delay(codes[i*slice:(i+1)*slice], full=full, start=start, end=end))
+    while True:
+        tasks = len(reply)
+        if (tasks * slice) >= len(codes):
+            break
+        reply.append(celery_dogen.daily_pull_update_kdata.delay(codes[tasks*slice:(tasks+1)*slice], full=full, start=start, end=end))
 
     result = []
     for i in range(0, len(reply)):
