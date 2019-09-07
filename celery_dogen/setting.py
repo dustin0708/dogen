@@ -33,7 +33,3 @@ beat_schedule = {
         'args': (None, None, None, True, 1000)
     }
 }
-
-####################### 业务配置，独立于celery #######################
-mongo_server = "mongodb://127.0.0.1:27017"
-mongo_database = "Dogen"
