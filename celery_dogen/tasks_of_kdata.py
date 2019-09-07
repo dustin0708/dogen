@@ -25,7 +25,7 @@ def dispatcher_of_daily_pull_update_kdata(full=False, start=None, end=None, slic
     try:
         ### 下载股票代码数据
         basics = dogen.download_basics()
-        codes = basics.index.tolist()
+        codes = basics.index.tolist().sort()
     except Exception:
         traceback.print_exc()
         return None

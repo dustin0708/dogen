@@ -9,7 +9,7 @@ import celery_dogen
 
 ### 导入当前模块变量
 from . import app
-from . import logger
+from . import logger, mongo_server, mongo_database
 
 @app.task
 def hl_fallback_match(codes, start=None, end=None, save_result=False, policy_args=None):
@@ -32,14 +32,14 @@ def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_resul
     """
     ### 初始化本地数据库连接
     try:
-        db = dogen.DbMongo()
+        db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
     except Exception:
         traceback.print_exc()
         return None
     
     ### 获取代码列表
     if codes is None:
-        codes = db.lookup_stock_codes()
+        codes = db.lookup_stock_codes().sort()
 
     ### 拆分任务
     tasks = (int)(math.ceil(len(codes)/slice))
