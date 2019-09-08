@@ -43,8 +43,8 @@ def __parse_policy_args(policy_args, arg_name):
     return arg_value
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 涨停回调策略, 有如下特征：
-            * 涨停在$maxi_trade个交易日之内;
+    """ 反弹策略, 有如下特征：
+            * $MAXI_DAYS交易日内，下跌;
             * 涨停后紧接着最多上涨一天, 若上涨必须放量$mini_scale倍;
             * 累积下跌等于或大于$mini_falls;
             * 最后一日MA5上涨;
@@ -80,7 +80,8 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAXI_DAYS))
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             kdata.sort_index(ascending=False, inplace=True)
-            
+            dogen.drop_fresh_stock_trades(basic, kdata)
+
             ### 策略分析
             logger.debug("Begin in analyzing %s from %s to %s" % (code, start, end))
             match = __policy_analyze(basic, kdata, policy_args)

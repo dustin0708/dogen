@@ -105,7 +105,7 @@ def find_largerise_range(codes, start=None, end=None, save_result=False, args=No
                 start = dogen.date_delta(end, -30)
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             kdata.sort_index(ascending=False, inplace=True)
-            kdata.drop_fresh_stock_trades(basic, kdata)
+            dogen.drop_fresh_stock_trades(basic, kdata)
             
             ### 统计分析
             logger.debug("Begin in analyzing %s from %s to %s" % (code, start, end))
