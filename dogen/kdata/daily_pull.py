@@ -74,6 +74,7 @@ def update_kdata(codes, full=False, start=None, end=None):
 
             logger.debug("Success update %s with %d items." % (code, kdata.index.size))
         except Exception:
+            logger.error('Trggered in handling code %s: %s' % (code, traceback.format_exc()))
             continue
         pass
         

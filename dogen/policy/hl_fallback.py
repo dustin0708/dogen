@@ -213,6 +213,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             ### 输出结果
             match_list.append(match)
         except Exception:
+            logger.error('Trggered in handling code %s: %s' % (code, traceback.format_exc()))
             continue
         pass
     
