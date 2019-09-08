@@ -18,7 +18,7 @@ def hl_fallback_match(codes, start=None, end=None, save_result=False, policy_arg
     return dogen.hl_fallback.match(codes, start=start, end=end, save_result=save_result, policy_args=policy_args)
 
 @app.task
-def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_result=False, slice=1000):
+def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_result=False, policy_args=None, slice=1000):
     """ hl_fallback策略任务拆分
 
         参数说明：
@@ -47,7 +47,7 @@ def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_resul
         tasks = len(reply)
         if (tasks * slice) >= len(codes):
             break
-        reply.append(celery_dogen.hl_fallback_match.delay(codes[tasks*slice:(tasks+1)*slice], start=start, end=end, save_result=save_result))
+        reply.append(celery_dogen.hl_fallback_match.delay(codes[tasks*slice:(tasks+1)*slice], start=start, end=end, save_result=save_result, policy_args=policy_args))
 
     ### 聚合子任务结果
     result = []

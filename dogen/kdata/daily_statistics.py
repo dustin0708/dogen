@@ -7,7 +7,25 @@ import traceback
 ### 导入日志句柄
 from dogen import logger, mongo_server, mongo_database
 
-def __statistics_analyze(basic, kdata, mini_rise, mini_hl):
+### 策略参数名
+MINI_RISE  = 'mini_rise'
+MINI_HL = 'mini_hl'
+
+### 策略参数经验值(默认值)
+ARGS_DEAULT_VALUE = {
+    MINI_RISE: 30,      # 天
+    MINI_HL: 2, # 最少涨停数
+}
+
+def __parse_policy_args(policy_args, arg_name):
+    try:
+        arg_value = policy_args[arg_name]
+    except Exception:
+        arg_value = ARGS_DEAULT_VALUE[arg_name]
+    return arg_value
+
+
+def __statistics_analyze(basic, kdata, args):
     """ 统计单只股票上涨区间
 
         参数说明：
@@ -16,9 +34,13 @@ def __statistics_analyze(basic, kdata, mini_rise, mini_hl):
             mini_rise - 区间最小涨幅
             mini_hl - 区间最少涨停板数
     """
+    ### 参数处理
+    mini_rise = __parse_policy_args(args, MINI_RISE)
+    mini_hl = __parse_policy_args(args, MINI_HL)
+
+    ### 循环检查
     tmpId = 0
     match = []
-
     while True:
         range = dogen.get_last_rise_range(kdata, mini_rise, max_fall=round(mini_rise/2, 2), sIdx=tmpId)
         if range is None:
@@ -48,7 +70,7 @@ def __statistics_analyze(basic, kdata, mini_rise, mini_hl):
 
     return match
 
-def find_largerise_range(codes, start=None, end=None, save_result=False, args=[20, 2]):
+def find_largerise_range(codes, start=None, end=None, save_result=False, args=None):
     """ 查找大涨的股票数据
 
         参数说明：
@@ -80,13 +102,14 @@ def find_largerise_range(codes, start=None, end=None, save_result=False, args=[2
             if end is None:
                 end = dogen.date_today()
             if start is None:
-                start = dogen.date_delta(end, -90)
+                start = dogen.date_delta(end, -30)
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             kdata.sort_index(ascending=False, inplace=True)
+            kdata.drop_fresh_stock_trades(basic, kdata)
             
             ### 统计分析
             logger.debug("Begin in analyzing %s from %s to %s" % (code, start, end))
-            match = __statistics_analyze(basic, kdata, args[0], args[1])
+            match = __statistics_analyze(basic, kdata, args)
             if match is None:
                 continue
             
