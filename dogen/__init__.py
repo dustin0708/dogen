@@ -1,5 +1,7 @@
 #-*-coding:utf-8-*-
 
+from dogen.result           import *
+
 from dogen.conf.setting     import *
 
 from dogen.stock.constant   import *

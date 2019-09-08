@@ -22,14 +22,23 @@ imports = (
 
 
 beat_schedule = {
+    ### 交易数据更新
     'exec-kdata-daily-pull': {
         'task': 'celery_dogen.tasks_of_kdata.dispatcher_of_daily_pull_update_kdata',
         'schedule': crontab(day_of_week='1-6', hour='0', minute='01')
     },
 
+    ### 涨停回调策略
     'exec-policy-hl-fallback': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_fallback_match',
         'schedule': crontab(day_of_week='1-6', hour='0', minute='21'),
+        'args': (None, None, None, True, 1000)
+    },
+
+    ### 大涨股票统计
+    'exec-statistics-largerise-range': {
+        'task': 'celery_dogen.tasks_of_statistics.dispatcher_of_daily_statistics_find_largerise_range',
+        'schedule': crontab(day_of_week='6', hour='0', minute='21'),
         'args': (None, None, None, True, 1000)
     }
 }

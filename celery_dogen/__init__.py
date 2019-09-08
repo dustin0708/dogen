@@ -12,3 +12,4 @@ app.config_from_object('celery_dogen.setting')
 from .setting               import *
 from .tasks_of_kdata        import *
 from .tasks_of_policy       import *
+from .tasks_of_statistics   import *
