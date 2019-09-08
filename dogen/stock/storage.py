@@ -8,9 +8,10 @@ import pymongo
 
 class DbMongo():
 
-    TBL_BASICS = "basics"
-    TBL_KDATA_PREFIX = "kdata"
-    TBL_POLICY_PREFIX = 'policy'
+    TBL_BASICS = "basics" # 股票基本信息数据表
+    TBL_KDATA_PREFIX = "kdata" # 股票交易数据表前缀
+    TBL_POLICY_PREFIX = "policy" # 策略结果表前缀
+    TBL_STAT_LR_RANGE = "stat_lr_range" # 大涨统计表前缀
     
     def __init__(self, uri="mongodb://127.0.0.1:27017", database="Dogen"):
         """ 初始化函数
@@ -245,7 +246,7 @@ class DbMongo():
             
         return data
     
-    def lookup_stock_kdata_last(self, code, key_field='_id'):
+    def lookup_stock_kdata_range(self, code, key_field='_id'):
         """ 获取指定股票样本数据区间
 
             参数说明：
@@ -283,12 +284,13 @@ class DbMongo():
         """
         return self.TBL_POLICY_PREFIX+'_'+policy
 
-    def insert_policy_result(self, policy, result):
+    def insert_policy_result(self, policy, result, key_name=None):
         """ 保存策略结果到数据库
 
             参数说明：
                 policy - 策略名
-                result - 结果列表
+                result - 结果列表, 子项为dict
+                key_name - 结果子项中唯一键标识
             
             返回结果：
                 成功返回True，否则返回False
@@ -299,7 +301,41 @@ class DbMongo():
         coll = self.database[self._return_policy_collection(policy)]
 
         try:
+            ### 根据数据键值逐个去重
+            if key_name is not None:
+                for item in result:
+                    cond = {key_name: item[key_name]}
+                    coll.delete_one(cond)
+                pass
+
+            ### 插入多条数据
             coll.insert_many(copy.deepcopy(result))
+            return True
+        except Exception:
+            pass
+        return False
+    
+    def _return_stat_lr_range_collection(self):
+        return self.TBL_STAT_LR_RANGE
+
+    def insert_statistics_largerise_range(self, result, key_name=None):
+        """ 保存大涨区间统计结果
+        """
+        if self.database is None:
+            return False
+
+        coll = self.database[self._return_stat_lr_range_collection()]
+
+        try:
+            ### 根据数据键值逐个去重
+            if key_name is not None:
+                for item in result:
+                    cond = {key_name: item[key_name]}
+                    coll.delete_one(cond)
+                pass
+
+            coll.insert_many(copy.deepcopy(result))
+            return True
         except Exception:
             pass
         return False

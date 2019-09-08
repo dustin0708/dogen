@@ -32,16 +32,17 @@ def __statistics_analyze(basic, kdata, mini_rise, mini_hl):
             
         ### 保存区间结果
         result = {}
-        result['code'] = basic.name
-        result['name'] = basic[dogen.NAME] #  证券简写
-        result['industry'] = basic[dogen.INDUSTRY]
-        result['start'] = kdata.index[min_index]
-        result['end'] = kdata.index[max_index]
-        result['rise_rate'] = inc_close
-        result['inc_hl'] = get_hl
-        result['start-close'] = kdata.iloc[min_index][dogen.P_CLOSE] # 最后一日收盘价
-        result['outstanding'] = round(result['start-close'] * basic[dogen.OUTSTANDING], 2) # 流通市值
-        result['match-time'] = dogen.datetime_now() # 选中时间
+        result[dogen.RST_COL_CODE]        = basic.name
+        result[dogen.RST_COL_NAME]        = basic[dogen.NAME] #  证券简写
+        result[dogen.RST_COL_INDUSTRY]    = basic[dogen.INDUSTRY]
+        result[dogen.RST_COL_START]       = kdata.index[min_index]
+        result[dogen.RST_COL_END]         = kdata.index[max_index]
+        result[dogen.RST_COL_RISE_RATE]   = inc_close
+        result[dogen.RST_COL_INC_HL]      = get_hl
+        result[dogen.RST_COL_START_CLOSE] = kdata.iloc[min_index][dogen.P_CLOSE] # 起始收盘价
+        result[dogen.RST_COL_OUTSTANDING] = round(result['start-close'] * basic[dogen.OUTSTANDING], 2) # 流通市值
+        result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
+        result[dogen.RST_COL_INDEX]       = '%s_%s_%s' % (basic.name, kdata.index[min_index], kdata.index[max_index])
 
         match.append(result)
 
@@ -98,6 +99,6 @@ def find_largerise_range(codes, start=None, end=None, save_result=False, args=[2
     
     ### 保存结果到数据库
     if save_result and len(match_list) > 0:
-        pass
+        db.insert_statistics_largerise_range(match_list, key_name=dogen.RST_COL_INDEX)
 
     return match_list

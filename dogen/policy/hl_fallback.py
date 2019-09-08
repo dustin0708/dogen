@@ -152,14 +152,15 @@ def __policy_analyze(basic, kdata, policy_args):
 
     ### 构造结果
     result = {}
-    result['code'] = basic.name # 股票代码
-    result['name'] = basic[dogen.NAME] #  证券简写
-    result['score'] = __score_analyze(basic, kdata, pick_index, take_index) # 打分
-    result['industry'] = basic[dogen.INDUSTRY]
-    result['take-trade'] = kdata.index[take_index] # 命中交易日
-    result['last-close'] = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
-    result['outstanding'] = round(result['last-close'] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result['match-time'] = dogen.datetime_now() # 选中时间
+    result[dogen.RST_COL_CODE]        = basic.name # 股票代码
+    result[dogen.RST_COL_NAME]        = basic[dogen.NAME] #  证券简写
+    result[dogen.RST_COL_INDUSTRY]    = basic[dogen.INDUSTRY]
+    result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
+    result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
+    result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
+    result[dogen.RST_COL_SCORE]       = __score_analyze(basic, kdata, pick_index, take_index) # 打分
+    result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
+    result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
     return result
 
@@ -216,7 +217,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
     
     ### 保存结果到数据库
     if save_result and len(match_list) > 0:
-        db.insert_policy_result(__name__.split('.')[-1], match_list)
+        db.insert_policy_result(__name__.split('.')[-1], match_list, key_name=dogen.RST_COL_INDEX)
 
     return match_list
 

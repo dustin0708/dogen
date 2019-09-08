@@ -45,7 +45,7 @@ def update_kdata(codes, full=False, start=None, end=None):
                 last_trade = None            
             else:
                 ### 读取数据区间
-                from_trade, last_trade = db.lookup_stock_kdata_last(code)
+                from_trade, last_trade = db.lookup_stock_kdata_range(code)
         
             ### 区间数据不存在, 默认下载end之前一年数据
             if full or from_trade is None or last_trade is None:
