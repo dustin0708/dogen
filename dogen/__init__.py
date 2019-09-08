@@ -14,8 +14,6 @@ from dogen.stock.storage    import *
 
 from dogen.stock.analyze    import *
 
-from dogen.policy.constant  import *
-
 from dogen.policy           import *
 
 from dogen.kdata            import *
