@@ -23,12 +23,14 @@ def drop_codes(codes, inplace=True):
     """ 通过股票代码过滤科创板股票
     """
     if not inplace:
-        codes = copy.deepcopy(codes)
+        pool = copy.deepcopy(codes)
+    else:
+        pool = codes
 
-    for code in codes:
+    for code in pool:
         if code.startswith("68", 0):
-            codes.remove(code)
-    return codes
+            pool.remove(code)
+    return pool
 
 def drop_fresh_stock_trades(basic, kdata, inplace=True):
     """丢掉新股涨停板, kdata索引按降序排列
