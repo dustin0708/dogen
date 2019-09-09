@@ -24,6 +24,7 @@ TAKE_VALID  = 'take_valid'
 HIGH_VALID  = 'high_valid'
 VOLUME_SCALE= 'volume_scale'
 MINI_FALLS  = 'mini_falls'
+MAXI_RISES  = 'maxi_rises'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
@@ -32,6 +33,7 @@ ARGS_DEAULT_VALUE = {
     TAKE_VALID: 1,      # 
     VOLUME_SCALE: 1.2,  # 倍
     MINI_FALLS: 30,   # 1%
+    MAXI_RISES: 15,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -48,6 +50,7 @@ def __policy_analyze(basic, kdata, policy_args):
     pick_valid = __parse_policy_args(policy_args, PICK_VALID)
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
     mini_falls = __parse_policy_args(policy_args, MINI_FALLS)
+    maxi_rises = __parse_policy_args(policy_args, MAXI_RISES)
 
     ### 特征一：获取有效跌幅区间
     range = dogen.get_last_fall_range(kdata, mini_falls, max_rise=mini_falls)
@@ -56,7 +59,11 @@ def __policy_analyze(basic, kdata, policy_args):
         return None
     else:
         [max_index, min_index, dec_close, get_llow, tmpId] = range
-        take_index = 0
+    ### 校验min_index之后涨幅区间
+    range = dogen.get_last_rise_range(kdata, maxi_rises, max_fall=maxi_rises, eIdx=min_index)
+    if range is not None:
+        logger.debug("Get invalid rise-range")
+    take_index = 0
     
     ### 特征二：校验区间[max_index+HIGH_VALID,min_index是否有涨停]
     tdata = kdata[kdata[dogen.P_CLOSE] >=  kdata[dogen.L_HIGH]]
