@@ -63,6 +63,7 @@ def __policy_analyze(basic, kdata, policy_args):
     range = dogen.get_last_rise_range(kdata, maxi_rises, max_fall=maxi_rises, eIdx=min_index)
     if range is not None:
         logger.debug("Get invalid rise-range")
+        return None
     take_index = 0
     
     ### 特征二：校验区间[max_index+HIGH_VALID,min_index是否有涨停]
