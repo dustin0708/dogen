@@ -19,20 +19,19 @@ from dogen import logger, mongo_server, mongo_database
 
 ### 策略参数名
 MAXI_DAYS   = 'maxi_days'
+PICK_VALID  = 'pick_valid'
 TAKE_VALID  = 'take_valid'
-HL_VALID    = 'hl_valid'
+HIGH_VALID  = 'high_valid'
 VOLUME_SCALE= 'volume_scale'
 MINI_FALLS  = 'mini_falls'
-MAXI_PRERISE= 'maxi_prerise'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 30,      # 天
-    TAKE_VALID: 0,      # 
-    HL_VALID: 4,        #
+    MAXI_DAYS: 90,      # 天
+    PICK_VALID: 7,       #
+    TAKE_VALID: 1,      # 
     VOLUME_SCALE: 1.2,  # 倍
-    MINI_FALLS: 3.99,   # 1%
-    MAXI_PRERISE: 30,   # 1%
+    MINI_FALLS: 30,   # 1%
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -42,12 +41,57 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
+def __policy_analyze(basic, kdata, policy_args):
+    """ 
+    """
+    ### 参数解析
+    pick_valid = __parse_policy_args(policy_args, PICK_VALID)
+    take_valid = __parse_policy_args(policy_args, TAKE_VALID)
+    mini_falls = __parse_policy_args(policy_args, MINI_FALLS)
+
+    ### 特征一：获取有效跌幅区间
+    range = dogen.get_last_fall_range(kdata, mini_falls, max_rise=mini_falls)
+    if range is None:
+        logger.debug("Don't get valid fall-range")
+        return None
+    else:
+        [max_index, min_index, dec_close, get_llow, tmpId] = range
+        take_index = 0
+    
+    ### 特征二：校验区间[max_index+HIGH_VALID,min_index是否有涨停]
+    tdata = kdata[kdata[dogen.P_CLOSE] >=  kdata[dogen.L_HIGH]]
+    if tdata.index.size <= 0:
+        logger.debug("Don't include highlimit trade from %s to %s" % (kdata.index[max_index], kdata.index[min_index]))
+        return None
+
+    ### 特征三：校验区间min_index有效性
+    if min_index < pick_valid:
+        logger.debug("Too close to lowest-trade %s" % kdata.index[min_index])
+        return None    
+
+    ### 特征四：单日放量大涨（5点以上振幅且4点以上涨幅）、连日放量累积上涨5点以上得take_index
+
+    
+    ### 构造结果
+    result = {}
+    result[dogen.RST_COL_CODE]        = basic.name # 股票代码
+    result[dogen.RST_COL_NAME]        = basic[dogen.NAME] #  证券简写
+    result[dogen.RST_COL_INDUSTRY]    = basic[dogen.INDUSTRY]
+    result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
+    result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
+    result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
+    result[dogen.RST_COL_SCORE]       = 60
+    result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
+    result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
+
+    return result
+
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 反弹策略, 有如下特征：
-            * $MAXI_DAYS交易日内，下跌;
-            * 涨停后紧接着最多上涨一天, 若上涨必须放量$mini_scale倍;
-            * 累积下跌等于或大于$mini_falls;
-            * 最后一日MA5上涨;
+            * $MAXI_DAYS交易日内，区间[max_index, min_index]下跌30%以上;
+            * [max_index+10, min_index]区间至少有一个涨停;
+            * min_index之后至少在PICK_VALID(默认取8)有效交易日内，收盘价横盘或缓慢上涨时，MA5连续上涨至少3日；
+            * PICK_VALID之后各种参数突变（涨停、放倍量上涨、缩量下跌等）
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
