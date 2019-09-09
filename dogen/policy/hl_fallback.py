@@ -77,11 +77,12 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
     """
     ### 检查区间最高涨幅
     try:
-        [min_index, max_index, inc_close, get_lhigh] = dogen.get_last_rise_range(kdata, 30, max_fall=20)
+        [min_index, max_index, inc_close, get_lhigh, tmpId] = dogen.get_last_rise_range(kdata, 30, max_fall=20)
         if inc_close > maxi_prerise:
             logger.debug("Too large rise-range from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
             return True
     except Exception:
+        traceback.print_exc()
         pass
 
     return False
