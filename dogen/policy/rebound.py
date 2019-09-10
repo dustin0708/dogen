@@ -66,7 +66,7 @@ def __policy_analyze(basic, kdata, policy_args):
         return None
     ### min_index在有效期内
     if min_index > pick_valid:
-        logger.debug("Too long from min-trade at %s" kdata.index[min_index])
+        logger.debug("Too long from min-trade at %s" % kdata.index[min_index])
         return None
     
     ### 特征二：校验区间[max_index+HIGH_VALID,min_index是否有涨停]
