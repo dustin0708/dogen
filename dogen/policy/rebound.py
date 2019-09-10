@@ -82,7 +82,7 @@ def __policy_analyze(basic, kdata, policy_args):
     for i in range(min_index, -1, -1):
         if kdata.iloc[i][dogen.MA5] >= kdata.iloc[i+1][dogen.MA5]:
             ma5__index = i
-        if kdata.iloc[i][dogen.R_AMP] >= and kdata.iloc[i][dogen.R_CLOSE] > 0:
+        if kdata.iloc[i][dogen.R_AMP] >= kdata.iloc[i][dogen.R_CLOSE] > 0:
             rise_index = i
         if ma5__index is not None and rise_index is not None:
             take_index = [ma5__index, rise_index][rise_index < ma5__index]
