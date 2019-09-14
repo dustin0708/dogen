@@ -34,6 +34,20 @@ beat_schedule = {
         'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
         'args': (None, None, None, True, 1000)
     },
+
+    ### 涨停上涨策略
+    'exec-policy-hl-risekeep': {
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_risekeep_match',
+        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'args': (None, None, None, True, 1000)
+    },
+
+    ### 超跌反弹策略
+    'exec-policy-rebound': {
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_rebound_match',
+        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'args': (None, None, None, True, 1000)
+    },
 }
 
 ####################### 业务配置，独立于celery #######################
