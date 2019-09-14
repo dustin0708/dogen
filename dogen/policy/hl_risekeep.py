@@ -89,6 +89,11 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
         traceback.print_exc()
         pass
     
+    ### taketrade收盘价相对涨停不能过高
+    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > 15:
+        logger.debug("Too large rise at %s" % kdata.index[take_index])
+        return True
+
     return False
 
 def __policy_analyze(basic, kdata, policy_args):
