@@ -64,10 +64,10 @@ def __score_analyze(basic, kdata, pick_index, take_index):
     elif (vary_volume > 1):
         score += (int)(math.ceil(10 * (vary_volume - 1)))
     
-    take_highx = kdata.iloc[take_index][dogen.P_HIGH]
+    take_highx = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_HIGH], kdata.iloc[take_index+1][dogen.P_CLOSE])
     if take_highx > 0:
         score += (int)(math.ceil(take_highx))
-        
+
     return score
 
 def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
