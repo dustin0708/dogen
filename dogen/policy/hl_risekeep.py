@@ -30,7 +30,7 @@ ARGS_DEAULT_VALUE = {
     MINI_HL: 3,      # 
     MAXI_HL: 14,        #
     TAKE_VALID: 0,  # 倍
-    MAXI_PRERISE: 40,   # 1%
+    MAXI_PRERISE: 35,   # 1%
 }
 
 def __parse_policy_args(policy_args, arg_name):
