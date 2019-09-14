@@ -3,12 +3,18 @@
 import sys
 import time
 import dogen
+import pandas
 import traceback
 import celery_dogen
 
 ### 导入当前模块变量
 from . import app
 from . import logger, mongo_server, mongo_database
+
+def dispatcher_sort_result(result):
+    data = pandas.DataFrame.from_dict(result, orient='columns')
+    data.sort_values(by=dogen.RST_COL_SCORE, ascending=False, inplace=True)
+    return data
 
 @app.task
 def hl_fallback_match(codes, start=None, end=None, save_result=False, policy_args=None):
@@ -57,7 +63,7 @@ def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_resul
             continue
         result.extend(reply[i].result)
 
-    return result
+    return dispatcher_sort_result(result)
 
 @app.task
 def rebound_match(codes, start=None, end=None, save_result=False, policy_args=None):
@@ -106,7 +112,7 @@ def dispatcher_of_rebound_match(codes=None, start=None, end=None, save_result=Fa
             continue
         result.extend(reply[i].result)
 
-    return result
+    return dispatcher_sort_result(result)
 
 @app.task
 def hl_risekeep_match(codes, start=None, end=None, save_result=False, policy_args=None):
@@ -155,4 +161,4 @@ def dispatcher_of_hl_risekeep_match(codes=None, start=None, end=None, save_resul
             continue
         result.extend(reply[i].result)
 
-    return result
+    return dispatcher_sort_result(result)
