@@ -42,13 +42,14 @@ def __parse_policy_args(policy_args, arg_name):
 
 def __score_analyze(basic, kdata, pick_index, take_index):
     """ 根据股票股价、市值、成交量等方面给股票打分:
-            * 基准分值60分，累积加分项；
+            * 基准分值50分，累积加分项；
             * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
             * 市值限高40亿，区间定为(40,36],(36,32],...,(4,0]，分值由1~10递增；
             * 量变限低一倍，区间定为(1.0,1.1],(1.1,1.2],...,(1.9, +Inf)，分值由1~10递增；
             * take最高涨幅，区间定位(0,1],(1,2],...,(9,10],分值由1~10递增;
+            * 最后5交易日， 连续放量上涨10%，每个交易日2分；
     """
-    score = 60
+    score = 50
 
     take_price = kdata.iloc[take_index][dogen.P_CLOSE]
     if (take_price < 50):
@@ -68,6 +69,11 @@ def __score_analyze(basic, kdata, pick_index, take_index):
     if take_highx > 0:
         score += (int)(math.ceil(take_highx))
 
+    for temp_index in range(4, -1, -1):
+        if kdata.iloc[temp_index+1][dogen.VOLUME]*1.1 <= kdata.iloc[temp_index][dogen.VOLUME]:
+            score += 2
+        pass
+
     return score
 
 def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
@@ -82,7 +88,7 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
     except Exception:
         traceback.print_exc()
         pass
-
+    
     return False
 
 def __policy_analyze(basic, kdata, policy_args):
