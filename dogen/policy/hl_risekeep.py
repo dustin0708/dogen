@@ -21,18 +21,16 @@ from dogen import logger, mongo_server, mongo_database
 MAXI_DAYS   = 'maxi_days'
 MINI_HL     = 'mini_hl'
 MAXI_HL     = 'maxi_hl'
-KEEP_TRADE  = 'keep_trade'
 TAKE_VALID  = 'take_valid'
 MAXI_PRERISE= 'maxi_prerise'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 30,      # 天
-    MINI_HL: 2,      # 
+    MINI_HL: 3,      # 
     MAXI_HL: 14,        #
-    KEEP_TRADE: 3, # 天
     TAKE_VALID: 0,  # 倍
-    MAXI_PRERISE: 30,   # 1%
+    MAXI_PRERISE: 40,   # 1%
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -48,57 +46,85 @@ def __score_analyze(basic, kdata, pick_index, take_index):
             * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
             * 市值限高40亿，区间定为(40,36],(36,32],...,(4,0]，分值由1~10递增；
             * 量变限低一倍，区间定为(1.0,1.1],(1.1,1.2],...,(1.9, +Inf)，分值由1~10递增；
-            * 收盘价限-3点，一个交易日2分
+            * take最高涨幅，区间定位(0,1],(1,2],...,(9,10],分值由1~10递增;
     """
     score = 60
+
+    take_price = kdata.iloc[take_index][dogen.P_CLOSE]
+    if (take_price < 50):
+        score += (10 - (int)(math.floor(take_price/5)))
+
+    take_value = take_price * basic[dogen.OUTSTANDING]
+    if (take_value < 40):
+        score += (10 - (int)(math.floor(take_value/4)))
+
+    vary_volume = kdata.iloc[take_index][dogen.VOLUME] / kdata.iloc[take_index+1][dogen.VOLUME]
+    if (vary_volume > 2):
+        score += 10
+    elif (vary_volume > 1):
+        score += (int)(math.ceil(10 * (vary_volume - 1)))
+    
+    take_highx = kdata.iloc[take_index][dogen.P_HIGH]
+    if take_highx > 0:
+        score += (int)(math.ceil(take_highx))
+        
     return score
 
 def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
     """ 根据日线做排除性校验
     """
+    ### 检查区间最高涨幅
+    try:
+        [min_index, max_index, inc_close, get_lhigh, tmpId] = dogen.get_last_rise_range(kdata, 30, max_fall=20)
+        if inc_close > maxi_prerise:
+            logger.debug("Too large rise-range from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
+            return True
+    except Exception:
+        traceback.print_exc()
+        pass
+
     return False
 
 def __policy_analyze(basic, kdata, policy_args):
     ### 策略参数处理
     mini_hl     = __parse_policy_args(policy_args, MINI_HL)
     maxi_hl     = __parse_policy_args(policy_args, MAXI_HL)
-    keep_trade  = __parse_policy_args(policy_args, KEEP_TRADE)
     take_valid  = __parse_policy_args(policy_args, TAKE_VALID)
     maxi_prerise= __parse_policy_args(policy_args, MAXI_PRERISE)
 
     ### 特征一校验
-    index = dogen.get_highlimit_trades(kdata, sIdx=mini_hl, eIdx=maxi_hl+1)
+    index = dogen.get_highlimit_trades(kdata, eIdx=maxi_hl+1)
     if index.size != 1:
         logger.debug("Don't match highlimit trades")
         return None
     else:
         pick_trade = index[0]
-        ### 若最后一天涨停忽略
         pick_index = kdata.index.get_loc(pick_trade)
         pick_close = kdata.iloc[pick_index][dogen.P_CLOSE]
+    if pick_index < mini_hl:
+        logger.debug("Too close hl-trade at %s" % pick_trade)
+        return None
     
     ### 特征二校验
-    tdata = kdata[0:pick_index]
-    tdata = tdata[tdata[dogen.P_CLOSE] > pick_close]
-    if tdata.index.size < keep_trade:
-        logger.debug("Don't get valid keep-trade")
-        return None
-
-    ### 特征三校验
-    heap_rises = 0
     take_index = None
-    for temp_index in range(4, -1, -1):
-        temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
-        if temp_close < 0:
-            heap_rises = 0
-        heap_rises += temp_close
-        ### 
-        if heap_rises >= 5:
-            take_index = temp_index
-        if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
-            take_index = temp_index
-        pass
-    if take_index is None or take_index > take_valid:
+    if pick_index < 5:
+        tdata = kdata[kdata[dogen.P_CLOSE] < pick_close]
+        if tdata.index.size > 0:
+            logger.debug("Invalid trade at %s" % tdata.index[0])
+        take_index = 0
+    else:
+        heap_rises = 0
+        for temp_index in range(4, -1, -1):
+            temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
+            if temp_close < 0:
+                heap_rises = 0
+            heap_rises += temp_close
+            if heap_rises >= 5:
+                take_index = temp_index
+            if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+                take_index = temp_index
+            pass
+    if take_index is None or take_index > take_valid or kdata.iloc[take_index][dogen.P_CLOSE] < pick_close:
         logger.debug("Don't match valid fallback trade")
         return None
     
@@ -124,8 +150,7 @@ def __policy_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 涨停上涨策略, 有如下特征：
             * 涨停在[min_hl， max_hl]交易区间以内;
-            * 涨停后收盘价在涨停价之上至少维持keep_trade以上;
-            * 买入信号: 5日以内持续关注；5日以上累积上涨幅度达5个点或单日涨幅3点振幅5点以上;
+            * 买入信号: 5日以内收盘价均维持在涨停价以上；5日以上累积上涨幅度达5个点或单日涨幅3点振幅5点以上;
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
