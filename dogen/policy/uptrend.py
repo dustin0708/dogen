@@ -38,17 +38,16 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def __score_analyze(basic, kdata, take_index):
+def __score_analyze(basic, kdata, pick_index, take_index):
     """ 根据股票股价、市值、成交量等方面给股票打分:
-            * 基准分值40分，累积加分项;
+            * 基准分值50分，累积加分项;
             * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增;
             * 市值限高40亿，区间定为(40,36],(36,32],...,(4,0]，分值由1~10递增;
-            * 历史涨停加分，pick_valid之前有涨停加10分，加0分;
             * 最大涨幅加分，区间定位(0,1],(1,2],...,(9,10],分值由1~10递增;
             * 最大回调加分，区间定位(0,1],(1,2],...,(9,10],分值由1~10递增;
             * 最后5交易日， 连续放量上涨10%，每个交易日2分;
     """
-    score = 40
+    score = 50
 
     take_price = kdata.iloc[take_index][dogen.P_CLOSE]
     if (take_price < 50):
@@ -58,8 +57,30 @@ def __score_analyze(basic, kdata, take_index):
     if (take_value < 40):
         score += (10 - (int)(math.floor(take_value/4)))
 
+    maxi_index = dogen.get_last_column_max(kdata, dogen.R_CLOSE, eIdx=pick_index+1)
+    if maxi_index is not None:
+        score += (int)(math.floor(kdata.iloc[maxi_index][dogen.R_CLOSE]))
+
+    mini_index = dogen.get_last_column_min(kdata, dogen.R_CLOSE, eIdx=pick_index+1)
+    if mini_index is not None:
+        score += (int)(math.floor(abs(kdata.iloc[mini_index][dogen.R_CLOSE])))
+    
+    for temp_index in range(4, -1, -1):
+        if kdata.iloc[temp_index+1][dogen.VOLUME]*1.1 <= kdata.iloc[temp_index][dogen.VOLUME]:
+            score += 2
+        pass
+
     return score
 
+def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises):
+    """ 根据日线做排除性校验
+    """
+    ### taketrade收盘价相对涨停不能过高
+    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > maxi_rises:
+        logger.debug("Too large rise at %s" % kdata.index[take_index])
+        return True
+
+    return False
 
 def __policy_analyze(basic, kdata, policy_args):
     """ 
@@ -80,6 +101,18 @@ def __policy_analyze(basic, kdata, policy_args):
         pass
     
     ### 特征二校验
+    pick_index = 0
+    for pick_index in range(0, kdata.index.size-1):
+        if kdata.iloc[pick_index][dogen.MA5] > kdata.iloc[pick_index][dogen.MA20]:
+            continue
+        if kdata.iloc[pick_index][dogen.R_CLOSE] < 0 and kdata.iloc[pick_index+1][dogen.R_CLOSE]>0:
+            if kdata.iloc[pick_index][dogen.VOLUME] > kdata.iloc[pick_index+1][dogen.VOLUME] * 1.1:
+                logger.debug("Invalid fall-trade at %s" % kdata.index[pick_index])
+                return None
+            pass
+        pass
+
+    ### 特征三校验
     take_index = None
     heap_rises = 0
     for temp_index in range(4, -1, -1):
@@ -101,6 +134,11 @@ def __policy_analyze(basic, kdata, policy_args):
         logger.debug("Don't match valid fallback trade")
         return None
 
+    ### 结果最后排它校验
+    if __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises):
+        logger.debug("__exclude_analyze() return True")
+        return None
+
     ### 构造结果
     result = {}
     result[dogen.RST_COL_CODE]        = basic.name # 股票代码
@@ -109,7 +147,7 @@ def __policy_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result[dogen.RST_COL_SCORE]       = __score_analyze(basic, kdata, take_index)
+    result[dogen.RST_COL_SCORE]       = __score_analyze(basic, kdata, pick_index, take_index)
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
