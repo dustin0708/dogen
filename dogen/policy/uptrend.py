@@ -104,11 +104,11 @@ def __policy_analyze(basic, kdata, policy_args):
     pick_index = 0
     for pick_index in range(0, kdata.index.size-1):
         if kdata.iloc[pick_index][dogen.MA5] > kdata.iloc[pick_index][dogen.MA20]:
-            continue
-        if kdata.iloc[pick_index][dogen.R_CLOSE] < 0 and kdata.iloc[pick_index+1][dogen.R_CLOSE]>0:
-            if kdata.iloc[pick_index][dogen.VOLUME] > kdata.iloc[pick_index+1][dogen.VOLUME] * 1.1:
-                logger.debug("Invalid fall-trade at %s" % kdata.index[pick_index])
-                return None
+            if kdata.iloc[pick_index][dogen.R_CLOSE] < 0 and kdata.iloc[pick_index+1][dogen.R_CLOSE]>0:
+                if kdata.iloc[pick_index][dogen.VOLUME] > kdata.iloc[pick_index+1][dogen.VOLUME] * 1.1:
+                    logger.debug("Invalid fall-trade at %s" % kdata.index[pick_index])
+                    return None
+                pass
             pass
         pass
 
@@ -131,7 +131,7 @@ def __policy_analyze(basic, kdata, policy_args):
     and kdata.iloc[0][dogen.VOLUME] > kdata.iloc[1][dogen.VOLUME]:
         take_index = 0
     if take_index is None or take_index > take_valid:
-        logger.debug("Don't match valid fallback trade")
+        logger.debug("Don't match valid take-trade")
         return None
 
     ### 结果最后排它校验
