@@ -129,7 +129,8 @@ def __policy_analyze(basic, kdata, policy_args):
             temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
             if temp_close < 0:
                 heap_rises = 0
-            heap_rises += temp_close
+            else:
+                heap_rises += temp_close
             if heap_rises >= 5:
                 take_index = temp_index
             if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
