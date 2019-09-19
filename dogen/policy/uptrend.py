@@ -28,7 +28,7 @@ ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 90,      # 天
     PICK_VALID: 4,      
     TAKE_VALID: 0,      # 
-    MAXI_RISES: 40,
+    MAXI_RISES: 35,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -76,8 +76,9 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises):
     """ 根据日线做排除性校验
     """
     ### taketrade收盘价相对涨停不能过高
-    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > maxi_rises:
-        logger.debug("Too large rise at %s" % kdata.index[take_index])
+    rise_range = dogen.get_last_rise_range(kdata, maxi_rises, max_fall=maxi_rises/2, eIdx=pick_index+1)
+    if rise_range is not None:
+        logger.debug("Too large rise after %s" % kdata.index[pick_index])
         return True
 
     return False
