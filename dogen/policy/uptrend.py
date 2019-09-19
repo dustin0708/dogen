@@ -103,12 +103,13 @@ def __policy_analyze(basic, kdata, policy_args):
     ### 特征二校验
     pick_index = 0
     for pick_index in range(0, kdata.index.size-1):
-        if kdata.iloc[pick_index][dogen.MA5] > kdata.iloc[pick_index][dogen.MA20]:
-            if kdata.iloc[pick_index][dogen.R_CLOSE] < 0 and kdata.iloc[pick_index+1][dogen.R_CLOSE]>0:
-                if kdata.iloc[pick_index][dogen.VOLUME] > kdata.iloc[pick_index+1][dogen.VOLUME] * 1.1:
-                    logger.debug("Invalid fall-trade at %s" % kdata.index[pick_index])
-                    return None
-                pass
+        if kdata.iloc[pick_index][dogen.MA5] < kdata.iloc[pick_index][dogen.MA20]:
+            pick_index -= 1
+            break
+        if kdata.iloc[pick_index][dogen.R_CLOSE] < 0 and kdata.iloc[pick_index+1][dogen.R_CLOSE]>0:
+            if kdata.iloc[pick_index][dogen.VOLUME] > kdata.iloc[pick_index+1][dogen.VOLUME] * 1.1:
+                logger.debug("Invalid fall-trade at %s" % kdata.index[pick_index])
+                return None
             pass
         pass
 
