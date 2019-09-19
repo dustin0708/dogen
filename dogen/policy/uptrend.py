@@ -21,19 +21,14 @@ from dogen import logger, mongo_server, mongo_database
 MAXI_DAYS   = 'maxi_days'
 PICK_VALID  = 'pick_valid'
 TAKE_VALID  = 'take_valid'
-HIGH_VALID  = 'high_valid'
-VOLUME_SCALE= 'volume_scale'
-MINI_FALLS  = 'mini_falls'
 MAXI_RISES  = 'maxi_rises'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 90,      # 天
-    PICK_VALID: 9,       #
+    PICK_VALID: 4,      
     TAKE_VALID: 0,      # 
-    VOLUME_SCALE: 1.2,  # 倍
-    MINI_FALLS: 25,   # 1%
-    MAXI_RISES: 15,
+    MAXI_RISES: 40,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -43,52 +38,67 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
+def __score_analyze(basic, kdata, take_index):
+    """ 根据股票股价、市值、成交量等方面给股票打分:
+            * 基准分值40分，累积加分项;
+            * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增;
+            * 市值限高40亿，区间定为(40,36],(36,32],...,(4,0]，分值由1~10递增;
+            * 历史涨停加分，pick_valid之前有涨停加10分，加0分;
+            * 最大涨幅加分，区间定位(0,1],(1,2],...,(9,10],分值由1~10递增;
+            * 最大回调加分，区间定位(0,1],(1,2],...,(9,10],分值由1~10递增;
+            * 最后5交易日， 连续放量上涨10%，每个交易日2分;
+    """
+    score = 40
+
+    take_price = kdata.iloc[take_index][dogen.P_CLOSE]
+    if (take_price < 50):
+        score += (10 - (int)(math.floor(take_price/5)))
+
+    take_value = take_price * basic[dogen.OUTSTANDING]
+    if (take_value < 40):
+        score += (10 - (int)(math.floor(take_value/4)))
+
+    return score
+
+
 def __policy_analyze(basic, kdata, policy_args):
     """ 
     """
     ### 参数解析
-    pick_valid = __parse_policy_args(policy_args, PICK_VALID)
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
-    mini_falls = __parse_policy_args(policy_args, MINI_FALLS)
+    pick_valid = __parse_policy_args(policy_args, PICK_VALID)
     maxi_rises = __parse_policy_args(policy_args, MAXI_RISES)
 
-    ### 特征一：获取有效跌幅区间
-    trange = dogen.get_last_fall_range(kdata, mini_falls, max_rise=mini_falls)
-    if trange is None:
-        logger.debug("Don't get valid fall-range")
-        return None
-    else:
-        [max_index, min_index, dec_close, get_llow, tmpId] = trange
-    ### 校验min_index之后涨幅区间
-    trange = dogen.get_last_rise_range(kdata, maxi_rises, max_fall=maxi_rises, eIdx=min_index)
-    if trange is not None:
-        logger.debug("Get invalid rise-range")
-        return None
-    ### min_index在有效期内
-    if min_index > pick_valid:
-        logger.debug("Too long from min-trade at %s" % kdata.index[min_index])
-        return None
-    
-    ### 特征二：校验区间[max_index+HIGH_VALID,min_index是否有涨停]
-    tdata = kdata[kdata[dogen.P_CLOSE] >=  kdata[dogen.L_HIGH]]
-    if tdata.index.size <= 0:
-        logger.debug("Don't include highlimit trade from %s to %s" % (kdata.index[max_index], kdata.index[min_index]))
-        return None
-
-    ### 特征三：
-    ma5__index = None
-    rise_index = None
-    take_index = None
-    for i in range(min_index, -1, -1):
-        if kdata.iloc[i][dogen.MA5] >= kdata.iloc[i+1][dogen.MA5]:
-            ma5__index = i
-        if kdata.iloc[i][dogen.R_AMP] >= kdata.iloc[i][dogen.R_CLOSE] > 0:
-            rise_index = i
-        if ma5__index is not None and rise_index is not None:
-            take_index = [ma5__index, rise_index][rise_index < ma5__index]
+    ### 特征一：
+    for temp_index in range(pick_valid, -1, -1):
+        if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index][dogen.MA20]:
+            logger.debug("Invalid MA5&MA20 at %s" % kdata.index[temp_index])
+            return None
+        if kdata.iloc[temp_index][dogen.MA20] < kdata.iloc[temp_index+1][dogen.MA20]:
+            logger.debug("Invalid MA20 at %s" % kdata.index[temp_index])
+            return None
         pass
+    
+    ### 特征二校验
+    take_index = None
+    heap_rises = 0
+    for temp_index in range(4, -1, -1):
+        temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
+        if temp_close < 0:
+            heap_rises = 0
+        heap_rises += temp_close
+        if heap_rises >= 5:
+            take_index = temp_index
+        if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+            take_index = temp_index
+        pass
+    ### 最近收盘价比take_index高更新, 且放量上涨
+    if take_index is not None\
+    and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[take_index][dogen.P_CLOSE]\
+    and kdata.iloc[0][dogen.VOLUME] > kdata.iloc[1][dogen.VOLUME]:
+        take_index = 0
     if take_index is None or take_index > take_valid:
-        logger.debug("Don't get valid take-trade")
+        logger.debug("Don't match valid fallback trade")
         return None
 
     ### 构造结果
@@ -99,17 +109,17 @@ def __policy_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result[dogen.RST_COL_SCORE]       = 60
+    result[dogen.RST_COL_SCORE]       = __score_analyze(basic, kdata, take_index)
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 反弹策略, 有如下特征：
-            * $MAXI_DAYS交易日内，区间[max_index, min_index]下跌30%以上;
-            * [max_index+10, min_index]区间至少有一个涨停;
-            * min_index之后出现MA5上涨，振幅大于5且上涨交易日;
+    """ 上涨策略, 有如下特征：
+            * 最近交易日MA5突破MA20, 且MA20上涨趋势;
+            * pick_valid区间内无放量(10%以上)下跌;
+            * 买入信号: 5日以内收盘价均维持在涨停价以上；5日以上累积上涨幅度达5个点或单日涨幅3点振幅5点以上;
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日

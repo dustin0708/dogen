@@ -135,6 +135,11 @@ def __policy_analyze(basic, kdata, policy_args):
             if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
                 take_index = temp_index
             pass
+        ### 最近收盘价比take_index高更新, 且放量上涨
+        if take_index is not None\
+        and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[take_index][dogen.P_CLOSE]\
+        and kdata.iloc[0][dogen.VOLUME] > kdata.iloc[1][dogen.VOLUME]:
+            take_index = 0
     if take_index is None or take_index > take_valid or kdata.iloc[take_index][dogen.P_CLOSE] < pick_close:
         logger.debug("Don't match valid fallback trade")
         return None
