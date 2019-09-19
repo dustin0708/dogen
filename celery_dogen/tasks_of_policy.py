@@ -13,7 +13,7 @@ from . import logger, mongo_server, mongo_database
 
 def dispatcher_sort_result(result):
     data = None
-    if result.index.size > 0:
+    if len(result) > 0:
         data = pandas.DataFrame.from_dict(result, orient='columns')
         data.sort_values(by=dogen.RST_COL_SCORE, ascending=False, inplace=True)
     return data
