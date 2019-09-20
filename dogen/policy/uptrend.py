@@ -57,11 +57,11 @@ def __score_analyze(basic, kdata, pick_index, take_index):
     if (take_value < 40):
         score += (10 - (int)(math.floor(take_value/4)))
 
-    maxi_index = dogen.get_last_column_max(kdata, dogen.R_CLOSE, eIdx=pick_index+1)
+    maxi_index = dogen.get_last_column_max(kdata, dogen.R_CLOSE, eIdx=5)
     if maxi_index is not None:
         score += (int)(math.floor(kdata.iloc[maxi_index][dogen.R_CLOSE]))
 
-    mini_index = dogen.get_last_column_min(kdata, dogen.R_CLOSE, eIdx=pick_index+1)
+    mini_index = dogen.get_last_column_min(kdata, dogen.R_CLOSE, eIdx=5)
     if mini_index is not None:
         score += (int)(math.floor(abs(kdata.iloc[mini_index][dogen.R_CLOSE])))
     
@@ -126,7 +126,7 @@ def __policy_analyze(basic, kdata, policy_args):
         if heap_rises >= 5:
             take_index = temp_index
         if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
-            take_index = temp_index
+            take_index = temp_index+
         pass
     ### 最近收盘价比take_index高更新, 且放量上涨
     if take_index is not None\
