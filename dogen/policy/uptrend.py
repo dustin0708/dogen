@@ -126,7 +126,7 @@ def __policy_analyze(basic, kdata, policy_args):
         if heap_rises >= 5:
             take_index = temp_index
         if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
-            take_index = temp_index+
+            take_index = temp_index
         pass
     ### 最近收盘价比take_index高更新, 且放量上涨
     if take_index is not None\
