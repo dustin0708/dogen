@@ -46,9 +46,9 @@ def __score_analyze(basic, kdata, pick_index, take_index):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 基准分值60分，累积加分项；
             * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
-            * 市值限高40亿，区间定为(40,36],(36,32],...,(4,0]，分值由1~10递增；
-            * 量变限低一倍，区间定为(1.0,1.1],(1.1,1.2],...,(1.9, +Inf)，分值由1~10递增；
-            * 收盘价限-3点，一个交易日2分
+            * 市值限高50亿，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
+            * 涨停放量估分，区间定为(1.0,1.1],(1.1,1.2],...,(1.9, +Inf)，分值由1~10递增；
+            * 下跌缩量估分，一个交易日2.5分；
     """
     score = 60
 
@@ -57,20 +57,21 @@ def __score_analyze(basic, kdata, pick_index, take_index):
         score += (10 - (int)(math.floor(take_price/5)))
 
     take_value = take_price * basic[dogen.OUTSTANDING]
-    if (take_value < 40):
-        score += (10 - (int)(math.floor(take_value/4)))
+    if (take_value < 50):
+        score += (10 - (int)(math.floor(take_value/5)))
 
-    vary_volume = kdata.iloc[take_index][dogen.VOLUME] / kdata.iloc[take_index+1][dogen.VOLUME]
+    vary_volume = kdata.iloc[pick_index][dogen.VOLUME] / kdata.iloc[pick_index+1][dogen.VOLUME]
     if (vary_volume > 2):
         score += 10
     elif (vary_volume > 1):
         score += (int)(math.ceil(10 * (vary_volume - 1)))
 
-    temp_kdata = kdata[0:pick_index]
-    if temp_kdata is not None:
-        score += temp_kdata[temp_kdata[dogen.R_CLOSE]>-3].index.size * 2
+    for temp_index in range(pick_index-1, -1, -1):
+        if kdata.iloc[temp_index][dogen.R_CLOSE] > 0:
+            continue
+        score += 2.5
 
-    return score
+    return (int)(score)
 
 def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
     """ 根据日线做排除性校验
