@@ -48,7 +48,7 @@ def __score_analyze(basic, kdata, pick_index, take_index):
             * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
             * 市值限高50亿，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
             * 涨停放量估分，区间定为(1.0,1.1],(1.1,1.2],...,(1.9, +Inf)，分值由1~10递增；
-            * 下跌缩量估分，一个交易日2.5分；
+            * 下跌量能估分，缩量加2.5分，否则减2.5；
     """
     score = 60
 
@@ -69,7 +69,11 @@ def __score_analyze(basic, kdata, pick_index, take_index):
     for temp_index in range(pick_index-1, -1, -1):
         if kdata.iloc[temp_index][dogen.R_CLOSE] > 0:
             continue
-        score += 2.5
+        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]
+            score += 2.5
+        else:
+            score -= 2.5
+        pass
 
     return (int)(score)
 
