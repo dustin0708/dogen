@@ -69,7 +69,7 @@ def __score_analyze(basic, kdata, pick_index, take_index):
     for temp_index in range(pick_index-1, -1, -1):
         if kdata.iloc[temp_index][dogen.R_CLOSE] > 0:
             continue
-        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]
+        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
             score += 2.5
         else:
             score -= 2.5
