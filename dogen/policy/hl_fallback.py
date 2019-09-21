@@ -137,6 +137,11 @@ def __policy_analyze(basic, kdata, policy_args):
             if take_index is not None:
                 take_index = this_index
             break
+        ### 排除假阳线
+        if kdata.iloc[this_index][dogen.P_OPEN] < kdata.iloc[this_index][dogen.P_CLOSE]:
+            logger.debug("Get invalid open&close trade at %s" % kdata.index[this_index])
+            break
+
         ### 达到回调要求, 命中
         heap_falls += abs(this_close)
         if heap_falls >= mini_falls:

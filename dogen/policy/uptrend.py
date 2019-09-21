@@ -42,7 +42,7 @@ def __score_analyze(basic, kdata, pick_index, take_index):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 基准分值50分，累积加分项;
             * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增;
-            * 市值限高40亿，区间定为(40,36],(36,32],...,(4,0]，分值由1~10递增;
+            * 市值限高50亿，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
             * 最大涨幅加分，区间定位(0,1],(1,2],...,(9,10],分值由1~10递增;
             * 最大回调加分，区间定位(0,1],(1,2],...,(9,10],分值由1~10递增;
             * 最后5交易日， 连续放量上涨10%，每个交易日2分;
@@ -54,8 +54,8 @@ def __score_analyze(basic, kdata, pick_index, take_index):
         score += (10 - (int)(math.floor(take_price/5)))
 
     take_value = take_price * basic[dogen.OUTSTANDING]
-    if (take_value < 40):
-        score += (10 - (int)(math.floor(take_value/4)))
+    if (take_value < 50):
+        score += (10 - (int)(math.floor(take_value/5)))
 
     maxi_index = dogen.get_last_column_max(kdata, dogen.R_CLOSE, eIdx=5)
     if maxi_index is not None:
