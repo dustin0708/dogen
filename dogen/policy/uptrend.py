@@ -81,6 +81,12 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises):
         logger.debug("Too large rise after %s" % kdata.index[pick_index])
         return True
 
+    ### 三个月内必须有涨停
+    tdata = kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]]
+    if tdata.index.size <= 0:
+        logger.debug("Don't include hl-trade")
+        return True
+
     return False
 
 def __policy_analyze(basic, kdata, policy_args):
