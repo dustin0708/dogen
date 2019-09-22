@@ -44,7 +44,7 @@ def __policy_analyze(basic, kdata, policy_args):
 
     ### 新股判断
     time_market= time.strftime("%Y-%m-%d", time.strptime(basic.loc['timeToMarket'], "%Y%m%d"))
-    if time_market > kdata.index[0] and time_market < kdata.index[-1]:
+    if time_market > kdata.index[0] or time_market < kdata.index[-1]:
         logger.debug("Isn't a new-ipo stock")
         return None
     else:
