@@ -57,7 +57,7 @@ beat_schedule = {
     },
 
     ### 新股开板策略
-    'exec-policy-uptrend': {
+    'exec-policy-new-ipo': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_new_ipo_match',
         'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
         'args': (None, None, None, True, 1000)

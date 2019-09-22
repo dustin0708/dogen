@@ -219,7 +219,7 @@ def new_ipo_match(codes, start=None, end=None, save_result=False, policy_args=No
     """ 调用rebound策略
     """
     logger.info("%s called with arguments: len(codes)=%d, start=%s, end=%s, save_result=%s, policy_args=%s" % ('new_ipo_match', len(codes), start, end, save_result, policy_args))
-    return dogen.uptrend.match(codes, start=start, end=end, save_result=save_result, policy_args=policy_args)
+    return dogen.new_ipo.match(codes, start=start, end=end, save_result=save_result, policy_args=policy_args)
 
 @app.task
 def dispatcher_of_new_ipo_match(codes=None, start=None, end=None, save_result=False, policy_args=None, slice=1000):
