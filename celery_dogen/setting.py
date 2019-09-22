@@ -55,6 +55,13 @@ beat_schedule = {
         'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
         'args': (None, None, None, True, 1000)
     },
+
+    ### 新股开板策略
+    'exec-policy-uptrend': {
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_new_ipo_match',
+        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'args': (None, None, None, True, 1000)
+    },
 }
 
 ####################### 业务配置，独立于celery #######################
