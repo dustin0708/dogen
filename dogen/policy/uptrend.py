@@ -87,6 +87,17 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises):
         logger.debug("Don't include hl-trade")
         return True
 
+    ### 排除放量下跌且股价未突破的股票
+    for temp_index in range(0, pick_index):
+        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
+            continue
+        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME] * 1.1:
+            continue
+        if kdata.iloc[temp_index][dogen.P_HIGH] > kdata.iloc[take_index][dogen.P_CLOSE]:
+            logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
+            return True
+        pass
+
     return False
 
 def __policy_analyze(basic, kdata, policy_args):
@@ -113,14 +124,6 @@ def __policy_analyze(basic, kdata, policy_args):
         if kdata.iloc[pick_index][dogen.MA5] < kdata.iloc[pick_index][dogen.MA20]:
             pick_index -= 1
             break
-        ### 排除放量下跌且股价未突破的股票
-        if kdata.iloc[pick_index][dogen.R_CLOSE] < 0 and kdata.iloc[pick_index+1][dogen.R_CLOSE]>0:
-            if kdata.iloc[pick_index][dogen.VOLUME] > kdata.iloc[pick_index+1][dogen.VOLUME] * 1.1:
-                if kdata.iloc[pick_index][dogen.P_HIGH] > kdata.iloc[0][dogen.P_CLOSE]:
-                    logger.debug("Invalid fall-trade at %s" % kdata.index[pick_index])
-                    return None
-                pass
-            pass
         pass
 
     ### 特征三校验
