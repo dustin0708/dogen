@@ -46,6 +46,7 @@ def __score_analyze(basic, kdata, pick_index, take_index):
             * 最大涨幅加分，区间定位(0,1],(1,2],...,(9,10],分值由1~10递增;
             * 最大回调加分，区间定位(0,1],(1,2],...,(9,10],分值由1~10递增;
             * 最后5交易日， 连续放量上涨10%，每个交易日2分;
+            * 一月成本加分，区间定为(5,15],分值由1~10递增；
     """
     score = 50
 
@@ -70,7 +71,11 @@ def __score_analyze(basic, kdata, pick_index, take_index):
             score += 2
         pass
 
-    return score
+    temp_close = dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[0][dogen.MA20])
+    if temp_close >= 5 and temp_close <= 15:
+        score += (temp_close - 5)
+
+    return (int)(score)
 
 def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises):
     """ 根据日线做排除性校验
