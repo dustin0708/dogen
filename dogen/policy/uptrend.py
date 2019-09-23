@@ -113,7 +113,8 @@ def __policy_analyze(basic, kdata, policy_args):
         if kdata.iloc[pick_index][dogen.MA5] < kdata.iloc[pick_index][dogen.MA20]:
             pick_index -= 1
             break
-        if kdata.iloc[pick_index][dogen.R_CLOSE] < 0 and kdata.iloc[pick_index+1][dogen.R_CLOSE]>0:
+        ### 排除放量下跌3个点以上股票
+        if kdata.iloc[pick_index][dogen.R_CLOSE] <= -3 and kdata.iloc[pick_index+1][dogen.R_CLOSE]>0:
             if kdata.iloc[pick_index][dogen.VOLUME] > kdata.iloc[pick_index+1][dogen.VOLUME] * 1.1:
                 logger.debug("Invalid fall-trade at %s" % kdata.index[pick_index])
                 return None
