@@ -103,6 +103,11 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises):
             return True
         pass
 
+    ### 不能超过MA20价15个点
+    if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[0][dogen.MA20]) > 15:
+        logger.debug("Too large rise at %s" % kdata.index[0])
+        return True
+
     return False
 
 def __policy_analyze(basic, kdata, policy_args):
