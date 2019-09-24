@@ -17,7 +17,7 @@ def dispatcher_poll_result(reply):
         while not reply[i].ready():
             time.sleep(0.05)
             continue
-        result = result.extend(reply[i].result)
+        result.extend(reply[i].result)
     if len(result) > 0:
         data = pandas.DataFrame.from_dict(result, orient='columns')
         data.sort_values(by=dogen.RST_COL_SCORE, ascending=False, inplace=True)
