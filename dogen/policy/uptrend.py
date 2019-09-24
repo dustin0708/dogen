@@ -149,9 +149,9 @@ def __policy_analyze(basic, kdata, policy_args):
             heap_rises += temp_close
         if heap_rises >= 5:
             take_index = temp_index
-        else if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+        elif temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
             take_index = temp_index
-        else if kdata.iloc[temp_index][dogen.P_LOW] <= kdata.iloc[temp_index][dogen.MA20]:
+        elif kdata.iloc[temp_index][dogen.P_LOW] <= kdata.iloc[temp_index][dogen.MA20]:
             ### 满足ma5一直大于ma20的前提才有效
             take_index = temp_index
         pass
