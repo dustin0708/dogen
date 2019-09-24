@@ -232,5 +232,5 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
     if save_result and len(match_list) > 0:
         db.insert_policy_result(__name__.split('.')[-1], match_list, key_name=dogen.RST_COL_INDEX)
 
-    return match_list
+    return dogen.result_dict2dataframe(match_list)
 

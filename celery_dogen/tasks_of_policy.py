@@ -11,12 +11,20 @@ import celery_dogen
 from . import app
 from . import logger, mongo_server, mongo_database
 
-def dispatcher_sort_result(result):
-    data = None
-    if len(result) > 0:
-        data = pandas.DataFrame.from_dict(result, orient='columns')
-        data.sort_values(by=dogen.RST_COL_SCORE, ascending=False, inplace=True)
-    return data
+def dispatcher_poll_result(reply):
+    result = None
+    for i in range(0, len(reply)):
+        while not reply[i].ready():
+            time.sleep(0.05)
+            continue
+        if result is None:
+            result = reply[i].result
+        else:
+            result = result.append(reply[i].result)
+        pass
+    if result is not None:
+        result.sort_values(by=dogen.RST_COL_SCORE, ascending=False, inplace=True)
+    return result
 
 @app.task
 def hl_fallback_match(codes, start=None, end=None, save_result=False, policy_args=None):
@@ -58,14 +66,7 @@ def dispatcher_of_hl_fallback_match(codes=None, start=None, end=None, save_resul
         reply.append(celery_dogen.hl_fallback_match.delay(codes[tasks*slice:(tasks+1)*slice], start=start, end=end, save_result=save_result, policy_args=policy_args))
 
     ### 聚合子任务结果
-    result = []
-    for i in range(0, len(reply)):
-        while not reply[i].ready():
-            time.sleep(0.05)
-            continue
-        result.extend(reply[i].result)
-
-    return dispatcher_sort_result(result)
+    return dispatcher_poll_result(reply)
 
 @app.task
 def rebound_match(codes, start=None, end=None, save_result=False, policy_args=None):
@@ -107,14 +108,8 @@ def dispatcher_of_rebound_match(codes=None, start=None, end=None, save_result=Fa
         reply.append(celery_dogen.rebound_match.delay(codes[tasks*slice:(tasks+1)*slice], start=start, end=end, save_result=save_result, policy_args=policy_args))
 
     ### 聚合子任务结果
-    result = []
-    for i in range(0, len(reply)):
-        while not reply[i].ready():
-            time.sleep(0.05)
-            continue
-        result.extend(reply[i].result)
+    return dispatcher_poll_result(reply)
 
-    return dispatcher_sort_result(result)
 
 @app.task
 def hl_risekeep_match(codes, start=None, end=None, save_result=False, policy_args=None):
@@ -156,14 +151,8 @@ def dispatcher_of_hl_risekeep_match(codes=None, start=None, end=None, save_resul
         reply.append(celery_dogen.hl_risekeep_match.delay(codes[tasks*slice:(tasks+1)*slice], start=start, end=end, save_result=save_result, policy_args=policy_args))
 
     ### 聚合子任务结果
-    result = []
-    for i in range(0, len(reply)):
-        while not reply[i].ready():
-            time.sleep(0.05)
-            continue
-        result.extend(reply[i].result)
+    return dispatcher_poll_result(reply)
 
-    return dispatcher_sort_result(result)
 
 @app.task
 def hl_uptrend_match(codes, start=None, end=None, save_result=False, policy_args=None):
@@ -205,14 +194,8 @@ def dispatcher_of_uptrend_match(codes=None, start=None, end=None, save_result=Fa
         reply.append(celery_dogen.hl_uptrend_match.delay(codes[tasks*slice:(tasks+1)*slice], start=start, end=end, save_result=save_result, policy_args=policy_args))
 
     ### 聚合子任务结果
-    result = []
-    for i in range(0, len(reply)):
-        while not reply[i].ready():
-            time.sleep(0.05)
-            continue
-        result.extend(reply[i].result)
+    return dispatcher_poll_result(reply)
 
-    return dispatcher_sort_result(result)
 
 @app.task
 def new_ipo_match(codes, start=None, end=None, save_result=False, policy_args=None):
@@ -254,13 +237,7 @@ def dispatcher_of_new_ipo_match(codes=None, start=None, end=None, save_result=Fa
         reply.append(celery_dogen.new_ipo_match.delay(codes[tasks*slice:(tasks+1)*slice], start=start, end=end, save_result=save_result, policy_args=policy_args))
 
     ### 聚合子任务结果
-    result = []
-    for i in range(0, len(reply)):
-        while not reply[i].ready():
-            time.sleep(0.05)
-            continue
-        result.extend(reply[i].result)
+    return dispatcher_poll_result(reply)
 
-    return dispatcher_sort_result(result)
 
 
