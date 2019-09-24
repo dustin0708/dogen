@@ -94,7 +94,7 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
     for temp_index in range(pick_index, -1, -1):
         if kdata.iloc[temp_index][dogen.R_CLOSE] < 0:
             if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
-                logger.debug("Invalid fall-trade at %s" %s kdata.index[temp_index])
+                logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
                 return True
             pass
         pass
