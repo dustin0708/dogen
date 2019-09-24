@@ -12,18 +12,15 @@ from . import app
 from . import logger, mongo_server, mongo_database
 
 def dispatcher_poll_result(reply):
-    result = None
+    result = []
     for i in range(0, len(reply)):
         while not reply[i].ready():
             time.sleep(0.05)
             continue
-        if result is None:
-            result = reply[i].result
-        else:
-            result = result.append(reply[i].result)
-        pass
-    if result is not None:
-        result.sort_values(by=dogen.RST_COL_SCORE, ascending=False, inplace=True)
+        result = result.extend(reply[i].result)
+    if len(result) > 0:
+        data = pandas.DataFrame.from_dict(result, orient='columns')
+        data.sort_values(by=dogen.RST_COL_SCORE, ascending=False, inplace=True)
     return result
 
 @app.task
