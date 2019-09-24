@@ -93,12 +93,14 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises):
         return True
 
     ### 排除放量下跌且股价未突破的股票
-    for temp_index in range(0, pick_index):
+    for temp_index in range(pick_index, 0, -1):
         if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
             continue
         if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME] * 1.1:
             continue
-        if kdata.iloc[temp_index][dogen.P_HIGH] > kdata.iloc[take_index][dogen.P_CLOSE]:
+        ### 放量下跌之后未被上涨突破
+        maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=temp_index)
+        if kdata.iloc[temp_index][dogen.P_HIGH] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
             logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
             return True
         pass
@@ -147,7 +149,10 @@ def __policy_analyze(basic, kdata, policy_args):
             heap_rises += temp_close
         if heap_rises >= 5:
             take_index = temp_index
-        if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+        else if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+            take_index = temp_index
+        else if kdata.iloc[temp_index][dogen.P_LOW] <= kdata.iloc[temp_index][dogen.MA20]:
+            ### 满足ma5一直大于ma20的前提才有效
             take_index = temp_index
         pass
     ### 最近收盘价比take_index高更新, 且放量上涨
