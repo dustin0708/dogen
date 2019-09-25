@@ -25,7 +25,7 @@ MAXI_RISES  = 'maxi_rises'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 90,      # 天
+    MAXI_DAYS: 180,      # 天
     PICK_VALID: 4,      
     TAKE_VALID: 0,      # 
     MAXI_RISES: 35,
