@@ -168,27 +168,37 @@ def __policy_analyze(basic, kdata, policy_args):
     ### 特征三校验
     take_index = None
     heap_rises = 0
-    for temp_index in range(4, -1, -1):
+    for temp_index in range(9, -1, -1):
+        ### 获取上涨take
         temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
         if temp_close < 0:
             heap_rises = 0
         else:
             heap_rises += temp_close
         if heap_rises >= 5:
-            take_index = temp_index
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
+            pass
         elif temp_close >= 3\
          and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
-            take_index = temp_index
-        elif kdata.iloc[temp_index][dogen.P_LOW] <= kdata.iloc[temp_index][dogen.MA20]\
-         and kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.MA20]:
-            ### 满足ma5一直大于ma20的前提才有效
-            take_index = temp_index
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
+            pass
         pass
     ### 最近收盘价比take_index高更新, 且放量上涨
     if take_index is not None\
     and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[take_index][dogen.P_CLOSE]\
     and kdata.iloc[0][dogen.VOLUME] > kdata.iloc[1][dogen.VOLUME]:
         take_index = 0
+    for temp_index in range(9, -1, -1):
+        ### 获取踩ma20 take
+        if kdata.iloc[temp_index][dogen.P_LOW] <= kdata.iloc[temp_index][dogen.MA20]\
+         and kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.MA20]:
+            ### 满足ma5一直大于ma20的前提才有效
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
+            pass
+        pass
     if take_index is None or take_index > take_valid:
         logger.debug("Don't match valid take-trade")
         return None
