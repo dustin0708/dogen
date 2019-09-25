@@ -22,6 +22,9 @@ MAXI_DAYS   = 'maxi_days'
 PICK_VALID  = 'pick_valid'
 TAKE_VALID  = 'take_valid'
 MAXI_RISES  = 'maxi_rises'
+MAXI_CLOSE  = 'maxi_close'
+MAXI_MVALUE= 'market_value'
+
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
@@ -29,6 +32,8 @@ ARGS_DEAULT_VALUE = {
     PICK_VALID: 4,      
     TAKE_VALID: 0,      # 
     MAXI_RISES: 35,
+    MAXI_CLOSE: 40,
+    MAXI_MVALUE: 40,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -77,9 +82,19 @@ def __score_analyze(basic, kdata, pick_index, take_index):
 
     return (int)(score)
 
-def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises):
+def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_args):
     """ 根据日线做排除性校验
     """
+    maxi_close = __parse_policy_args(policy_args, MAXI_CLOSE)
+    if maxi_close is not None and kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
+        logger.debug("Too large close price")
+        return True
+
+    maxi_mvalue = __parse_policy_args(policy_args, MAXI_MVALUE)
+    if maxi_mvalue is not None and round(kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) > maxi_mvalue:
+        logger.debug("Too large market value")
+        return True
+
     ### taketrade收盘价相对涨停不能过高
     rise_range = dogen.get_last_rise_range(kdata, maxi_rises, max_fall=maxi_rises/2, eIdx=pick_index+1)
     if rise_range is not None:
@@ -172,7 +187,7 @@ def __policy_analyze(basic, kdata, policy_args):
         return None
 
     ### 结果最后排它校验
-    if __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises):
+    if __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_args):
         logger.debug("__exclude_analyze() return True")
         return None
 
