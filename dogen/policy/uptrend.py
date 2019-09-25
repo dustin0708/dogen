@@ -85,14 +85,21 @@ def __score_analyze(basic, kdata, pick_index, take_index):
 def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_args):
     """ 根据日线做排除性校验
     """
+    ### 最大收盘价校验
     maxi_close = __parse_policy_args(policy_args, MAXI_CLOSE)
     if maxi_close is not None and kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
         logger.debug("Too large close price")
         return True
 
+    ### 最大流通市值校验
     maxi_mvalue = __parse_policy_args(policy_args, MAXI_MVALUE)
     if maxi_mvalue is not None and round(kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) > maxi_mvalue:
         logger.debug("Too large market value")
+        return True
+    
+    ### 允许短暂回调MA10上涨
+    if kdata.iloc[take_index][dogen.MA10] < kdata.iloc[take_index+1][dogen.MA10]:
+        logger.debug("Invalid MA10 at %s" % kdata.index[take_index])
         return True
 
     ### taketrade收盘价相对涨停不能过高
