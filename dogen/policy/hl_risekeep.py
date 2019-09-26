@@ -94,6 +94,11 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
         logger.debug("Too large rise at %s" % kdata.index[take_index])
         return True
 
+    ### take交易日在ma20之上
+    if kdata.iloc[take_index][dogen.P_CLOSE] < kdata.iloc[take_index][dogen.MA20]:
+        logger.debug("Invalid take trade at %s" % kdata.index[take_index])
+        return True
+
     return False
 
 def __policy_analyze(basic, kdata, policy_args):
