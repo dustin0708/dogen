@@ -119,9 +119,11 @@ def __policy_analyze(basic, kdata, policy_args):
     ### 特征二校验
     take_index = None
     if pick_index < 5:
-        tdata = kdata[kdata[dogen.P_CLOSE] < pick_close]
+        tdata = kdata[0: pick_index]
+        tdata = tdata[tdata[dogen.P_CLOSE] < pick_close]
         if tdata.index.size > 0:
             logger.debug("Invalid trade at %s" % tdata.index[0])
+            return None
         take_index = 0
     else:
         heap_rises = 0
@@ -136,10 +138,14 @@ def __policy_analyze(basic, kdata, policy_args):
             if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
                 take_index = temp_index
             pass
-        ### 最近收盘价比take_index高更新, 且放量上涨
+        ### take_index之后缩量下跌，也符合策略
+        if take_index is not None and take_index > 0\
+        and kdata.iloc[take_index-1][dogen.R_CLOSE] < 0\
+        and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
+            take_index-= 1
+        ### 最近收盘价比take_index高更新
         if take_index is not None\
-        and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[take_index][dogen.P_CLOSE]\
-        and kdata.iloc[0][dogen.VOLUME] > kdata.iloc[1][dogen.VOLUME]:
+        and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[take_index][dogen.P_CLOSE]:
             take_index = 0
     if take_index is None or take_index > take_valid or kdata.iloc[take_index][dogen.P_CLOSE] < pick_close:
         logger.debug("Don't match valid fallback trade")
