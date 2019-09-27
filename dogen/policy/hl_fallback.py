@@ -14,7 +14,7 @@ from dogen import logger, mongo_server, mongo_database
         * hl_valid: 最后一个涨停有效交易日数
         * volume_scale: 涨停后一交易日上涨时，放量最小倍数
         * mini_falls： 回调最小幅度，单位1%
-        * maxi_prerise: 涨停之前最大涨幅
+        * maxi_rise: 涨停之前最大涨幅
 """
 
 ### 策略参数名
@@ -23,7 +23,7 @@ TAKE_VALID  = 'take_valid'
 HL_VALID    = 'hl_valid'
 VOLUME_SCALE= 'volume_scale'
 MINI_FALLS  = 'mini_falls'
-MAXI_PRERISE= 'maxi_prerise'
+MAXI_RISE= 'maxi_rise'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
@@ -32,7 +32,7 @@ ARGS_DEAULT_VALUE = {
     HL_VALID: 4,        #
     VOLUME_SCALE: 1.2,  # 倍
     MINI_FALLS: 3.99,   # 1%
-    MAXI_PRERISE: 35,   # 1%
+    MAXI_RISE: 35,   # 1%
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -77,27 +77,25 @@ def __score_analyze(basic, kdata, pick_index, take_index):
 
     return (int)(score)
 
-def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
+def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
-    ### 检查区间最高涨幅
+    maxi_rise = __parse_policy_args(policy_args, MAXI_RISE)
+
+    ### 特征四
     try:
-        [min_index, max_index, inc_close, get_lhigh, tmpId] = dogen.get_last_rise_range(kdata, 30, max_fall=20)
-        if inc_close > maxi_prerise:
-            logger.debug("Too large rise-range from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
+        rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2)
+        if rise_range is not None:
+            logger.debug("Too large rise-range")
             return True
     except Exception:
         traceback.print_exc()
         pass
 
-    ### 下跌必须缩量
-    for temp_index in range(pick_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.R_CLOSE] < 0:
-            if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
-                logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
-                return True
-            pass
-        pass
+    ### 特征五
+    if kdata.iloc[take_index+1][dogen.MA5] >= kdata.iloc[take_index][dogen.MA5]:
+        logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
+        return None
 
     return False
 
@@ -107,15 +105,14 @@ def __policy_analyze(basic, kdata, policy_args):
     hl_valid    = __parse_policy_args(policy_args, HL_VALID)
     volume_scale= __parse_policy_args(policy_args, VOLUME_SCALE)
     mini_falls  = __parse_policy_args(policy_args, MINI_FALLS)
-    maxi_prerise= __parse_policy_args(policy_args, MAXI_PRERISE)
 
-    ### 特征一校验
+    ### 特征一
     index = dogen.get_highlimit_trades(kdata, eIdx=hl_valid+1)
     if index.size != 1:
         logger.debug("Don't match highlimit trades")
         return None
     else:
-        pick_trade = index[0]        
+        pick_trade = index[0]
         ### 若最后一天涨停忽略
         pick_index = kdata.index.get_loc(pick_trade)
         if pick_index == 0:
@@ -123,7 +120,7 @@ def __policy_analyze(basic, kdata, policy_args):
             return None
         pass
     
-    ### 特征二校验
+    ### 特征二
     if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
         if (kdata.iloc[pick_index][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index-1][dogen.VOLUME]:
             logger.debug("Too small volume at " + kdata.index[pick_index-1])
@@ -135,7 +132,7 @@ def __policy_analyze(basic, kdata, policy_args):
             return None
         pass
     
-    ### 特征三校验
+    ### 特征三
     heap_falls = 0
     take_index = None
     for this_index in range(pick_index-1, -1, -1):        
@@ -146,23 +143,21 @@ def __policy_analyze(basic, kdata, policy_args):
             if take_index is not None:
                 take_index = this_index
             break
-
         ### 达到回调要求, 命中
         heap_falls += abs(this_close)
         if heap_falls >= mini_falls:
             take_index = this_index
+        ### 若放量下跌即终止
+        if kdata.iloc[this_index][dogen.VOLUME] > kdata.iloc[this_index+1][dogen.VOLUME]:
+            logger.debug("Invalid fall-trade at %s" % kdata.index[this_index])
+            break
         pass
     if take_index is None or take_index > take_valid:
         logger.debug("Don't match valid fallback trade")
         return None
     
-    ### 特征四校验
-    if kdata.iloc[take_index+1][dogen.MA5] >= kdata.iloc[take_index][dogen.MA5]:
-        logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
-        return None
-    
     ### 结果最后排它校验
-    if __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
+    if __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("__exclude_analyze() return True")
         return None
 
@@ -181,11 +176,14 @@ def __policy_analyze(basic, kdata, policy_args):
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 涨停回调策略, 有如下特征：
-            * 涨停在$maxi_trade个交易日之内;
-            * 涨停后紧接着最多上涨一天, 若上涨必须放量$mini_scale倍;
-            * 累积下跌等于或大于$mini_falls;
-            * 最后一日MA5上涨;
+    """ 涨停回调策略，满足特征：
+            一 仅有一个涨停在hl_valid交易日内;
+            二 涨停后限一个交易日上涨，放量限制最小volume_scale倍；
+            三 买入信号(take-trade)，有效期由take_valid限定:
+                1) 连续缩量下跌4个点以上，放量下跌或上涨即终止；
+            四 股价成本合理：
+                1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）；            
+            五 维持上涨趋势：买入信号交易日MA5高于前一交易日
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日

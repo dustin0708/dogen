@@ -185,7 +185,7 @@ def __policy_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 涨停上涨策略, 满足特征：
             一 仅有一个涨停在[min_hl， max_hl]交易区间以内;
-            二 买入信号take-trade，有效期由take_valid限定:
+            二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 5日以内收盘价均维持在涨停价以上；
                 2) 5日以外累积上涨幅度达5个点或单日涨幅3点以上，且收盘价突破涨停价, 下面情况更新take-trade;
                     a. 若take-trade之后限一个交易日缩量下跌；
