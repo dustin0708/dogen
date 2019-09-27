@@ -132,27 +132,32 @@ def __policy_analyze(basic, kdata, policy_args):
         take_index = 0
     else:
         heap_rises = 0
-        for temp_index in range(4, -1, -1):
+        for temp_index in range(pick_index-1, -1, -1):
             temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
             if temp_close < 0:
                 heap_rises = 0
             else:
                 heap_rises += temp_close
+            ### 上涨take交易日收盘价必须超过涨停交易日
+            if kdata.iloc[temp_index][dogen.P_CLOSE] < pick_close:
+                continue
             if heap_rises >= 5:
                 take_index = temp_index
             if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
                 take_index = temp_index
             pass
-        ### take_index之后缩量下跌，也符合策略
-        if take_index is not None and take_index > 0\
-        and kdata.iloc[take_index-1][dogen.R_CLOSE] < 0\
-        and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
-            take_index-= 1
-        ### 最近收盘价比take_index高更新
-        if take_index is not None\
-        and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[take_index][dogen.P_CLOSE]:
-            take_index = 0
-    if take_index is None or take_index > take_valid or kdata.iloc[take_index][dogen.P_CLOSE] < pick_close:
+        if take_index is not None:
+            ### take_index之后缩量下跌(限一个交易日)，也符合策略
+            if take_index == 1\
+            and kdata.iloc[take_index-1][dogen.R_CLOSE] < 0\
+            and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
+                take_index-= 1
+            ### 最近收盘价比take_index(不能取更新后值)高更新
+            elif kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[take_index][dogen.P_CLOSE]:
+                take_index = 0
+            pass
+        pass
+    if take_index is None or take_index > take_valid:
         logger.debug("Don't match valid fallback trade")
         return None
     
