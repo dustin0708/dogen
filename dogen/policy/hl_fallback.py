@@ -182,7 +182,8 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 买入信号(take-trade)，有效期由take_valid限定:
                 1) 连续缩量下跌4个点以上，放量下跌或上涨即终止；
             四 股价成本合理：
-                1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）；            
+                1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）； 
+                2) 不可回调过高，take-trade收盘价高于涨停前交易日
             五 维持上涨趋势：买入信号交易日MA5高于前一交易日
 
         参数说明：
