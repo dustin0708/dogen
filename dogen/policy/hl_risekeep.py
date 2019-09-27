@@ -14,7 +14,7 @@ from dogen import logger, mongo_server, mongo_database
         * hl_valid: 最后一个涨停有效交易日数
         * volume_scale: 涨停后一交易日上涨时，放量最小倍数
         * mini_falls： 回调最小幅度，单位1%
-        * maxi_prerise: 涨停之前最大涨幅
+        * maxi_rise: 涨停之前最大涨幅
 """
 
 ### 策略参数名
@@ -22,7 +22,8 @@ MAXI_DAYS   = 'maxi_days'
 MINI_HL     = 'mini_hl'
 MAXI_HL     = 'maxi_hl'
 TAKE_VALID  = 'take_valid'
-MAXI_PRERISE= 'maxi_prerise'
+MAXI_RISE   = 'maxi_rise'
+MAX_TAKE2HL = 'maxi_take2hl'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
@@ -30,7 +31,8 @@ ARGS_DEAULT_VALUE = {
     MINI_HL: 3,      # 
     MAXI_HL: 14,        #
     TAKE_VALID: 0,  # 倍
-    MAXI_PRERISE: 35,   # 1%
+    MAXI_RISE: 35,   # 1%
+    MAX_TAKE2HL: 15, 
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -76,25 +78,26 @@ def __score_analyze(basic, kdata, pick_index, take_index):
 
     return score
 
-def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
+def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
-    ### 检查区间最高涨幅
+    maxi_rise    = __parse_policy_args(policy_args, MAXI_RISE)
+    maxi_take2hl = __parse_policy_args(policy_args, MAX_TAKE2HL)
+
+    ### 特征三
     try:
-        [min_index, max_index, inc_close, get_lhigh, tmpId] = dogen.get_last_rise_range(kdata, 30, max_fall=20)
-        if inc_close > maxi_prerise:
-            logger.debug("Too large rise-range from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
+        this_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2)
+        if this_range is not None:
+            logger.debug("Too large rise-range")
             return True
     except Exception:
         traceback.print_exc()
-        pass
-    
-    ### taketrade收盘价相对涨停不能过高
-    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > 15:
+        pass    
+    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > maxi_take2hl:
         logger.debug("Too large rise at %s" % kdata.index[take_index])
         return True
 
-    ### take交易日在ma20之上
+    ### 特征四
     if kdata.iloc[take_index][dogen.P_CLOSE] < kdata.iloc[take_index][dogen.MA20]:
         logger.debug("Invalid take trade at %s" % kdata.index[take_index])
         return True
@@ -106,9 +109,8 @@ def __policy_analyze(basic, kdata, policy_args):
     mini_hl     = __parse_policy_args(policy_args, MINI_HL)
     maxi_hl     = __parse_policy_args(policy_args, MAXI_HL)
     take_valid  = __parse_policy_args(policy_args, TAKE_VALID)
-    maxi_prerise= __parse_policy_args(policy_args, MAXI_PRERISE)
 
-    ### 特征一校验
+    ### 特征一
     index = dogen.get_highlimit_trades(kdata, eIdx=maxi_hl+1)
     if index.size != 1:
         logger.debug("Don't match highlimit trades")
@@ -121,7 +123,7 @@ def __policy_analyze(basic, kdata, policy_args):
         logger.debug("Too close hl-trade at %s" % pick_trade)
         return None
     
-    ### 特征二校验
+    ### 特征二
     take_index = None
     if pick_index < 5:
         tdata = kdata[0: pick_index]
@@ -162,7 +164,7 @@ def __policy_analyze(basic, kdata, policy_args):
         return None
     
     ### 结果最后排它校验
-    if __exclude_analyze(basic, kdata, pick_index, take_index, maxi_prerise):
+    if __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("__exclude_analyze() return True")
         return None
 
@@ -181,9 +183,17 @@ def __policy_analyze(basic, kdata, policy_args):
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 涨停上涨策略, 有如下特征：
-            * 涨停在[min_hl， max_hl]交易区间以内;
-            * 买入信号: 5日以内收盘价均维持在涨停价以上；5日以上累积上涨幅度达5个点或单日涨幅3点振幅5点以上;
+    """ 涨停上涨策略, 满足特征：
+            一 仅有一个涨停在[min_hl， max_hl]交易区间以内;
+            二 买入信号take-trade，有效期由take_valid限定:
+                1) 5日以内收盘价均维持在涨停价以上；
+                2) 5日以外累积上涨幅度达5个点或单日涨幅3点以上，且收盘价突破涨停价, 下面情况更新take-trade;
+                    a. 若take-trade之后限一个交易日缩量下跌；
+                    b. 若take-trade之后最后交易日收盘价突破，更新为买入信号；
+            三 股价成本合理：
+                1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）；
+                2) take-trade相对于涨停日收盘价涨幅由maxi_take2hl限制（默认15%）
+            四 维持上涨趋势：take-trade收盘价高于MA20
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
