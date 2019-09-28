@@ -119,8 +119,8 @@ def __policy_analyze(basic, kdata, policy_args):
         pick_trade = index[0]
         pick_index = kdata.index.get_loc(pick_trade)
         pick_close = kdata.iloc[pick_index][dogen.P_CLOSE]
-    if pick_index < mini_hl:
-        logger.debug("Too close hl-trade at %s" % pick_trade)
+    if pick_index < mini_hl or kdata.iloc[pick_index][dogen.R_AMP] < 5:
+        logger.debug("Invalid hl-trade at %s" % pick_trade)
         return None
     
     ### 特征二
