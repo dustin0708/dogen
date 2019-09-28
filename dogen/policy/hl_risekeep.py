@@ -98,6 +98,9 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征四
+    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]:
+        logger.debug("Invalid MA5 at %s" % kdata.index[take_index])
+        return True
     if kdata.iloc[take_index][dogen.P_CLOSE] < kdata.iloc[take_index][dogen.MA20]:
         logger.debug("Invalid take trade at %s" % kdata.index[take_index])
         return True
@@ -193,7 +196,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价成本合理：
                 1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）；
                 2) take-trade相对于涨停日收盘价涨幅由maxi_take2hl限制（默认15%）
-            四 维持上涨趋势：take-trade收盘价高于MA20
+            四 维持上涨趋势：MA5上涨，且take-trade收盘价高于MA20
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
