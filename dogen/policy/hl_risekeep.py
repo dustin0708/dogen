@@ -140,8 +140,8 @@ def __policy_analyze(basic, kdata, policy_args):
                 heap_rises = 0
             else:
                 heap_rises += temp_close
-            ### 上涨take交易日收盘价必须高于涨停交易日回调3%价位
-            if kdata.iloc[temp_index][dogen.P_CLOSE] < pick_close*(1-0.03):
+            ### 上涨take交易日收盘价必须超过涨停交易日
+            if kdata.iloc[temp_index][dogen.P_CLOSE] < pick_close:
                 continue
             if heap_rises >= 5:
                 take_index = temp_index
