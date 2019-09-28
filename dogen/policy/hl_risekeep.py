@@ -29,7 +29,7 @@ MAX_TAKE2HL = 'maxi_take2hl'
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 30,      # 天
     MINI_HL: 3,      # 
-    MAXI_HL: 14,        #
+    MAXI_HL: 19,        #
     TAKE_VALID: 0,  # 倍
     MAXI_RISE: 35,   # 1%
     MAX_TAKE2HL: 15, 
