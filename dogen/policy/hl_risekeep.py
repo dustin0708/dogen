@@ -27,7 +27,7 @@ MAX_TAKE2HL = 'maxi_take2hl'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 30,      # 天
+    MAXI_DAYS: 60,      # 天
     MINI_HL: 3,      # 
     MAXI_HL: 15,        #
     TAKE_VALID: 0,  # 倍
@@ -140,8 +140,8 @@ def __policy_analyze(basic, kdata, policy_args):
                 heap_rises = 0
             else:
                 heap_rises += temp_close
-            ### 上涨take交易日收盘价必须超过涨停交易日
-            if kdata.iloc[temp_index][dogen.P_CLOSE] < pick_close:
+            ### 上涨take交易日收盘价必须超过涨停价回调3个点的价位
+            if kdata.iloc[temp_index][dogen.P_CLOSE] < pick_close*(1-0.03):
                 continue
             if heap_rises >= 5:
                 take_index = temp_index
