@@ -26,7 +26,7 @@ TAKE_VALID  = 'take_valid'
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 45,      # 天
-    TAKE_VALID: 14,      # 
+    TAKE_VALID: 10,     # 
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -60,7 +60,7 @@ def __policy_analyze(basic, kdata, policy_args):
             heap_rises = 0
         else:
             heap_rises+= kdata.iloc[i][dogen.R_CLOSE]
-        if heap_rises >= 5:
+        if heap_rises >= 8:
             take_index = i
         pass
     if take_index is None or take_index > take_valid:
@@ -82,8 +82,11 @@ def __policy_analyze(basic, kdata, policy_args):
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 上市新股开板策略, 有如下特征：
-            * $MAXI_DAYS开板之后交易日内，有涨停或者连续放量上涨
+    """ 上市新股开板策略, 满足特征：
+            一 $MAXI_DAYS交易日内开板
+            二 买入信号take-trade:
+                1) 涨停;
+                2) 连续放量上涨超过八个点;
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
