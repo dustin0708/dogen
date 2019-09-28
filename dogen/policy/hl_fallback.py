@@ -23,7 +23,8 @@ TAKE_VALID  = 'take_valid'
 HL_VALID    = 'hl_valid'
 VOLUME_SCALE= 'volume_scale'
 MINI_FALLS  = 'mini_falls'
-MAXI_RISE= 'maxi_rise'
+MAXI_FALLS  = 'maxi_falls'
+MAXI_RISE   = 'maxi_rise'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
@@ -32,6 +33,7 @@ ARGS_DEAULT_VALUE = {
     HL_VALID: 4,        #
     VOLUME_SCALE: 1.2,  # 倍
     MINI_FALLS: 3.99,   # 1%
+    MAXI_FALLS: 9.9,
     MAXI_RISE: 35,   # 1%
 }
 
@@ -105,6 +107,7 @@ def __policy_analyze(basic, kdata, policy_args):
     hl_valid    = __parse_policy_args(policy_args, HL_VALID)
     volume_scale= __parse_policy_args(policy_args, VOLUME_SCALE)
     mini_falls  = __parse_policy_args(policy_args, MINI_FALLS)
+    maxi_falls  = __parse_policy_args(policy_args, MAXI_FALLS)
 
     ### 特征一
     index = dogen.get_highlimit_trades(kdata, eIdx=hl_valid+1)
@@ -145,7 +148,7 @@ def __policy_analyze(basic, kdata, policy_args):
             break
         ### 达到回调要求, 命中
         heap_falls += abs(this_close)
-        if heap_falls >= mini_falls:
+        if heap_falls >= mini_falls and heap_falls <= maxi_falls:
             take_index = this_index
         ### 若放量下跌即终止
         if kdata.iloc[this_index][dogen.VOLUME] > kdata.iloc[this_index+1][dogen.VOLUME]:
@@ -180,7 +183,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             一 仅有一个涨停在hl_valid交易日内;
             二 涨停后限一个交易日上涨，放量限制最小volume_scale倍；
             三 买入信号(take-trade)，有效期由take_valid限定:
-                1) 连续缩量下跌4个点以上，放量下跌或上涨即终止；
+                1) 连续缩量下跌[mini_falls, maxi_falls]，放量下跌或上涨即终止；
             四 股价成本合理：
                 1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) 不可回调过高，take-trade收盘价高于涨停前交易日
