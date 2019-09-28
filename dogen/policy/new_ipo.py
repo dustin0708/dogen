@@ -36,13 +36,22 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
+def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
+    """ 根据日线做排除性校验
+    """
+    if kdata.iloc[0][dogen.MA5] < kdata.iloc[1][dogen.MA5]:
+        logger.debug("Invalid MA5 at %s" % kdata.index[0])
+        return True
+
+    return False
+
 def __policy_analyze(basic, kdata, policy_args):
     """ 
     """
     ### 参数解析
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
 
-    ### 新股判断
+    ### 特征一
     time_market= time.strftime("%Y-%m-%d", time.strptime(basic.loc['timeToMarket'], "%Y%m%d"))
     if time_market > kdata.index[0] or time_market < kdata.index[-1]:
         logger.debug("Isn't a new-ipo stock")
@@ -60,11 +69,16 @@ def __policy_analyze(basic, kdata, policy_args):
             heap_rises = 0
         else:
             heap_rises+= kdata.iloc[i][dogen.R_CLOSE]
-        if heap_rises >= 8:
+        if heap_rises >= 9.99:
             take_index = i
         pass
     if take_index is None or take_index > take_valid:
         logger.debug("Don't get valid take-trade")
+        return None
+
+    ### 结果最后排它校验
+    if __exclude_analyze(basic, kdata, take_index, take_index, policy_args):
+        logger.debug("__exclude_analyze() return True")
         return None
 
     ### 构造结果
@@ -86,7 +100,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             一 $MAXI_DAYS交易日内开板
             二 买入信号take-trade:
                 1) 涨停;
-                2) 连续放量上涨超过八个点;
+                2) 连续放量上涨超过10个点;
+            三 上涨趋势：MA5上涨
+
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
