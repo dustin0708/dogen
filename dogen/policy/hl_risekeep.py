@@ -24,6 +24,8 @@ MAXI_HL     = 'maxi_hl'
 TAKE_VALID  = 'take_valid'
 MAXI_RISE   = 'maxi_rise'
 MAX_TAKE2HL = 'maxi_take2hl'
+MAXI_CLOSE  = 'maxi_close'
+OUTSTANDING = 'outstanding'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
@@ -33,6 +35,8 @@ ARGS_DEAULT_VALUE = {
     TAKE_VALID: 0,  # 倍
     MAXI_RISE: 35,   # 1%
     MAX_TAKE2HL: 15, 
+    MAXI_CLOSE: 50,
+    OUTSTANDING: 100,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -83,6 +87,8 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """
     maxi_rise    = __parse_policy_args(policy_args, MAXI_RISE)
     maxi_take2hl = __parse_policy_args(policy_args, MAX_TAKE2HL)
+    maxi_close   = __parse_policy_args(policy_args, MAXI_CLOSE)
+    outstanding  = __parse_policy_args(policy_args, OUTSTANDING)
 
     ### 特征三
     try:
@@ -103,6 +109,14 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
     if kdata.iloc[take_index][dogen.P_CLOSE] < kdata.iloc[take_index][dogen.MA20]:
         logger.debug("Invalid take trade at %s" % kdata.index[take_index])
+        return True
+
+    ### 特征五
+    if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
+        logger.debug("Too high close price at %s" % kdata.index[take_index])
+        return True
+    if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
+        logger.debug("Too large outstanding at %s" % kdata.index[take_index])
         return True
 
     return False
@@ -197,6 +211,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）；
                 2) take-trade相对于涨停日收盘价涨幅由maxi_take2hl限制（默认15%）
             四 维持上涨趋势：MA5上涨，且take-trade收盘价高于MA20
+            五 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日

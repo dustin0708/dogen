@@ -25,6 +25,8 @@ VOLUME_SCALE= 'volume_scale'
 MINI_FALLS  = 'mini_falls'
 MAXI_FALLS  = 'maxi_falls'
 MAXI_RISE   = 'maxi_rise'
+MAXI_CLOSE  = 'maxi_close'
+OUTSTANDING = 'outstanding'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
@@ -35,6 +37,8 @@ ARGS_DEAULT_VALUE = {
     MINI_FALLS: 3.99,   # 1%
     MAXI_FALLS: 9.9,
     MAXI_RISE: 35,   # 1%
+    MAXI_CLOSE: 50,
+    OUTSTANDING: 100,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -82,7 +86,9 @@ def __score_analyze(basic, kdata, pick_index, take_index):
 def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
-    maxi_rise = __parse_policy_args(policy_args, MAXI_RISE)
+    maxi_rise    = __parse_policy_args(policy_args, MAXI_RISE)
+    maxi_close   = __parse_policy_args(policy_args, MAXI_CLOSE)
+    outstanding  = __parse_policy_args(policy_args, OUTSTANDING)
 
     ### 特征四
     try:
@@ -98,6 +104,14 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     if kdata.iloc[take_index+1][dogen.MA5] >= kdata.iloc[take_index][dogen.MA5]:
         logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
         return None
+
+    ### 特征六
+    if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
+        logger.debug("Too high close price at %s" % kdata.index[take_index])
+        return True
+    if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
+        logger.debug("Too large outstanding at %s" % kdata.index[take_index])
+        return True
 
     return False
 
@@ -188,6 +202,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) 不可回调过高，take-trade收盘价高于涨停前交易日
             五 维持上涨趋势：买入信号交易日MA5高于前一交易日
+            六 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
