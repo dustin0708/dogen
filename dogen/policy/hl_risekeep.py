@@ -90,6 +90,11 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     maxi_close   = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding  = __parse_policy_args(policy_args, OUTSTANDING)
 
+    ### 净资产为负数的
+    if basic[dogen.BVPS] <= 0:
+        logger.debug("Invalid bvps")
+        return True
+        
     ### 特征三
     try:
         this_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)

@@ -20,7 +20,7 @@ MA5         = 'ma5'
 MA10        = 'ma10'
 MA20        = 'ma20'
 
-
+BVPS = 'bvps'
 INDUSTRY = 'industry'
 OUTSTANDING = 'outstanding'
 TIMETOMARKET='timeToMarket'

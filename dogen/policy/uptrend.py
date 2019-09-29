@@ -85,6 +85,11 @@ def __score_analyze(basic, kdata, pick_index, take_index):
 def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_args):
     """ 根据日线做排除性校验
     """
+    ### 净资产为负数的
+    if basic[dogen.BVPS] <= 0:
+        logger.debug("Invalid bvps")
+        return True
+        
     ### 最大收盘价校验
     maxi_close = __parse_policy_args(policy_args, MAXI_CLOSE)
     if maxi_close is not None and kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
