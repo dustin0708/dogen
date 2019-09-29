@@ -29,9 +29,9 @@ MAXI_MVALUE= 'market_value'
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 180,      # 天
-    PICK_VALID: 4,      
+    PICK_VALID: 15,      
     TAKE_VALID: 0,      # 
-    MAXI_RISES: 35,
+    MAXI_RISES: 50,
     MAXI_CLOSE: 40,
     MAXI_MVALUE: 40,
 }
@@ -223,10 +223,14 @@ def __policy_analyze(basic, kdata, policy_args):
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 上涨策略, 有如下特征：
-            * 最近交易日MA5突破MA20, 且MA20上涨趋势;
-            * pick_valid区间内无放量(10%以上)下跌;
-            * 买入信号: 5日以内收盘价均维持在涨停价以上；5日以上累积上涨幅度达5个点或单日涨幅3点振幅5点以上;
+    """ 上涨策略, 满足特征：
+            一 入选条件，最近交易日MA5突破MA20, 且MA20上涨趋势;
+            二 买入信号(take-trade)，有效期由take_valid限定:
+                1) 累积上涨超过5个点，或者单日涨幅超过3个点；
+                    a. 回调至踩MA20线，且回调过程缩量，更新take-trade；
+                    b. 限take-trade之后一个交易日缩量下跌，更新take-trade；
+            三 最近交易日若有放量下跌，其后必须有交易日突破其最高价；
+            四 样本区间内必须有过涨停，仅限当前上涨区间和前一个下跌区间(根据反弹策略而定)；
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日

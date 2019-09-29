@@ -92,7 +92,7 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     ### 特征三
     try:
-        this_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2)
+        this_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
         if this_range is not None:
             logger.debug("Too large rise-range")
             return True
