@@ -126,11 +126,18 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征六
-    tdata = kdata[take_index:pick_index]
-    polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
-    if polyf[0] < 0:
-        logger.debug("Invalid polyfit(2) shape from %s to %s" % (kdata.index[pick_index], kdata.index[take_index]))
-        return True
+    temp_index = pick_index
+    for temp_index in range(pick_index, -1, -1):
+        if kdata.iloc[temp_index][dogen.P_CLOSE] < 0:
+            break
+        pass
+    if temp_index >= (take_index+5):
+        tdata = kdata[take_index:temp_index].sort_index()
+        polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
+        if polyf[0] < 0:
+            logger.debug("Invalid polyfit(2) shape from %s to %s" % (kdata.index[temp_index], kdata.index[take_index]))
+            return True
+        pass
 
     return False
 
