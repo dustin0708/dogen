@@ -126,8 +126,10 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征六
-    temp_index = pick_index
-    if temp_index > (take_index+4):
+    if pick_index >= 5:
+        temp_index = pick_index
+        if kdata.iloc[pick_index][dogen.P_CLOSE] < kdata.iloc[pick_index-1][dogen.P_CLOSE]:
+            temp_index = pick_index - 1
         tdata = kdata[take_index:temp_index].sort_index()
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
         if polyf[0] < 0.01:
@@ -167,7 +169,7 @@ def __policy_analyze(basic, kdata, policy_args):
         if tdata.index.size > 0:
             logger.debug("Invalid trade at %s" % tdata.index[0])
             return None
-        pass ### 不准确暂不启用该策略take_index = 0
+        pass ###take_index = 0
     else:
         heap_rises = 0
         for temp_index in range(pick_index-1, -1, -1):
