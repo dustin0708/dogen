@@ -47,7 +47,7 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def __score_analyze(basic, kdata, pick_index, take_index):
+def score_analyze(basic, kdata, pick_index, take_index):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 基准分值50分，累积加分项；
             * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
@@ -203,7 +203,7 @@ def include_analyze(basic, kdata, policy_args):
     
     return [pick_index, take_index]
 
-def __policy_analyze(basic, kdata, policy_args):
+def stock_analyze(basic, kdata, policy_args):
     ### 基本条件选取
     get_index = include_analyze(basic, kdata, policy_args)
     if get_index is None:
@@ -225,7 +225,7 @@ def __policy_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result[dogen.RST_COL_SCORE]       = __score_analyze(basic, kdata, pick_index, take_index) # 打分
+    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index) # 打分
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
@@ -286,7 +286,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
 
             ### 策略分析
             logger.debug("Begin in analyzing %s from %s to %s" % (code, start, end))
-            match = __policy_analyze(basic, kdata, policy_args)
+            match = stock_analyze(basic, kdata, policy_args)
             if match is None:
                 continue
             

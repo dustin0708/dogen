@@ -36,7 +36,7 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
+def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
     if kdata.iloc[0][dogen.MA5] < kdata.iloc[1][dogen.MA5]:
@@ -45,9 +45,7 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     return False
 
-def __policy_analyze(basic, kdata, policy_args):
-    """ 
-    """
+def include_analyze(basic, kdata, policy_args):
     ### 参数解析
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
 
@@ -75,10 +73,21 @@ def __policy_analyze(basic, kdata, policy_args):
     if take_index is None or take_index > take_valid:
         logger.debug("Don't get valid take-trade")
         return None
+    
+    return [take_index, take_index]
 
-    ### 结果最后排它校验
-    if __exclude_analyze(basic, kdata, take_index, take_index, policy_args):
-        logger.debug("__exclude_analyze() return True")
+def stock_analyze(basic, kdata, policy_args):
+    ### 基本条件选取
+    get_index = include_analyze(basic, kdata, policy_args)
+    if get_index is None:
+        logger.debug("include_analyze() return None")
+        return None
+    else:
+        [pick_index, take_index] = get_index
+
+    ### 排它条件过滤
+    if exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
+        logger.debug("exclude_analyze() return True")
         return None
 
     ### 构造结果
@@ -140,7 +149,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
 
             ### 策略分析
             logger.debug("Begin in analyzing %s from %s to %s" % (code, start, end))
-            match = __policy_analyze(basic, kdata, policy_args)
+            match = stock_analyze(basic, kdata, policy_args)
             if match is None:
                 continue
             
