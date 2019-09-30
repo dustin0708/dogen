@@ -127,11 +127,7 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     ### 特征六
     temp_index = pick_index
-    for temp_index in range(pick_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.P_CLOSE] < 0:
-            break
-        pass
-    if temp_index >= (take_index+5):
+    if temp_index > (take_index+4):
         tdata = kdata[take_index:temp_index].sort_index()
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
         if polyf[0] < 0:
