@@ -167,7 +167,7 @@ def __policy_analyze(basic, kdata, policy_args):
         if tdata.index.size > 0:
             logger.debug("Invalid trade at %s" % tdata.index[0])
             return None
-        take_index = 0
+        pass ### 不准确暂不启用该策略take_index = 0
     else:
         heap_rises = 0
         for temp_index in range(pick_index-1, -1, -1):
