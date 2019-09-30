@@ -3,6 +3,7 @@
 import sys
 import math
 import dogen
+import numpy
 import traceback
 
 ### 导入日志句柄
@@ -124,6 +125,13 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("Too large outstanding at %s" % kdata.index[take_index])
         return True
 
+    ### 特征六
+    tdata = kdata[take_index:pick_index+1]
+    polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
+    if polyf[0] < 0:
+        logger.debug("Invalid polyfit(2) shape from %s to %s" % (kdata.index[pick_index], kdata.index[take_index]))
+        return True
+
     return False
 
 def __policy_analyze(basic, kdata, policy_args):
@@ -220,6 +228,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 2) take-trade相对于涨停日收盘价涨幅由maxi_take2hl限制（默认15%）
             四 维持上涨趋势：MA5上涨，且take-trade收盘价高于MA20
             五 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
+            六 涨停之后保持碗底弧形上涨趋势
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
@@ -251,6 +260,8 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             if start is None:
                 start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAXI_DAYS))
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
+            if kdata is None:
+                continue
             kdata.sort_index(ascending=False, inplace=True)
             dogen.drop_fresh_stock_trades(basic, kdata)
 

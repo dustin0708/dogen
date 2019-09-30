@@ -141,6 +141,8 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             if start is None:
                 start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAXI_DAYS))
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
+            if kdata is None:
+                continue
             kdata.sort_index(ascending=False, inplace=True)
             dogen.drop_fresh_stock_trades(basic, kdata)
 
