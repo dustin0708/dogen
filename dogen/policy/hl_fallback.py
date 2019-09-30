@@ -83,7 +83,7 @@ def __score_analyze(basic, kdata, pick_index, take_index):
 
     return (int)(score)
 
-def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
+def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
     maxi_rise    = __parse_policy_args(policy_args, MAXI_RISE)
@@ -120,7 +120,7 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     return False
 
-def __policy_analyze(basic, kdata, policy_args):
+def include_analyze(basic, kdata, policy_args):
     ### 策略参数处理
     take_valid  = __parse_policy_args(policy_args, TAKE_VALID)
     hl_valid    = __parse_policy_args(policy_args, HL_VALID)
@@ -177,10 +177,21 @@ def __policy_analyze(basic, kdata, policy_args):
     if take_index is None or take_index > take_valid:
         logger.debug("Don't match valid fallback trade")
         return None
-    
-    ### 结果最后排它校验
-    if __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
-        logger.debug("__exclude_analyze() return True")
+
+    return [pick_index, take_index]
+
+def __policy_analyze(basic, kdata, policy_args):    
+    ### 基本条件选取
+    get_index = include_analyze(basic, kdata, policy_args)
+    if get_index is None:
+        logger.debug("include_analyze() return None")
+        return None
+    else:
+        [pick_index, take_index] = get_index
+
+    ### 排它条件过滤
+    if exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
+        logger.debug("exclude_analyze() return True")
         return None
 
     ### 构造结果
@@ -198,11 +209,14 @@ def __policy_analyze(basic, kdata, policy_args):
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 涨停回调策略，满足特征：
+    """ 涨停回调策略，满足条件：
+        >>> 基本条件
             一 仅有一个涨停在hl_valid交易日内;
             二 涨停后限一个交易日上涨，放量限制最小volume_scale倍；
             三 买入信号(take-trade)，有效期由take_valid限定:
                 1) 连续缩量下跌[mini_falls, maxi_falls]，放量下跌或上涨即终止；
+        
+        >>> 排它条件
             四 股价成本合理：
                 1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) 不可回调过高，take-trade收盘价高于涨停前交易日

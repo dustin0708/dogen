@@ -83,7 +83,7 @@ def __score_analyze(basic, kdata, pick_index, take_index):
 
     return score
 
-def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
+def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
     maxi_rise    = __parse_policy_args(policy_args, MAXI_RISE)
@@ -139,7 +139,7 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     return False
 
-def __policy_analyze(basic, kdata, policy_args):
+def include_analyze(basic, kdata, policy_args):
     ### 策略参数处理
     mini_hl     = __parse_policy_args(policy_args, MINI_HL)
     maxi_hl     = __parse_policy_args(policy_args, MAXI_HL)
@@ -201,9 +201,20 @@ def __policy_analyze(basic, kdata, policy_args):
         logger.debug("Don't match valid fallback trade")
         return None
     
-    ### 结果最后排它校验
-    if __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
-        logger.debug("__exclude_analyze() return True")
+    return [pick_index, take_index]
+
+def __policy_analyze(basic, kdata, policy_args):
+    ### 基本条件选取
+    get_index = include_analyze(basic, kdata, policy_args)
+    if get_index is None:
+        logger.debug("include_analyze() return None")
+        return None
+    else:
+        [pick_index, take_index] = get_index
+
+    ### 排它条件过滤
+    if exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
+        logger.debug("exclude_analyze() return True")
         return None
 
     ### 构造结果
@@ -221,13 +232,16 @@ def __policy_analyze(basic, kdata, policy_args):
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 涨停上涨策略, 满足特征：
+    """ 涨停上涨策略, 满足条件：
+        >>> 基本条件
             一 仅有一个涨停在[min_hl， max_hl]交易区间以内;
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 5日以内收盘价均维持在涨停价以上，且相对涨停价涨幅不高于5个点；
                 2) 5日以外累积上涨幅度达5个点或单日涨幅3点以上，且收盘价突破涨停价, 下面情况更新take-trade;
                     a. 若take-trade之后限一个交易日缩量下跌；
                     b. 若take-trade之后最后交易日收盘价突破，更新为买入信号；
+        
+        >>> 排它条件
             三 股价成本合理：
                 1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）；
                 2) take-trade相对于涨停日收盘价涨幅由maxi_take2hl限制（默认15%）
