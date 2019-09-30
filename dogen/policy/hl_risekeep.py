@@ -159,7 +159,7 @@ def __policy_analyze(basic, kdata, policy_args):
     ### 特征二
     take_index = None
     if pick_index < 5:
-        if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > 5:
+        if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > 3:
             logger.debug("Invalid trade at %s" % kdata.index[0])
             return None
         tdata = kdata[0: pick_index]
