@@ -154,7 +154,7 @@ def include_analyze(basic, kdata, policy_args):
         pick_trade = index[0]
         pick_index = kdata.index.get_loc(pick_trade)
         pick_close = kdata.iloc[pick_index][dogen.P_CLOSE]
-    if pick_index < mini_hl or kdata.iloc[pick_index][dogen.R_AMP] < 5:
+    if pick_index < mini_hl:
         logger.debug("Invalid hl-trade at %s" % pick_trade)
         return None
     
@@ -193,7 +193,7 @@ def include_analyze(basic, kdata, policy_args):
             and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
                 take_index-= 1
             ### 最近收盘价比take_index(不能取更新后值)高更新
-            elif kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[take_index][dogen.P_CLOSE]:
+            elif kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
                 take_index = 0
             pass
         pass

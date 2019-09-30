@@ -43,7 +43,7 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def __policy_analyze(basic, kdata, policy_args):
+def stock_analyze(basic, kdata, policy_args):
     """ 
     """
     ### 参数解析
@@ -148,7 +148,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
 
             ### 策略分析
             logger.debug("Begin in analyzing %s from %s to %s" % (code, start, end))
-            match = __policy_analyze(basic, kdata, policy_args)
+            match = stock_analyze(basic, kdata, policy_args)
             if match is None:
                 continue
             

@@ -43,7 +43,7 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def __score_analyze(basic, kdata, pick_index, take_index):
+def score_analyze(basic, kdata, pick_index, take_index):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 基准分值50分，累积加分项;
             * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增;
@@ -82,7 +82,7 @@ def __score_analyze(basic, kdata, pick_index, take_index):
 
     return (int)(score)
 
-def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_args):
+def exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_args):
     """ 根据日线做排除性校验
     """
     ### 净资产为负数的
@@ -144,7 +144,7 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_a
 
     return False
 
-def __policy_analyze(basic, kdata, policy_args):
+def stock_analyze(basic, kdata, policy_args):
     """ 
     """
     ### 参数解析
@@ -209,8 +209,8 @@ def __policy_analyze(basic, kdata, policy_args):
         return None
 
     ### 结果最后排它校验
-    if __exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_args):
-        logger.debug("__exclude_analyze() return True")
+    if exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_args):
+        logger.debug("exclude_analyze() return True")
         return None
 
     ### 构造结果
@@ -221,19 +221,22 @@ def __policy_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result[dogen.RST_COL_SCORE]       = __score_analyze(basic, kdata, pick_index, take_index)
+    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index)
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 上涨策略, 满足特征：
+    """ 上涨策略, 满足条件：
+        >>> 基本条件
             一 入选条件，最近交易日MA5突破MA20, 且MA20上涨趋势;
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 累积上涨超过5个点，或者单日涨幅超过3个点；
                     a. 回调至踩MA20线，且回调过程缩量，更新take-trade；
                     b. 限take-trade之后一个交易日缩量下跌，更新take-trade；
+        
+        >>> 排它条件
             三 最近交易日若有放量下跌，其后必须有交易日突破其最高价；
             四 样本区间内必须有过涨停，仅限当前上涨区间和前一个下跌区间(根据反弹策略而定)；
 
@@ -274,7 +277,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
 
             ### 策略分析
             logger.debug("Begin in analyzing %s from %s to %s" % (code, start, end))
-            match = __policy_analyze(basic, kdata, policy_args)
+            match = stock_analyze(basic, kdata, policy_args)
             if match is None:
                 continue
             
