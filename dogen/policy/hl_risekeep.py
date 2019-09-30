@@ -126,7 +126,7 @@ def __exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征六
-    tdata = kdata[take_index:pick_index+1]
+    tdata = kdata[take_index:pick_index]
     polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
     if polyf[0] < 0:
         logger.debug("Invalid polyfit(2) shape from %s to %s" % (kdata.index[pick_index], kdata.index[take_index]))
