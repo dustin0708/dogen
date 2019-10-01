@@ -32,6 +32,15 @@ def drop_codes(codes, inplace=True):
             pool.remove(code)
     return pool
 
+def drop_stock_check(code, basic):
+    if code is not None and code.startswith("68", 0):
+        return True
+    if basic is not None:
+        if basic[NAME].startswith("*", 0) or basic[NAME].startswith("S", 0):
+            return True
+        pass
+    return False
+
 def drop_fresh_stock_trades(basic, kdata, inplace=True):
     """丢掉新股涨停板, kdata索引按降序排列
     """

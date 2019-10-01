@@ -237,15 +237,14 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         logger.error("Cannot connect to mongo-server %s" % mongo_server)
         return None
 
-    ### 股票代码过滤，如科创板
-    codes = dogen.drop_codes(codes)
-
     ### 依次策略检查
     match_list = []
     for code in codes:
         try:
             ### 从数据库读取basic数据
             basic = db.lookup_stock_basic(code)
+            if dogen.drop_stock_check(code, basic):
+                continue
 
             ### 从数据库读取日线数据，必须按索引（日期）降序排列
             if end is None:
