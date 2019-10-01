@@ -158,21 +158,23 @@ def include_analyze(basic, kdata, policy_args):
     heap_falls = 0
     take_index = None
     for this_index in range(pick_index-1, -1, -1):        
-        this_close = kdata.iloc[this_index][dogen.R_CLOSE]        
-        ### 若上涨停止
+        this_close = kdata.iloc[this_index][dogen.R_CLOSE]
+        ### 若上涨即停止
         if  this_close > 0:
             ### 更新take_index
             if take_index is not None:
                 take_index = this_index
             break
+        ### 若放量下跌即终止
+        elif kdata.iloc[this_index][dogen.VOLUME] > kdata.iloc[this_index+1][dogen.VOLUME]:
+            break
+        ### 若下跌交易日最高价高于前日停止
+        elif kdata.iloc[this_index][dogen.P_HIGH] > kdata.iloc[this_index+1][dogen.P_HIGH]:
+            break
         ### 达到回调要求, 命中
         heap_falls += abs(this_close)
         if heap_falls >= mini_falls and heap_falls <= maxi_falls:
             take_index = this_index
-        ### 若放量下跌即终止
-        if kdata.iloc[this_index][dogen.VOLUME] > kdata.iloc[this_index+1][dogen.VOLUME]:
-            logger.debug("Invalid fall-trade at %s" % kdata.index[this_index])
-            break
         pass
     if take_index is None or take_index > take_valid:
         logger.debug("Don't match valid fallback trade")
