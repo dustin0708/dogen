@@ -123,7 +123,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_arg
     for temp_index in range(pick_index, 0, -1):
         if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
             continue
-        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME] * 1.1:
+        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
             continue
         ### 放量下跌之后未被上涨突破
         maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=temp_index)
