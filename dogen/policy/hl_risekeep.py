@@ -199,9 +199,13 @@ def include_analyze(basic, kdata, policy_args):
             if kdata.iloc[temp_index][dogen.P_CLOSE] < pick_close*(1-0.03):
                 continue
             if heap_rises >= 5:
-                take_index = temp_index
-            if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
-                take_index = temp_index
+                if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
+                    take_index = temp_index
+                pass
+            if temp_close >= 3:
+                if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
+                    take_index = temp_index
+                pass
             pass
         if take_index is not None:
             ### take_index之后缩量下跌(限一个交易日)，也符合策略
