@@ -162,9 +162,8 @@ def include_analyze(basic, kdata, policy_args):
         if this_close > 0:
             heap_falls = 0
         else:
-            heap_falls+= this_close
+            heap_falls+= abs(this_close)
         ### 达到回调要求, 命中
-        heap_falls += abs(this_close)
         if heap_falls >= mini_falls and heap_falls <= maxi_falls:
             take_index = this_index
         ### 若上涨即停止
