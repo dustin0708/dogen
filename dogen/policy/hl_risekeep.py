@@ -202,7 +202,7 @@ def include_analyze(basic, kdata, policy_args):
                 if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
                     take_index = temp_index
                 pass
-            if temp_close >= 3:
+            if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
                 if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
                     take_index = temp_index
                 pass
