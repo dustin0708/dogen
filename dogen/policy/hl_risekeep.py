@@ -198,14 +198,16 @@ def include_analyze(basic, kdata, policy_args):
             ### 上涨take交易日收盘价必须超过涨停价回调3个点的价位
             if kdata.iloc[temp_index][dogen.P_CLOSE] < pick_close*(1-0.03):
                 continue
+            ### 上涨take交易日必须放量
+            if kdata.iloc[temp_index][dogen.VOLUME] < kdata.iloc[temp_index+1][dogen.VOLUME] * 1.1:
+                continue
+            ### 不能是上影线
+            if kdata.iloc[temp_index][dogen.R_CLOSE] * 2 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
+                continue
             if heap_rises >= 5:
-                if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
-                    take_index = temp_index
-                pass
+                take_index = temp_index
             if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
-                if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
-                    take_index = temp_index
-                pass
+                take_index = temp_index
             pass
         if take_index is not None:
             ### take_index之后缩量下跌(限一个交易日)，也符合策略
