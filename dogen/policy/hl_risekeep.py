@@ -127,6 +127,10 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     ### 特征六
     if pick_index >= 5:
+        mini_index = dogen.get_last_column_min(kdata, dogen.P_CLOSE, sIdx=take_index, eIdx=pick_index)
+        if dogen.caculate_incr_percentage(kdata.iloc[mini_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > -3:
+            logger.debug("Don't get valid lowest trade")
+            return True
         temp_index = pick_index
         if kdata.iloc[pick_index][dogen.P_CLOSE] < kdata.iloc[pick_index-1][dogen.P_CLOSE]:
             temp_index = pick_index - 1
@@ -243,11 +247,11 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         
         >>> 排它条件
             三 股价成本合理：
-                1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）；
+                1) 在一个月交易日内，最高涨幅由maxi_rise限制（默认35%）；
                 2) take-trade相对于涨停日收盘价涨幅由maxi_take2hl限制（默认15%）
             四 维持上涨趋势：MA5上涨，且take-trade收盘价高于MA20
             五 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            六 涨停之后保持碗底弧形上涨趋势
+            六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价3个点以上
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
