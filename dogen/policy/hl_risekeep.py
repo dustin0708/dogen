@@ -129,8 +129,9 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     ### 特征六
     if pick_index >= 5:
-        if dogen.caculate_incr_percentage(kdata.iloc[mini_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > -3:
-            logger.debug("Don't get valid lowest trade")
+        temp_falls = dogen.caculate_incr_percentage(kdata.iloc[mini_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE])
+        if temp_falls > -3 or temp_falls < -10:
+            logger.debug("Get invalid lowest trade at %s" % kdata.index[mini_index])
             return True
         temp_index = pick_index
         if kdata.iloc[pick_index][dogen.P_CLOSE] < kdata.iloc[pick_index-1][dogen.P_CLOSE]:
@@ -272,7 +273,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 2) take-trade相对于涨停日收盘价涨幅由maxi_take2hl限制（默认15%）
             四 维持上涨趋势：MA5上涨，且take-trade收盘价高于MA20
             五 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价3个点以上
+            六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上,高于-10个点以上
             七 碗底之后若放量下跌必须突破最高价
 
         参数说明：
