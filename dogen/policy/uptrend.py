@@ -33,7 +33,7 @@ ARGS_DEAULT_VALUE = {
     PICK_VALID: 15,      
     TAKE_VALID: 0,      # 
     MAXI_RISE: 35,
-    MAX_TAKE2PICK: 15,
+    MAX_TAKE2PICK: 20,
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -113,8 +113,9 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Too large rise-range")
             return True
         pass
-    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > maxi_take2pick:
-        logger.debug("Too large rise at %s" % kdata.index[take_index])
+    rise_range = dogen.get_last_rise_range(kdata, maxi_take2pick, max_fall=maxi_take2pick/2, eIdx=pick_index)
+    if rise_range is not None:
+        logger.debug("Too large rise-range")
         return True
 
     ### 特征五
