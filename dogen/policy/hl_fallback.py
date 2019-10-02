@@ -163,22 +163,22 @@ def include_analyze(basic, kdata, policy_args):
     ### 特征三
     heap_falls = 0
     take_index = None
-    for this_index in range(pick_index-1, -1, -1):
-        if kdata.iloc[this_index][dogen.P_CLOSE] < mini_close:
-            logger.debug("Get invalid fall trade at %s" % kdata.index[this_index])
+    for temp_index in range(pick_index-1, -1, -1):
+        if kdata.iloc[temp_index][dogen.P_CLOSE] < mini_close:
+            logger.debug("Get invalid fall trade at %s" % kdata.index[temp_index])
             return None
-        this_close = kdata.iloc[this_index][dogen.R_CLOSE]
+        this_close = kdata.iloc[temp_index][dogen.R_CLOSE]
         if this_close > 0:
             if take_index is not None:
-                take_index = this_index
-            pass
+                take_index = temp_index
+            break
         else:
             heap_falls+= abs(this_close)
         ### 达到回调要求, 命中
         if heap_falls >= mini_falls:
-            take_index = this_index
+            take_index = temp_index
         ### 若放量下跌即终止
-        elif kdata.iloc[this_index][dogen.VOLUME] > kdata.iloc[this_index+1][dogen.VOLUME]:
+        elif kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
             break
         pass
     if take_index is None or take_index > take_valid:
