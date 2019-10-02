@@ -104,9 +104,12 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征五
+    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
+        logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
+        return True
     if kdata.iloc[take_index+1][dogen.MA5] >= kdata.iloc[take_index][dogen.MA5]:
         logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
-        return None
+        return True
 
     ### 特征六
     if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
@@ -227,7 +230,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             四 股价成本合理：
                 1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) 不可回调过高，take-trade收盘价高于涨停前交易日
-            五 维持上涨趋势：买入信号交易日MA5高于前一交易日
+            五 维持上涨趋势：MA5高于MA20, 且take-trade交易日MA5高于前一交易日
             六 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
 
         参数说明：
