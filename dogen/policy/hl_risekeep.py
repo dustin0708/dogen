@@ -146,10 +146,9 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征七
-    for temp_index in range(pick_index, 0, -1):
-        ### 下跌或假阴线
-        if (kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN])\
-        or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
+    for temp_index in range(pick_index-1, 0, -1):
+        ### 下跌
+        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
             continue
         if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
             continue
