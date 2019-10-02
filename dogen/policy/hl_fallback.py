@@ -152,8 +152,8 @@ def include_analyze(basic, kdata, policy_args):
         if pick_index == 0:
             logger.debug("Fallback didn't occur")
             return None
-        if (kdata.iloc[pick_index][dogen.VOLUME+1] * volume_scale) > kdata.iloc[pick_index][dogen.VOLUME]:
-            logger.debug("Too small volume at " + kdata.index[pick_index-1])
+        if (kdata.iloc[pick_index+1][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index][dogen.VOLUME]:
+            logger.debug("Too small volume at " + kdata.index[pick_index])
             return None
         if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_OPEN]) <= -3:
             logger.debug("Invalid open&close at %s" % kdata.index[pick_index])
