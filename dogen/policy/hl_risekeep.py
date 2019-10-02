@@ -91,8 +91,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     maxi_close   = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding  = __parse_policy_args(policy_args, OUTSTANDING)
 
-    mini_index = dogen.get_last_column_min(kdata, dogen.P_CLOSE, sIdx=take_index, eIdx=pick_index)
-
     ### 净资产为负数的
     if basic[dogen.BVPS] <= 0:
         logger.debug("Invalid bvps")
@@ -132,6 +130,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     ### 特征六
     if pick_index >= 5:
+        mini_index = dogen.get_last_column_min(kdata, dogen.P_CLOSE, sIdx=take_index, eIdx=pick_index)
         temp_falls = dogen.caculate_incr_percentage(kdata.iloc[mini_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE])
         if temp_falls > -3 or temp_falls < -10:
             logger.debug("Get invalid lowest trade at %s" % kdata.index[mini_index])
@@ -147,7 +146,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征七
-    for temp_index in range(mini_index, 0, -1):
+    for temp_index in range(pick_index, 0, -1):
         ### 下跌或假阴线
         if (kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN])\
         or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
