@@ -24,7 +24,7 @@ MINI_HL     = 'mini_hl'
 MAXI_HL     = 'maxi_hl'
 TAKE_VALID  = 'take_valid'
 MAXI_RISE   = 'maxi_rise'
-MAX_TAKE2HL = 'maxi_take2hl'
+MAX_TAKE2PICK = 'maxi_take2pick'
 MAXI_CLOSE  = 'maxi_close'
 OUTSTANDING = 'outstanding'
 
@@ -35,7 +35,7 @@ ARGS_DEAULT_VALUE = {
     MAXI_HL: 15,        #
     TAKE_VALID: 0,  # 倍
     MAXI_RISE: 35,   # 1%
-    MAX_TAKE2HL: 15, 
+    MAX_TAKE2PICK: 15, 
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -87,7 +87,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
     maxi_rise    = __parse_policy_args(policy_args, MAXI_RISE)
-    maxi_take2hl = __parse_policy_args(policy_args, MAX_TAKE2HL)
+    maxi_take2pick = __parse_policy_args(policy_args, MAX_TAKE2PICK)
     maxi_close   = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding  = __parse_policy_args(policy_args, OUTSTANDING)
 
@@ -100,30 +100,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
         
     ### 特征三
-    try:
-        this_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
-        if this_range is not None:
-            [min_index, max_index, inc_close, get_lhigh] = rise_range
-            if max_index >= pick_index and max_index <= take_index:
-                logger.debug("Too large rise-range")
-                return True
-            pass
-    except Exception:
-        traceback.print_exc()
-        pass    
-    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > maxi_take2hl:
-        logger.debug("Too large rise at %s" % kdata.index[take_index])
-        return True
-
-    ### 特征四
-    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
-        logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
-        return True
-    if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
-        logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
-        return True
-
-    ### 特征五
     if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
         logger.debug("Too high close price at %s" % kdata.index[take_index])
         return True
@@ -131,10 +107,30 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("Too large outstanding at %s" % kdata.index[take_index])
         return True
 
+    ### 特征四
+    rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
+    if rise_range is not None:
+        [min_index, max_index, inc_close, get_lhigh] = rise_range
+        if max_index == pick_index:
+            logger.debug("Too large rise-range")
+            return True
+        pass
+    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > maxi_take2pick:
+        logger.debug("Too large rise at %s" % kdata.index[take_index])
+        return True
+
+    ### 特征五
+    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
+        logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
+        return True
+    if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
+        logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
+        return True
+
     ### 特征六
     if pick_index >= 5:
         temp_falls = dogen.caculate_incr_percentage(kdata.iloc[mini_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE])
-        if temp_falls > -3 or temp_falls < -10:
+        if temp_falls > -3:
             logger.debug("Get invalid lowest trade at %s" % kdata.index[mini_index])
             return True
         temp_index = pick_index
@@ -216,7 +212,7 @@ def include_analyze(basic, kdata, policy_args):
                 continue
             if heap_rises >= 5:
                 take_index = temp_index
-            if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+            if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
                 take_index = temp_index
             pass
         if take_index is not None:
@@ -275,12 +271,12 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                     b. 若take-trade之后最后交易日收盘价突破，更新为买入信号；
         
         >>> 排它条件
-            三 股价成本合理：
-                1) 在一个月交易日内，最高涨幅由maxi_rise限制（默认35%）；
-                2) take-trade相对于涨停日收盘价涨幅由maxi_take2hl限制（默认15%）
-            四 维持上涨趋势：MA5上涨，且take-trade收盘价高于MA20
-            五 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上,高于-10个点以上
+            三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
+            四 股价成本合理：
+                1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
+                2) take-trade相对于pick-trade收盘价涨幅由maxi_take2pick限制（默认15%）
+            五 维持上涨趋势：MA5上涨，且take-trade收盘价高于MA20
+            六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上
             七 碗底之后若放量下跌必须突破最高价
 
         参数说明：

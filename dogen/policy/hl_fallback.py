@@ -92,18 +92,22 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     if basic[dogen.BVPS] <= 0:
         logger.debug("Invalid bvps")
         return True
+
+    ### 特征三
+    if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
+        logger.debug("Too high close price at %s" % kdata.index[take_index])
+        return True
+    if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
+        logger.debug("Too large outstanding at %s" % kdata.index[take_index])
+        return True
     
     ### 特征四
-    try:
-        rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2)
-        if rise_range is not None:
-            [min_index, max_index, inc_close, get_lhigh] = rise_range
-            if max_index == pick_index:
-                logger.debug("Too large rise-range")
-                return True
-            pass
-    except Exception:
-        traceback.print_exc()
+    rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
+    if rise_range is not None:
+        [min_index, max_index, inc_close, get_lhigh] = rise_range
+        if max_index == pick_index:
+            logger.debug("Too large rise-range")
+            return True
         pass
 
     ### 特征五
@@ -112,14 +116,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
     if kdata.iloc[take_index+1][dogen.MA5] > kdata.iloc[take_index][dogen.MA5]:
         logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
-        return True
-
-    ### 特征六
-    if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
-        logger.debug("Too high close price at %s" % kdata.index[take_index])
-        return True
-    if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
-        logger.debug("Too large outstanding at %s" % kdata.index[take_index])
         return True
 
     return False
@@ -149,9 +145,6 @@ def include_analyze(basic, kdata, policy_args):
             return None
         ### 取最低回调价
         mini_close = kdata.iloc[pick_index+1][dogen.P_CLOSE]
-        pass
-    
-    ### 特征二
     if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
         pick_index -= 1
         if pick_index == 0:
@@ -165,8 +158,7 @@ def include_analyze(basic, kdata, policy_args):
             return None
         pass
 
-    
-    ### 特征三
+    ### 特征二
     heap_falls = 0
     take_index = None
     for temp_index in range(pick_index-1, -1, -1):
@@ -224,17 +216,16 @@ def stock_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 涨停回调策略，满足条件：
         >>> 基本条件
-            一 仅有一个涨停在hl_valid交易日内;
-            二 涨停后限一个交易日上涨，放量限制最小volume_scale倍；
-            三 买入信号(take-trade)，有效期由take_valid限定:
+            一 仅有一个涨停在hl_valid交易日内, 涨停后限一个交易日上涨，放量限制最小volume_scale倍；
+            二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 连续缩量下跌[mini_falls, maxi_falls]，放量下跌或上涨即终止；
         
         >>> 排它条件
+            三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 股价成本合理：
-                1) 在maxi_days交易日内，最高涨幅由maxi_rise限制（默认35%）； 
+                1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) 不可回调过高，take-trade收盘价高于涨停前交易日
             五 维持上涨趋势：MA5高于MA20, 且take-trade交易日MA5高于前一交易日
-            六 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日

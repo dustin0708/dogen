@@ -21,9 +21,10 @@ from dogen import logger, mongo_server, mongo_database
 MAXI_DAYS   = 'maxi_days'
 PICK_VALID  = 'pick_valid'
 TAKE_VALID  = 'take_valid'
-MAXI_RISES  = 'maxi_rises'
+MAXI_RISE   = 'maxi_rise'
+MAX_TAKE2PICK = 'maxi_take2pick'
 MAXI_CLOSE  = 'maxi_close'
-MAXI_MVALUE= 'market_value'
+OUTSTANDING = 'market_value'
 
 
 ### 策略参数经验值(默认值)
@@ -31,9 +32,10 @@ ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 180,      # 天
     PICK_VALID: 15,      
     TAKE_VALID: 0,      # 
-    MAXI_RISES: 50,
-    MAXI_CLOSE: 40,
-    MAXI_MVALUE: 40,
+    MAXI_RISE: 35,
+    MAX_TAKE2PICK: 15,
+    MAXI_CLOSE: 50,
+    OUTSTANDING: 100,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -85,43 +87,37 @@ def score_analyze(basic, kdata, pick_index, take_index):
 def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
-    maxi_rises  = __parse_policy_args(policy_args, MAXI_RISES)
+    maxi_rise   = __parse_policy_args(policy_args, MAXI_RISE)
+    maxi_take2pick = __parse_policy_args(policy_args, MAX_TAKE2PICK)
     maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
-    maxi_mvalue = __parse_policy_args(policy_args, MAXI_MVALUE)
+    outstanding = __parse_policy_args(policy_args, OUTSTANDING)
 
     ### 净资产为负数的
     if basic[dogen.BVPS] <= 0:
         logger.debug("Invalid bvps")
         return True
         
-    ### 最大收盘价校验
-    if maxi_close is not None and kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
-        logger.debug("Too large close price")
+    ### 特征三
+    if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
+        logger.debug("Too high close price at %s" % kdata.index[take_index])
         return True
-
-    ### 最大流通市值校验
-    if maxi_mvalue is not None and round(kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) > maxi_mvalue:
-        logger.debug("Too large market value")
+    if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
+        logger.debug("Too large outstanding at %s" % kdata.index[take_index])
         return True
     
-    ### 允许短暂回调MA10上涨
-    if kdata.iloc[take_index][dogen.MA10] < kdata.iloc[take_index+1][dogen.MA10]:
-        logger.debug("Invalid MA10 at %s" % kdata.index[take_index])
-        return True
-
-    ### taketrade收盘价相对涨停不能过高
-    rise_range = dogen.get_last_rise_range(kdata, maxi_rises, max_fall=maxi_rises/2, eIdx=pick_index+1)
+    ### 特征四
+    rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
     if rise_range is not None:
-        logger.debug("Too large rise after %s" % kdata.index[pick_index])
+        [min_index, max_index, inc_close, get_lhigh] = rise_range
+        if max_index == pick_index:
+            logger.debug("Too large rise-range")
+            return True
+        pass
+    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > maxi_take2pick:
+        logger.debug("Too large rise at %s" % kdata.index[take_index])
         return True
 
-    ### 三个月内必须有涨停
-    tdata = kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]]
-    if tdata.index.size <= 0:
-        logger.debug("Don't include hl-trade")
-        return True
-
-    ### 排除放量下跌且股价未突破的股票
+    ### 特征五
     for temp_index in range(pick_index, -1, -1):
         if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
             continue
@@ -137,6 +133,16 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     ### 不能超过MA20价15个点
     if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[0][dogen.MA20]) > 15:
         logger.debug("Too large rise at %s" % kdata.index[0])
+        return True
+    ### 允许短暂回调MA10上涨
+    if kdata.iloc[take_index][dogen.MA10] < kdata.iloc[take_index+1][dogen.MA10]:
+        logger.debug("Invalid MA10 at %s" % kdata.index[take_index])
+        return True
+
+    ### 三个月内必须有涨停
+    tdata = kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]]
+    if tdata.index.size <= 0:
+        logger.debug("Don't include hl-trade")
         return True
 
     ### take交易日不能涨停（属于打板）
@@ -184,8 +190,7 @@ def include_analyze(basic, kdata, policy_args):
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
-        elif temp_close >= 3\
-        and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
+        elif temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
@@ -252,8 +257,12 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                     b. 限take-trade之后一个交易日缩量下跌，更新take-trade；
         
         >>> 排它条件
-            三 最近交易日若有放量下跌，其后必须有交易日突破其最高价；
-            四 样本区间内必须有过涨停，仅限当前上涨区间和前一个下跌区间(根据反弹策略而定)；
+            三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
+            四 股价成本合理：
+                1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
+                2) take-trade相对于pick-trade收盘价涨幅由maxi_take2pick限制（默认15%）
+            五 最近交易日若有放量下跌，其后必须有交易日突破其最高价；
+            六 样本区间内必须有过涨停，仅限当前上涨区间和前一个下跌区间(根据反弹策略而定)；
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
