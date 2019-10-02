@@ -82,22 +82,24 @@ def score_analyze(basic, kdata, pick_index, take_index):
 
     return (int)(score)
 
-def exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_args):
+def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
+    maxi_rises  = __parse_policy_args(policy_args, MAXI_RISES)
+    maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
+    maxi_mvalue = __parse_policy_args(policy_args, MAXI_MVALUE)
+
     ### 净资产为负数的
     if basic[dogen.BVPS] <= 0:
         logger.debug("Invalid bvps")
         return True
         
     ### 最大收盘价校验
-    maxi_close = __parse_policy_args(policy_args, MAXI_CLOSE)
     if maxi_close is not None and kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
         logger.debug("Too large close price")
         return True
 
     ### 最大流通市值校验
-    maxi_mvalue = __parse_policy_args(policy_args, MAXI_MVALUE)
     if maxi_mvalue is not None and round(kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) > maxi_mvalue:
         logger.debug("Too large market value")
         return True
@@ -144,72 +146,85 @@ def exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_arg
 
     return False
 
-def stock_analyze(basic, kdata, policy_args):
+def include_analyze(basic, kdata, policy_args):
     """ 
     """
     ### 参数解析
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
     pick_valid = __parse_policy_args(policy_args, PICK_VALID)
-    maxi_rises = __parse_policy_args(policy_args, MAXI_RISES)
 
-    ### 特征一：
-    for temp_index in range(pick_valid, -1, -1):
+    ### 特征一
+    pick_index = None
+    for temp_index in range(0, pick_valid):
         if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index][dogen.MA20]:
-            logger.debug("Invalid MA5&MA20 at %s" % kdata.index[temp_index])
-            return None
-        if kdata.iloc[temp_index][dogen.MA20] < kdata.iloc[temp_index+1][dogen.MA20]:
-            logger.debug("Invalid MA20 at %s" % kdata.index[temp_index])
-            return None
-        pass
-    
-    ### 特征二校验
-    pick_index = 0
-    for pick_index in range(0, kdata.index.size-1):
-        if kdata.iloc[pick_index][dogen.MA5] < kdata.iloc[pick_index][dogen.MA20]:
-            pick_index -= 1
             break
-        pass
-
-    ### 特征三校验
+        pick_index = temp_index
+    if pick_index is None:
+        logger.debug("Don't get valid pick-trade")
+        return None
+    
+    ### 特征二
     take_index = None
     heap_rises = 0
-    for temp_index in range(9, -1, -1):
+    for temp_index in range(pick_index, -1, -1):
         ### 获取上涨take
         temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
         if temp_close < 0:
             heap_rises = 0
         else:
             heap_rises += temp_close
+        ### 上涨take交易日必须放量
+        if kdata.iloc[temp_index][dogen.VOLUME] < kdata.iloc[temp_index+1][dogen.VOLUME] * 1.1:
+            continue
+        ### 不能是上影线
+        if kdata.iloc[temp_index][dogen.R_CLOSE] * 2 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
+            continue
+
         if heap_rises >= 5:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
         elif temp_close >= 3\
-         and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
+        and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
         pass
-    ### 最近收盘价比take_index高更新, 且放量上涨
-    if take_index is not None\
-    and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[take_index][dogen.P_CLOSE]\
-    and kdata.iloc[0][dogen.VOLUME] > kdata.iloc[1][dogen.VOLUME]:
+    if take_index is None:
+        logger.debug("Don't get take-trade")
+        return None
+    ### take_index之后缩量下跌(限一个交易日)，也符合策略
+    if take_index == 1\
+    and kdata.iloc[take_index-1][dogen.R_CLOSE] < 0\
+    and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
+        take_index-= 1
+    ### 最近收盘价比take_index(不能取更新后值)高更新
+    elif take_index <= 3 and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
         take_index = 0
-    for temp_index in range(9, -1, -1):
+    for temp_index in range(take_index, -1, -1):
         ### 获取踩ma20 take
-        if kdata.iloc[temp_index][dogen.P_LOW] <= kdata.iloc[temp_index][dogen.MA20]\
-         and kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.MA20]:
-            ### 满足ma5一直大于ma20的前提才有效
+        if kdata.iloc[temp_index][dogen.P_LOW] <= kdata.iloc[temp_index][dogen.MA20]:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
         pass
-    if take_index is None or take_index > take_valid:
-        logger.debug("Don't match valid take-trade")
+    if take_index > take_valid:
+        logger.debug("Don't get valid take-trade")
         return None
 
-    ### 结果最后排它校验
-    if exclude_analyze(basic, kdata, pick_index, take_index, maxi_rises, policy_args):
+    return [pick_index, take_index]
+
+def stock_analyze(basic, kdata, policy_args):
+    ### 基本条件选取
+    get_index = include_analyze(basic, kdata, policy_args)
+    if get_index is None:
+        logger.debug("include_analyze() return None")
+        return None
+    else:
+        [pick_index, take_index] = get_index
+
+    ### 排它条件过滤
+    if exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("exclude_analyze() return True")
         return None
 
@@ -230,7 +245,7 @@ def stock_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 上涨策略, 满足条件：
         >>> 基本条件
-            一 入选条件，最近交易日MA5突破MA20, 且MA20上涨趋势;
+            一 入选条件，最近交易日MA5突破MA20
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 累积上涨超过5个点，或者单日涨幅超过3个点；
                     a. 回调至踩MA20线，且回调过程缩量，更新take-trade；
