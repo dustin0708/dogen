@@ -97,8 +97,11 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     try:
         rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2)
         if rise_range is not None:
-            logger.debug("Too large rise-range")
-            return True
+            [min_index, max_index, inc_close, get_lhigh] = rise_range
+            if max_index == pick_index:
+                logger.debug("Too large rise-range")
+                return True
+            pass
     except Exception:
         traceback.print_exc()
         pass
@@ -107,7 +110,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
         logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
         return True
-    if kdata.iloc[take_index+1][dogen.MA5] >= kdata.iloc[take_index][dogen.MA5]:
+    if kdata.iloc[take_index+1][dogen.MA5] > kdata.iloc[take_index][dogen.MA5]:
         logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
         return True
 

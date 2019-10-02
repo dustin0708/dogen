@@ -102,8 +102,11 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     try:
         this_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
         if this_range is not None:
-            logger.debug("Too large rise-range")
-            return True
+            [min_index, max_index, inc_close, get_lhigh] = rise_range
+            if max_index >= pick_index and max_index <= take_index:
+                logger.debug("Too large rise-range")
+                return True
+            pass
     except Exception:
         traceback.print_exc()
         pass    
