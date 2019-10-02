@@ -132,7 +132,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征六
-    if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
+    if kdata.iloc[take_index][dogen.MA10] < kdata.iloc[take_index+1][dogen.MA10]:
         logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
         return True
 
@@ -256,7 +256,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) take-trade相对于pick-trade收盘价涨幅由maxi_take2pick限制（默认15%）
             五 最近交易日若有放量下跌，其后必须有交易日突破其最高价；
-            六 上涨趋势: MA20上涨
+            六 上涨趋势: MA10上涨
             七 样本区间内必须有过涨停，仅限当前上涨区间和前一个下跌区间(根据反弹策略而定)；
 
         参数说明：
