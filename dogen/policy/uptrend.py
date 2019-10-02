@@ -109,7 +109,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
     if rise_range is not None:
         [min_index, max_index, inc_close, get_lhigh] = rise_range
-        if max_index == pick_index:
+        if pick_index >= min_index and pick_index <= max_index:
             logger.debug("Too large rise-range")
             return True
         pass
@@ -131,23 +131,14 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征六
+    if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
+        logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
+        return True
+
+    ### 特征七
     tdata = kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]]
     if tdata.index.size <= 0:
         logger.debug("Don't include hl-trade")
-        return True
-
-    ### 不能超过MA20价15个点
-    if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[0][dogen.MA20]) > 15:
-        logger.debug("Too large rise at %s" % kdata.index[0])
-        return True
-    ### 允许短暂回调MA10上涨
-    if kdata.iloc[take_index][dogen.MA10] < kdata.iloc[take_index+1][dogen.MA10]:
-        logger.debug("Invalid MA10 at %s" % kdata.index[take_index])
-        return True
-
-    ### take交易日不能涨停（属于打板）
-    if kdata.iloc[take_index][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.L_HIGH]:
-        logger.debug("Get invalid take-trade at %s" % kdata.index[take_index])
         return True
 
     return False
@@ -185,7 +176,9 @@ def include_analyze(basic, kdata, policy_args):
         ### 不能是上影线
         if kdata.iloc[temp_index][dogen.R_CLOSE] * 3 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
             continue
-
+        ### 不能是涨停
+        if kdata.iloc[take_index][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.L_HIGH]:
+            continue
         if heap_rises >= 5:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
@@ -263,7 +256,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 2) take-trade相对于pick-trade收盘价涨幅由maxi_take2pick限制（默认15%）
             五 最近交易日若有放量下跌，其后必须有交易日突破其最高价；
             六 上涨趋势: MA20上涨
-            六 样本区间内必须有过涨停，仅限当前上涨区间和前一个下跌区间(根据反弹策略而定)；
+            七 样本区间内必须有过涨停，仅限当前上涨区间和前一个下跌区间(根据反弹策略而定)；
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
