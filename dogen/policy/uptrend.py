@@ -177,9 +177,6 @@ def include_analyze(basic, kdata, policy_args):
         ### 不能是上影线
         if kdata.iloc[temp_index][dogen.R_CLOSE] * 3 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
             continue
-        ### 不能是涨停
-        if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
-            continue
         if heap_rises >= 5:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
@@ -207,7 +204,7 @@ def include_analyze(basic, kdata, policy_args):
                 take_index = temp_index
             pass
         pass
-    if take_index > take_valid:
+    if take_index > take_valid or kdata.iloc[take_index][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.L_HIGH]:
         logger.debug("Don't get valid take-trade")
         return None
 
