@@ -208,7 +208,7 @@ def include_analyze(basic, kdata, policy_args):
             if kdata.iloc[temp_index][dogen.VOLUME] < kdata.iloc[temp_index+1][dogen.VOLUME] * 1.1:
                 continue
             ### 不能是上影线
-            if kdata.iloc[temp_index][dogen.R_CLOSE] * 2 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
+            if kdata.iloc[temp_index][dogen.R_CLOSE] * 3 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
                 continue
             if heap_rises >= 5:
                 take_index = temp_index

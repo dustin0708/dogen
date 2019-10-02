@@ -130,6 +130,12 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             return True
         pass
 
+    ### 特征六
+    tdata = kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]]
+    if tdata.index.size <= 0:
+        logger.debug("Don't include hl-trade")
+        return True
+
     ### 不能超过MA20价15个点
     if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[0][dogen.MA20]) > 15:
         logger.debug("Too large rise at %s" % kdata.index[0])
@@ -137,12 +143,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     ### 允许短暂回调MA10上涨
     if kdata.iloc[take_index][dogen.MA10] < kdata.iloc[take_index+1][dogen.MA10]:
         logger.debug("Invalid MA10 at %s" % kdata.index[take_index])
-        return True
-
-    ### 三个月内必须有涨停
-    tdata = kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]]
-    if tdata.index.size <= 0:
-        logger.debug("Don't include hl-trade")
         return True
 
     ### take交易日不能涨停（属于打板）
@@ -183,7 +183,7 @@ def include_analyze(basic, kdata, policy_args):
         if kdata.iloc[temp_index][dogen.VOLUME] < kdata.iloc[temp_index+1][dogen.VOLUME] * 1.1:
             continue
         ### 不能是上影线
-        if kdata.iloc[temp_index][dogen.R_CLOSE] * 2 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
+        if kdata.iloc[temp_index][dogen.R_CLOSE] * 3 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
             continue
 
         if heap_rises >= 5:
@@ -262,6 +262,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) take-trade相对于pick-trade收盘价涨幅由maxi_take2pick限制（默认15%）
             五 最近交易日若有放量下跌，其后必须有交易日突破其最高价；
+            六 上涨趋势: MA20上涨
             六 样本区间内必须有过涨停，仅限当前上涨区间和前一个下跌区间(根据反弹策略而定)；
 
         参数说明：
