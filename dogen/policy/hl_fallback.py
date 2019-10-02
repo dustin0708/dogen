@@ -148,15 +148,18 @@ def include_analyze(basic, kdata, policy_args):
     
     ### 特征二
     if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
-        if (kdata.iloc[pick_index][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index-1][dogen.VOLUME]:
-            logger.debug("Too small volume at " + kdata.index[pick_index-1])
-            return None
-        ### 更正pick_index
-        pick_index = pick_index-1
+        pick_index -= 1
         if pick_index == 0:
             logger.debug("Fallback didn't occur")
             return None
+        if (kdata.iloc[pick_index][dogen.VOLUME+1] * volume_scale) > kdata.iloc[pick_index][dogen.VOLUME]:
+            logger.debug("Too small volume at " + kdata.index[pick_index-1])
+            return None
+        if kdata.iloc[pick_index][dogen.P_OPEN] > kdata.iloc[pick_index][dogen.P_CLOSE]:
+            logger.debug("Invalid open&close at %s" % kdata.index[pick_index])
+            return None
         pass
+
     
     ### 特征三
     heap_falls = 0
