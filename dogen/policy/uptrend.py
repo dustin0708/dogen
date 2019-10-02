@@ -122,14 +122,14 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 排除放量下跌且股价未突破的股票
-    for temp_index in range(pick_index, 0, -1):
+    for temp_index in range(pick_index, -1, -1):
         if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
             continue
         if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
             continue
         ### 放量下跌之后未被上涨突破
         maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=temp_index)
-        if kdata.iloc[temp_index][dogen.P_HIGH] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
+        if maxi_index is None or kdata.iloc[temp_index][dogen.P_HIGH] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
             logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
             return True
         pass
