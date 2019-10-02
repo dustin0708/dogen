@@ -23,7 +23,6 @@ TAKE_VALID  = 'take_valid'
 HL_VALID    = 'hl_valid'
 VOLUME_SCALE= 'volume_scale'
 MINI_FALLS  = 'mini_falls'
-MAXI_FALLS  = 'maxi_falls'
 MAXI_RISE   = 'maxi_rise'
 MAXI_CLOSE  = 'maxi_close'
 OUTSTANDING = 'outstanding'
@@ -35,7 +34,6 @@ ARGS_DEAULT_VALUE = {
     HL_VALID: 4,        #
     VOLUME_SCALE: 1.2,  # 倍
     MINI_FALLS: 3.99,   # 1%
-    MAXI_FALLS: 9.9,
     MAXI_RISE: 35,   # 1%
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
@@ -126,7 +124,6 @@ def include_analyze(basic, kdata, policy_args):
     hl_valid    = __parse_policy_args(policy_args, HL_VALID)
     volume_scale= __parse_policy_args(policy_args, VOLUME_SCALE)
     mini_falls  = __parse_policy_args(policy_args, MINI_FALLS)
-    maxi_falls  = __parse_policy_args(policy_args, MAXI_FALLS)
 
     ### 特征一
     index = dogen.get_highlimit_trades(kdata, eIdx=hl_valid+1)
@@ -144,6 +141,8 @@ def include_analyze(basic, kdata, policy_args):
         if kdata.iloc[pick_index][dogen.R_AMP] < 5:
             logger.debug("Invalid R_AMP at %s" % kdata.index[pick_index])
             return None
+        ### 取最低回调价
+        mini_close = kdata.iloc[pick_index+1][dogen.P_CLOSE]
         pass
     
     ### 特征二
@@ -164,21 +163,20 @@ def include_analyze(basic, kdata, policy_args):
     ### 特征三
     heap_falls = 0
     take_index = None
-    for this_index in range(pick_index-1, -1, -1):        
+    for this_index in range(pick_index-1, -1, -1):
+        if kdata.iloc[this_index][dogen.P_CLOSE] < mini_close:
+            logger.debug("Get invalid fall trade at %s" % kdata.index[this_index])
+            return None
         this_close = kdata.iloc[this_index][dogen.R_CLOSE]
         if this_close > 0:
-            heap_falls = 0
+            if take_index is not None:
+                take_index = this_index
+            pass
         else:
             heap_falls+= abs(this_close)
         ### 达到回调要求, 命中
-        if heap_falls >= mini_falls and heap_falls <= maxi_falls:
+        if heap_falls >= mini_falls:
             take_index = this_index
-        ### 若上涨即停止
-        if  this_close > 0:
-            ### 更新take_index
-            if take_index is not None:
-                take_index = this_index
-            break
         ### 若放量下跌即终止
         elif kdata.iloc[this_index][dogen.VOLUME] > kdata.iloc[this_index+1][dogen.VOLUME]:
             break
