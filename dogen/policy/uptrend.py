@@ -177,7 +177,7 @@ def include_analyze(basic, kdata, policy_args):
         if kdata.iloc[temp_index][dogen.R_CLOSE] * 3 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
             continue
         ### 不能是涨停
-        if kdata.iloc[take_index][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.L_HIGH]:
+        if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
             continue
         if heap_rises >= 5:
             if take_index is None or take_index > temp_index:
