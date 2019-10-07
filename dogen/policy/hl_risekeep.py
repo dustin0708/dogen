@@ -173,7 +173,11 @@ def include_analyze(basic, kdata, policy_args):
         pick_trade = index[0]
         pick_index = kdata.index.get_loc(pick_trade)
         pick_close = kdata.iloc[pick_index][dogen.P_CLOSE]
-        mini_close = kdata.iloc[pick_index+1][dogen.P_CLOSE]
+        mini_index = pick_index + 1
+        if mini_index < kdata.index.size:
+            mini_close = kdata.iloc[pick_index+1][dogen.P_CLOSE]
+        else:
+            mini_close = 0
     if pick_index < mini_hl:
         logger.debug("Invalid hl-trade at %s" % pick_trade)
         return None

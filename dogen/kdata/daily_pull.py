@@ -68,9 +68,10 @@ def update_kdata(codes, full=False, start=None, end=None):
                 kdata = kdata.loc[(kdata.index<from_trade) | (kdata.index>last_trade)]
             
             ### 写数据库
-            db.insert_stock_basic(code, basic)
-            db.insert_stock_kdata(code, kdata, kdata.index)
-            success_list.append(code)
+            if kdata is not None:
+                db.insert_stock_basic(code, basic)
+                db.insert_stock_kdata(code, kdata, kdata.index)
+                success_list.append(code)
 
             logger.debug("Success update %s with %d items." % (code, kdata.index.size))
         except Exception:

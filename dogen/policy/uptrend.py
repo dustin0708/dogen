@@ -151,6 +151,10 @@ def include_analyze(basic, kdata, policy_args):
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
     pick_valid = __parse_policy_args(policy_args, PICK_VALID)
 
+    if kdata.index.size <= pick_valid:
+        logger.debug("Don't include enough samples")
+        return None
+
     ### 特征一
     pick_index = None
     for temp_index in range(0, pick_valid):
