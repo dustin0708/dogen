@@ -147,10 +147,12 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             kdata.sort_index(ascending=False, inplace=True)
 
             ### 策略分析
-            logger.debug("Begin in analyzing %s from %s to %s" % (code, kdata.index[-1], kdata.index[0]))
-            match = stock_analyze(basic, kdata, policy_args)
-            if match is None:
-                continue
+            if kdata is not None and kdata.index.size > 0:
+                logger.debug("Begin in analyzing %s from %s to %s" % (code, kdata.index[-1], kdata.index[0]))
+                match = stock_analyze(basic, kdata, policy_args)
+                if match is None:
+                    continue
+                pass
             
             ### 输出结果
             match_list.append(match)
