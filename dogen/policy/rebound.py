@@ -22,18 +22,14 @@ MAXI_DAYS   = 'maxi_days'
 PICK_VALID  = 'pick_valid'
 TAKE_VALID  = 'take_valid'
 HIGH_VALID  = 'high_valid'
-VOLUME_SCALE= 'volume_scale'
 MINI_FALLS  = 'mini_falls'
-MAXI_RISES  = 'maxi_rises'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 90,      # 天
+    MAXI_DAYS: 180,      # 天
     PICK_VALID: 9,       #
     TAKE_VALID: 0,      # 
-    VOLUME_SCALE: 1.2,  # 倍
     MINI_FALLS: 25,   # 1%
-    MAXI_RISES: 15,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -43,43 +39,47 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def stock_analyze(basic, kdata, policy_args):
+def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
+    ### 特征三
+    from_index = high_index
+    rise_range = dogen.get_last_rise_range(kdata, 20, max_fall=15, sIdx=high_index)
+    if rise_range is not None:
+        [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
+        if max_index == high_index:
+            from_index = min_index
+        pass
+    tdata = kdata[0:from_index+1]
+    tdata = tdata[tdata[dogen.P_CLOSE] >=  tdata[dogen.L_HIGH]]
+    if tdata.index.size <= 0:
+        logger.debug("Don't include highlimit trade from %s to %s" % (kdata.index[high_index], kdata.index[0]))
+        return True
+        
+    return False
+
+def include_analyze(basic, kdata, policy_args):
     """ 
     """
     ### 参数解析
     pick_valid = __parse_policy_args(policy_args, PICK_VALID)
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
     mini_falls = __parse_policy_args(policy_args, MINI_FALLS)
-    maxi_rises = __parse_policy_args(policy_args, MAXI_RISES)
 
-    ### 特征一：获取有效跌幅区间
-    trange = dogen.get_last_fall_range(kdata, mini_falls, max_rise=mini_falls)
-    if trange is None:
+    ### 特征一
+    fall_range = dogen.get_last_fall_range(kdata, mini_falls, max_rise=20)
+    if fall_range is None:
         logger.debug("Don't get valid fall-range")
         return None
     else:
-        [max_index, min_index, dec_close, get_llow, tmpId] = trange
-    ### 校验min_index之后涨幅区间
-    trange = dogen.get_last_rise_range(kdata, maxi_rises, max_fall=maxi_rises, eIdx=min_index)
-    if trange is not None:
-        logger.debug("Get invalid rise-range")
-        return None
-    ### min_index在有效期内
-    if min_index > pick_valid:
-        logger.debug("Too long from min-trade at %s" % kdata.index[min_index])
-        return None
-    
-    ### 特征二：校验区间[max_index+HIGH_VALID,min_index是否有涨停]
-    tdata = kdata[kdata[dogen.P_CLOSE] >=  kdata[dogen.L_HIGH]]
-    if tdata.index.size <= 0:
-        logger.debug("Don't include highlimit trade from %s to %s" % (kdata.index[max_index], kdata.index[min_index]))
+        [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
+    if pick_index > pick_valid:
+        logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
         return None
 
-    ### 特征三：
+    ### 特征二
     ma5__index = None
     rise_index = None
     take_index = None
-    for i in range(min_index, -1, -1):
+    for i in range(pick_index, -1, -1):
         if kdata.iloc[i][dogen.MA5] >= kdata.iloc[i+1][dogen.MA5]:
             ma5__index = i
         if kdata.iloc[i][dogen.R_AMP] >= kdata.iloc[i][dogen.R_CLOSE] > 0:
@@ -89,6 +89,22 @@ def stock_analyze(basic, kdata, policy_args):
         pass
     if take_index is None or take_index > take_valid:
         logger.debug("Don't get valid take-trade")
+        return None
+
+    return [pick_index, take_index, high_index]
+
+def stock_analyze(basic, kdata, policy_args):
+    ### 基本条件选取
+    get_index = include_analyze(basic, kdata, policy_args)
+    if get_index is None:
+        logger.debug("include_analyze() return None")
+        return None
+    else:
+        [pick_index, take_index, high_index] = get_index
+
+    ### 排它条件过滤
+    if exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
+        logger.debug("exclude_analyze() return True")
         return None
 
     ### 构造结果
@@ -106,10 +122,14 @@ def stock_analyze(basic, kdata, policy_args):
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 反弹策略, 有如下特征：
-            * $MAXI_DAYS交易日内，区间[max_index, min_index]下跌30%以上;
-            * [max_index+10, min_index]区间至少有一个涨停;
-            * min_index之后出现MA5上涨，振幅大于5且上涨交易日;
+    """ 反弹策略, 满足条件：
+        >>> 基本条件
+            一 下跌幅度达$MINI_FALLS;
+            二 买入信号(take-trade)，有效期由take_valid限定:
+                1) MA5上涨，振幅大于5%的上涨交易日
+
+        >>> 排它条件
+            三 前一个下降区间或上涨区间存在涨停交易日;
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
