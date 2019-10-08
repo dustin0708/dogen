@@ -76,17 +76,15 @@ def include_analyze(basic, kdata, policy_args):
         return None
 
     ### 特征二
-    ma5__index = None
-    rise_index = None
     take_index = None
     for i in range(pick_index, -1, -1):
-        if kdata.iloc[i][dogen.MA5] >= kdata.iloc[i+1][dogen.MA5]:
-            ma5__index = i
-        if kdata.iloc[i][dogen.R_AMP] >= kdata.iloc[i][dogen.R_CLOSE] > 0:
-            rise_index = i
-        if ma5__index is not None and rise_index is not None:
-            take_index = [ma5__index, rise_index][rise_index < ma5__index]
-        pass
+        if kdata.iloc[i][dogen.MA5] < kdata.iloc[i+1][dogen.MA5]:
+            continue
+        if kdata.iloc[i][dogen.R_AMP] < 5:
+            continue
+        if kdata.iloc[i][dogen.R_CLOSE] < 0:
+            continue
+        take_index = i
     if take_index is None or take_index > take_valid:
         logger.debug("Don't get valid take-trade")
         return None
