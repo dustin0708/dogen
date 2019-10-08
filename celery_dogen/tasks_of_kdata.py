@@ -47,4 +47,4 @@ def dispatcher_of_daily_pull_update_kdata(codes=None, full=False, start=None, en
             continue
         result.extend(reply[i].result)
         
-    return [codes, result]
+    return result
