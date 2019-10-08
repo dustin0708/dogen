@@ -32,7 +32,7 @@ ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 60,      # 天
     TAKE_VALID: 0,      # 
     HL_VALID: 4,        #
-    VOLUME_SCALE: 1.2,  # 倍
+    VOLUME_SCALE: 1.6,  # 倍
     MINI_FALLS: 3.99,   # 1%
     MAXI_RISE: 35,   # 1%
     MAXI_CLOSE: 50,
