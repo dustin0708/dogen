@@ -267,10 +267,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 match = stock_analyze(basic, kdata, policy_args)
                 if match is None:
                     continue
-                pass
-            
-            ### 输出结果
-            match_list.append(match)
+                ### 输出结果
+                match_list.append(match)
+                
         except Exception:
             logger.error('Trggered in handling code %s: %s' % (code, traceback.format_exc()))
             continue

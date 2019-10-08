@@ -302,11 +302,10 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 logger.debug("Begin in analyzing %s from %s to %s" % (code, kdata.index[-1], kdata.index[0]))
                 match = stock_analyze(basic, kdata, policy_args)
                 if match is None:
-                    continue
-                pass
-            
-            ### 输出结果
-            match_list.append(match)
+                    continue           
+                ### 输出结果
+                match_list.append(match)
+                
         except Exception:
             logger.error('Trggered in handling code %s: %s' % (code, traceback.format_exc()))
             continue
