@@ -41,19 +41,18 @@ def __parse_policy_args(policy_args, arg_name):
 
 def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
     ### 特征三
-    from_index = high_index
-    rise_range = dogen.get_last_rise_range(kdata, 20, max_fall=15, sIdx=high_index)
-    if rise_range is not None:
-        [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
-        if max_index == high_index:
-            from_index = min_index
-        pass
-    tdata = kdata[0:from_index+1]
+    tdata = kdata[0:high_index+1]
     tdata = tdata[tdata[dogen.P_CLOSE] >=  tdata[dogen.L_HIGH]]
     if tdata.index.size <= 0:
-        logger.debug("Don't include highlimit trade from %s to %s" % (kdata.index[high_index], kdata.index[0]))
-        return True
-        
+        rise_range = dogen.get_last_rise_range(kdata, 20, max_fall=15, sIdx=high_index)
+        if rise_range is not None:
+            [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
+            if max_index != high_index or get_lhigh <= 0:
+                logger.debug("Don't include highlimit trade from %s to %s" % (kdata.index[high_index], kdata.index[0]))
+                return True
+            pass
+        pass
+
     return False
 
 def include_analyze(basic, kdata, policy_args):
