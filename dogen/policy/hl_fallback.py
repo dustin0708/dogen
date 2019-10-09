@@ -111,12 +111,14 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征五
-    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
-        logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
-        #return True
-    if kdata.iloc[take_index+1][dogen.MA5] > kdata.iloc[take_index][dogen.MA5]:
-        logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
-        #return True
+    if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
+        if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
+            logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
+            return True
+        if kdata.iloc[take_index+1][dogen.MA5] > kdata.iloc[take_index][dogen.MA5]:
+            logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
+            return True
+        pass
 
     ### 特征六
     if kdata.iloc[pick_index-1][dogen.P_OPEN] > kdata.iloc[pick_index][dogen.P_CLOSE]:
@@ -230,7 +232,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) 不可回调过高，take-trade收盘价高于涨停前交易日
-            五 维持上涨趋势：MA5高于MA20, 且take-trade交易日MA5高于前一交易日(deprecated)
+            五 维持上涨趋势：
+                1) MA20高于前一日;
+                2) 若MA20减小, 则必须MA5高于MA20, 且take-trade交易日MA5高于前一交易日;
             六 pick-trade后一交易日开盘价不可超过pick-trade收盘价
 
         参数说明：
