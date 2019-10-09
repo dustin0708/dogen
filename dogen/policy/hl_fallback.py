@@ -155,7 +155,7 @@ def include_analyze(basic, kdata, policy_args):
         if (kdata.iloc[pick_index+1][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index][dogen.VOLUME]:
             logger.debug("Too small volume at " + kdata.index[pick_index])
             return None
-        if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_OPEN]) <= -3:
+        if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_OPEN]) <= -5:
             logger.debug("Invalid open&close at %s" % kdata.index[pick_index])
             return None
         pass
