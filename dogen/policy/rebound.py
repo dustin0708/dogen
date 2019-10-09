@@ -91,7 +91,7 @@ def include_analyze(basic, kdata, policy_args):
             take_index = temp_index
         pass
     if pick_index >= 5:
-        tdata = kdata[0, pick_index+1].sort_index()
+        tdata = kdata[0:pick_index+1].sort_index()
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 1)
         if polyf[0] >= 0:
             for temp_index in range(pick_index, -1, -1):
