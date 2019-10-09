@@ -231,7 +231,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) 不可回调过高，take-trade收盘价高于涨停前交易日
             五 维持上涨趋势：MA5高于MA20, 且take-trade交易日MA5高于前一交易日(deprecated)
-            六 pick-trade后一交易日最高价不可超过pick-trade收盘价
+            六 pick-trade后一交易日开盘价不可超过pick-trade收盘价
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
