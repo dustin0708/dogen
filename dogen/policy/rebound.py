@@ -19,7 +19,6 @@ from dogen import logger, mongo_server, mongo_database
 
 ### 策略参数名
 MAXI_DAYS   = 'maxi_days'
-PICK_VALID  = 'pick_valid'
 TAKE_VALID  = 'take_valid'
 HIGH_VALID  = 'high_valid'
 MINI_FALLS  = 'mini_falls'
@@ -27,7 +26,6 @@ MINI_FALLS  = 'mini_falls'
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 180,      # 天
-    PICK_VALID: 9,       #
     TAKE_VALID: 0,      # 
     MINI_FALLS: 25,   # 1%
 }
@@ -59,7 +57,6 @@ def include_analyze(basic, kdata, policy_args):
     """ 
     """
     ### 参数解析
-    pick_valid = __parse_policy_args(policy_args, PICK_VALID)
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
     mini_falls = __parse_policy_args(policy_args, MINI_FALLS)
 
