@@ -113,9 +113,14 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     ### 特征五
     if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
         logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
-        return True
+        #return True
     if kdata.iloc[take_index+1][dogen.MA5] > kdata.iloc[take_index][dogen.MA5]:
         logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
+        #return True
+
+    ### 特征六
+    if kdata.iloc[pick_index-1][dogen.P_HIGH] > kdata.iloc[pick_index][dogen.P_CLOSE]:
+        logger.debug("Invalid high price at %s" % kdata.index[pick_index-1])
         return True
 
     return False
@@ -225,7 +230,8 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) 不可回调过高，take-trade收盘价高于涨停前交易日
-            五 维持上涨趋势：MA5高于MA20, 且take-trade交易日MA5高于前一交易日
+            五 维持上涨趋势：MA5高于MA20, 且take-trade交易日MA5高于前一交易日(deprecated)
+            六 pick-trade后一交易日最高价不可超过pick-trade收盘价
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
