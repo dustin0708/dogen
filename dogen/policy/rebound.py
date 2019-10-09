@@ -142,7 +142,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         >>> 基本条件
             一 下跌幅度达$MINI_FALLS;
             二 买入信号(take-trade)，有效期由take_valid限定:
-                1) MA5上涨，振幅大于5%的上涨交易日
+                1) 累积上涨5个点以上；
+                2) 单日上涨3个点以上；
+                3) pick-trade之后保持横盘;
 
         >>> 排它条件
             三 前一个下降区间或上涨区间存在涨停交易日;
