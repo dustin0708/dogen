@@ -119,8 +119,8 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         #return True
 
     ### 特征六
-    if kdata.iloc[pick_index-1][dogen.P_HIGH] > kdata.iloc[pick_index][dogen.P_CLOSE]:
-        logger.debug("Invalid high price at %s" % kdata.index[pick_index-1])
+    if kdata.iloc[pick_index-1][dogen.P_OPEN] > kdata.iloc[pick_index][dogen.P_CLOSE]:
+        logger.debug("Invalid open price at %s" % kdata.index[pick_index-1])
         return True
 
     return False
