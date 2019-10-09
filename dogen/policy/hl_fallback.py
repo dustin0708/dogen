@@ -176,7 +176,7 @@ def include_analyze(basic, kdata, policy_args):
         if heap_falls >= mini_falls:
             take_index = temp_index
         ### 若放量下跌即终止
-        elif kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
+        if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
             break
         pass
     if take_index is None or take_index > take_valid:
