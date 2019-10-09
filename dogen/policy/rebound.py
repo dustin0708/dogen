@@ -70,9 +70,11 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-    if pick_index > pick_valid:
-        logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
-        return None
+    for temp_index in range(pick_index, -1, -1):
+        if kdata.iloc[temp_index][dogen.MA5] >= kdata.iloc[temp_index][dogen.MA20]:
+            logger.debug("Shouldn't treat as rebound trend")
+            return None
+        pass
 
     ### 特征二
     heap_rises = 0
@@ -99,7 +101,6 @@ def include_analyze(basic, kdata, policy_args):
         ### 最近收盘价比take_index(不能取更新后值)高更新
         elif take_index <= 3\
         and kdata.iloc[0][dogen.R_CLOSE] > 0\
-        and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[0][dogen.P_OPEN]\
         and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
             take_index = 0
         pass
