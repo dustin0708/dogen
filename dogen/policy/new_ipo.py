@@ -60,15 +60,15 @@ def include_analyze(basic, kdata, policy_args):
     ### 特征三：
     take_index = None
     heap_rises = 0
-    for i in range(kdata.index.size-1, -1, -1):
-        if kdata.iloc[i][dogen.P_CLOSE] >= kdata.iloc[i][dogen.L_HIGH] > 0:
-            take_index = i
-        if kdata.iloc[i][dogen.R_CLOSE] < 0:
+    for temp_index in range(kdata.index.size-1, -1, -1):
+        if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH] > 0:
+            take_index = temp_index
+        if kdata.iloc[temp_index][dogen.R_CLOSE] < 0:
             heap_rises = 0
         else:
-            heap_rises+= kdata.iloc[i][dogen.R_CLOSE]
-        if heap_rises >= 9.99:
-            take_index = i
+            heap_rises+= kdata.iloc[temp_index][dogen.R_CLOSE]
+        if heap_rises >= 5 or kdata.iloc[temp_index][dogen.R_CLOSE] > 3:
+            take_index = temp_index
         pass
     if take_index is None or take_index > take_valid:
         logger.debug("Don't get valid take-trade")
