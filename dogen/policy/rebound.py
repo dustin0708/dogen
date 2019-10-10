@@ -69,7 +69,7 @@ def include_analyze(basic, kdata, policy_args):
     else:
         [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
     for temp_index in range(pick_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.MA5] >= kdata.iloc[temp_index][dogen.MA20]:
+        if kdata.iloc[temp_index][dogen.MA5] > kdata.iloc[temp_index][dogen.MA20]:
             logger.debug("Shouldn't treat as rebound trend")
             return None
         pass
