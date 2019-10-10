@@ -208,7 +208,7 @@ def include_analyze(basic, kdata, policy_args):
         ### 获取踩ma20 take
         if kdata.iloc[temp_index][dogen.P_LOW] <= kdata.iloc[temp_index][dogen.MA20]:
             if take_index is None or take_index > temp_index:
-                take_index = temp_index
+                pass #take_index = temp_index
             pass
         pass
     if take_index > take_valid or kdata.iloc[take_index][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.L_HIGH]:
