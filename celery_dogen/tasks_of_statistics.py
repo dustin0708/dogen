@@ -21,6 +21,7 @@ def dispatcher_poll_result(reply):
     data = None
     if len(result) > 0:
         data = pandas.DataFrame.from_dict(result, orient='columns')
+        data.sort_values(by=dogen.RST_COL_RISE_RATE, ascending=False, inplace=True)
     return data
     
 @app.task
