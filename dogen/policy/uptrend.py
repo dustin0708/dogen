@@ -126,7 +126,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             continue
         ### 放量下跌之后未被上涨突破
         maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=temp_index)
-        if maxi_index is None or kdata.iloc[temp_index][dogen.P_HIGH] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
+        if maxi_index is None or kdata.iloc[temp_index][dogen.P_OPEN] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
             logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
             return True
         pass
@@ -199,7 +199,7 @@ def include_analyze(basic, kdata, policy_args):
     and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
         take_index-= 1
     ### 最近收盘价比take_index(不能取更新后值)高更新
-    elif take_index <= 3\
+    elif take_index <= 3 and take_index > 1\
     and kdata.iloc[0][dogen.R_CLOSE] > 0\
     and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[0][dogen.P_OPEN]\
     and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
