@@ -76,9 +76,11 @@ def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_arg
     rise_range = dogen.get_last_rise_range(kdata, 20, max_fall=20, sIdx=high_index)
     if rise_range is not None:
         [min_index, max_index, dec_close, get_hl, tmpId] = rise_range
-        if kdata.iloc[pick_index][dogen.P_CLOSE]*2 >= (kdata.iloc[min_index][dogen.P_CLOSE]+kdata.iloc[max_index][dogen.P_CLOSE]):
-            logger.debug("Invalid fall-range")
-            return True
+        if max_index == high_index:
+            if kdata.iloc[pick_index][dogen.P_CLOSE]*2 >= (kdata.iloc[min_index][dogen.P_CLOSE]+kdata.iloc[max_index][dogen.P_CLOSE]):
+                logger.debug("Invalid fall-range")
+                return True
+            pass
         pass
         
     return False
