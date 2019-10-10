@@ -32,7 +32,7 @@ ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 60,      # 天
     TAKE_VALID: 0,      # 
     HL_VALID: 4,        #
-    VOLUME_SCALE: 1.6,  # 倍
+    VOLUME_SCALE: 1.5,  # 倍
     MINI_FALLS: 3.99,   # 1%
     MAXI_RISE: 35,   # 1%
     MAXI_CLOSE: 50,
@@ -111,14 +111,9 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征五
-    if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
-        if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
-            logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
-            return True
-        if kdata.iloc[take_index+1][dogen.MA5] > kdata.iloc[take_index][dogen.MA5]:
-            logger.debug("Don't match valid MA5 at " + kdata.index[take_index])
-            return True
-        pass
+    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5] and kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
+        logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
+        return True
 
     ### 特征六
     if kdata.iloc[pick_index-1][dogen.P_OPEN] > kdata.iloc[pick_index][dogen.P_CLOSE]:
@@ -160,7 +155,7 @@ def include_analyze(basic, kdata, policy_args):
         if (kdata.iloc[pick_index+1][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index][dogen.VOLUME]:
             logger.debug("Too small volume at " + kdata.index[pick_index])
             return None
-        if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_OPEN]) <= -3:
+        if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_OPEN]) <= -5:
             logger.debug("Invalid open&close at %s" % kdata.index[pick_index])
             return None
         pass
@@ -232,9 +227,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) 不可回调过高，take-trade收盘价高于涨停前交易日
-            五 维持上涨趋势：
-                1) MA20高于前一日;
-                2) 若MA20减小, 则必须MA5高于MA20, 且take-trade交易日MA5高于前一交易日;
+            五 维持上涨趋势：take-trade交易日MA5或MA20上涨;
             六 pick-trade后一交易日开盘价不可超过pick-trade收盘价
 
         参数说明：

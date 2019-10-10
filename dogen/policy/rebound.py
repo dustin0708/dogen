@@ -3,6 +3,7 @@
 import sys
 import math
 import dogen
+import numpy
 import traceback
 
 ### 导入日志句柄
@@ -19,7 +20,6 @@ from dogen import logger, mongo_server, mongo_database
 
 ### 策略参数名
 MAXI_DAYS   = 'maxi_days'
-PICK_VALID  = 'pick_valid'
 TAKE_VALID  = 'take_valid'
 HIGH_VALID  = 'high_valid'
 MINI_FALLS  = 'mini_falls'
@@ -27,7 +27,6 @@ MINI_FALLS  = 'mini_falls'
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 180,      # 天
-    PICK_VALID: 9,       #
     TAKE_VALID: 0,      # 
     MINI_FALLS: 25,   # 1%
 }
@@ -59,7 +58,6 @@ def include_analyze(basic, kdata, policy_args):
     """ 
     """
     ### 参数解析
-    pick_valid = __parse_policy_args(policy_args, PICK_VALID)
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
     mini_falls = __parse_policy_args(policy_args, MINI_FALLS)
 
@@ -70,9 +68,11 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-    if pick_index > pick_valid:
-        logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
-        return None
+    for temp_index in range(pick_index, -1, -1):
+        if kdata.iloc[temp_index][dogen.MA5] >= kdata.iloc[temp_index][dogen.MA20]:
+            logger.debug("Shouldn't treat as rebound trend")
+            return None
+        pass
 
     ### 特征二
     heap_rises = 0
@@ -90,6 +90,18 @@ def include_analyze(basic, kdata, policy_args):
         if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
             take_index = temp_index
         pass
+    if pick_index >= 5:
+        tdata = kdata[0:pick_index+1].sort_index()
+        polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 1)
+        if polyf[0] >= 0:
+            for temp_index in range(pick_index, -1, -1):
+                if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+                    if take_index is None or take_index > temp_index:
+                        take_index = temp_index
+                    pass
+                pass
+            pass
+        pass
     if take_index is not None:
         ### take_index之后缩量下跌(限一个交易日)，也符合策略
         if take_index == 1\
@@ -99,7 +111,7 @@ def include_analyze(basic, kdata, policy_args):
         ### 最近收盘价比take_index(不能取更新后值)高更新
         elif take_index <= 3\
         and kdata.iloc[0][dogen.R_CLOSE] > 0\
-        and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[0][dogen.P_OPEN]\
+        and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[0][dogen.P_OPEN]\
         and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
             take_index = 0
         pass
@@ -142,7 +154,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         >>> 基本条件
             一 下跌幅度达$MINI_FALLS;
             二 买入信号(take-trade)，有效期由take_valid限定:
-                1) MA5上涨，振幅大于5%的上涨交易日
+                1) 累积上涨5个点以上；
+                2) 单日上涨3个点以上；
+                3) pick-trade之后保持横盘或向上, 振幅大于5%以上的上涨交易日;
 
         >>> 排它条件
             三 前一个下降区间或上涨区间存在涨停交易日;
