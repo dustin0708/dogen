@@ -259,7 +259,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) take-trade相对于pick-trade收盘价涨幅由maxi_take2pick限制（默认15%）
-            五 最近交易日若有放量下跌，其后必须有交易日突破其最高价；
+            五 最近交易日若有放量下跌，其后必须有交易日突破开盘价；
             六 上涨趋势: MA10上涨
             七 样本区间内必须有过涨停，仅限当前上涨区间和前一个下跌区间(根据反弹策略而定)；
 
