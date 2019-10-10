@@ -156,6 +156,14 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
             return True
         pass
+
+    ### 特征八
+    for temp_index in range(mini_index-1, -1, -1):
+        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 7:
+            logger.debug("Invalid R-Close at %s" % kdata.index[temp_index])
+            return True
+        pass
+    
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -285,6 +293,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             五 维持上涨趋势：MA5上涨，且take-trade收盘价高于MA20
             六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上
             七 碗底之后若放量下跌必须突破最高价
+            八 没有超过7%的单日涨幅
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
