@@ -71,7 +71,16 @@ def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_arg
     if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
         logger.debug("Too large outstanding at %s" % kdata.index[take_index])
         return True
-
+    
+    ### 特征四
+    rise_range = dogen.get_last_rise_range(kdata, 20, max_fall=20, sIdx=high_index)
+    if rise_range is not None:
+        [min_index, max_index, dec_close, get_hl, tmpId] = rise_range
+        if kdata.iloc[pick_index][dogen.P_CLOSE]*2 >= (kdata.iloc[min_index][dogen.P_CLOSE]+kdata.iloc[max_index][dogen.P_CLOSE]):
+            logger.debug("Invalid fall-range")
+            return True
+        pass
+        
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -180,6 +189,8 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
 
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
+            四 最低价低于前上涨区间中间价
+
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
