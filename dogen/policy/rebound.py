@@ -39,18 +39,6 @@ def __parse_policy_args(policy_args, arg_name):
     return arg_value
 
 def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
-    ### 特征三
-    tdata = kdata[0:high_index+1]
-    tdata = tdata[tdata[dogen.P_CLOSE] >=  tdata[dogen.L_HIGH]]
-    if tdata.index.size <= 0:
-        rise_range = dogen.get_last_rise_range(kdata, 20, max_fall=15, sIdx=high_index)
-        if rise_range is not None:
-            [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
-            if max_index != high_index or get_lhigh <= 0:
-                logger.debug("Don't include highlimit trade from %s to %s" % (kdata.index[high_index], kdata.index[0]))
-                return True
-            pass
-        pass
 
     return False
 
@@ -159,7 +147,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 3) pick-trade之后保持横盘或向上, 振幅大于5%以上的上涨交易日;
 
         >>> 排它条件
-            三 前一个下降区间或上涨区间存在涨停交易日;
+            暂无
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
