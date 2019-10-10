@@ -104,17 +104,20 @@ def find_largerise_range(codes, start=None, end=None, save_result=False, args=No
             if start is None:
                 start = dogen.date_delta(end, -30)
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
+            if kdata is None or kdata.index.size <= 0:
+                continue
             kdata.sort_index(ascending=False, inplace=True)
             dogen.drop_fresh_stock_trades(basic, kdata)
             
             ### 统计分析
-            logger.debug("Begin in analyzing %s from %s to %s" % (code, start, end))
-            match = __statistics_analyze(basic, kdata, args)
-            if match is None:
-                continue
-            
-            ### 输出结果
-            match_list.extend(match)
+            if kdata is not None and kdata.index.size > 0:
+                logger.debug("Begin in analyzing %s from %s to %s" % (code, start, end))
+                match = __statistics_analyze(basic, kdata, args)
+                if match is None:
+                    continue            
+                ### 输出结果
+                match_list.extend(match)
+                
         except Exception:
             logger.error('Trggered in handling code %s: %s' % (code, traceback.format_exc()))
             continue
