@@ -143,7 +143,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             temp_index = pick_index - 1
         tdata = kdata[take_index:temp_index+1].sort_index()
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
-        if polyf[0] < 0.01:
+        if polyf[0] < 0.008:
             logger.debug("Invalid polyfit(2) shape from %s to %s" % (kdata.index[temp_index], kdata.index[take_index]))
             return True
         pass
