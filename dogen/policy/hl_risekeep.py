@@ -121,8 +121,8 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征五
-    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
-        logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
+    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]:
+        logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
         return True
     if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
         logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
@@ -285,7 +285,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) take-trade交易日收盘价高于涨停价-3%，但不超过最低价+15%;
-            五 维持上涨趋势：MA5上涨，且take-trade收盘价高于MA20
+            五 维持上涨趋势：MA5上涨，MA20上涨
             六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上
             七 碗底之后若放量下跌必须突破开盘价
             八 没有超过7%的单日涨幅
