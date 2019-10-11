@@ -47,14 +47,14 @@ def __parse_policy_args(policy_args, arg_name):
 
 def score_analyze(basic, kdata, pick_index, take_index):
     """ 根据股票股价、市值、成交量等方面给股票打分:
-            * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
+            * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增，权重2；
             * 市值限高50亿，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增，权重3；
     """
     score = 0
 
     take_price = kdata.iloc[take_index][dogen.P_CLOSE]
     if (take_price < 50):
-        score += (10 - (int)(math.floor(take_price/5)))
+        score += (10 - (int)(math.floor(take_price/5)))*2
 
     take_value = take_price * basic[dogen.OUTSTANDING]
     if (take_value < 50):
