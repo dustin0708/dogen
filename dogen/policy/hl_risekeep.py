@@ -127,7 +127,8 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
         logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
         return True
-    if kdata.iloc[temp_index][dogen.R_CLOSE] * 3 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
+    if kdata.iloc[take_index][dogen.R_CLOSE] > 0\
+    and kdata.iloc[take_index][dogen.R_CLOSE]*3 < dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_HIGH], kdata.iloc[take_index+1][dogen.P_CLOSE]):
         logger.debug("Invalid take-trade with up shadow at %s" % kdata.index[take_index])
         return True
 
