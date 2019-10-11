@@ -21,7 +21,7 @@ from dogen import logger, mongo_server, mongo_database
 ### 策略参数名
 MAXI_DAYS   = 'maxi_days'
 MINI_HL     = 'mini_hl'
-MAXI_HL     = 'maxi_hl'
+HL_VALID     = 'hl_valid'
 TAKE_VALID  = 'take_valid'
 MAXI_RISE   = 'maxi_rise'
 MAXI_CLOSE  = 'maxi_close'
@@ -31,7 +31,7 @@ OUTSTANDING = 'outstanding'
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 60,      # 天
     MINI_HL: 3,      # 
-    MAXI_HL: 15,        #
+    HL_VALID: 15,        #
     TAKE_VALID: 0,  # 倍
     MAXI_RISE: 35,   # 1%
     MAXI_CLOSE: 50,
@@ -167,11 +167,11 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 def include_analyze(basic, kdata, policy_args):
     ### 策略参数处理
     mini_hl     = __parse_policy_args(policy_args, MINI_HL)
-    maxi_hl     = __parse_policy_args(policy_args, MAXI_HL)
+    hl_valid    = __parse_policy_args(policy_args, HL_VALID)
     take_valid  = __parse_policy_args(policy_args, TAKE_VALID)
 
     ### 特征一
-    index = dogen.get_highlimit_trades(kdata, eIdx=maxi_hl+1)
+    index = dogen.get_highlimit_trades(kdata, eIdx=hl_valid+1)
     if index.size != 1:
         logger.debug("Don't match highlimit trades")
         return None
