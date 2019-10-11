@@ -112,6 +112,9 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Too large rise-range")
             return True
         pass
+    if kdata.iloc[take_index][dogen.P_CLOSE] < kdata.iloc[pick_index][dogen.P_CLOSE]*(1-0.03):
+        logger.debug("Too low P-CLOSE at take-trade %s" % kdata.index[take_index])
+        return True
     temp_rises = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[mini_index][dogen.P_CLOSE])
     if temp_rises > 15:
         logger.debug("Too high-close price at take-trade %s" % kdata.index[take_index])
@@ -211,12 +214,6 @@ def include_analyze(basic, kdata, policy_args):
                 heap_rises = 0
             else:
                 heap_rises += temp_close
-            ### 上涨take交易日收盘价必须超过涨停价回调3个点的价位
-            if kdata.iloc[temp_index][dogen.P_CLOSE] < pick_close*(1-0.03):
-                continue
-            ### 上涨take交易日必须放量
-            if kdata.iloc[temp_index][dogen.VOLUME] < kdata.iloc[temp_index+1][dogen.VOLUME] * 1.1:
-                continue
             ### 不能是上影线
             if kdata.iloc[temp_index][dogen.R_CLOSE] * 3 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
                 continue
@@ -287,7 +284,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
-                2) take-trade交易日不超过最低价15个点;
+                2) take-trade交易日收盘价高于涨停价-3%，但不超过最低价+15%;
             五 维持上涨趋势：MA5上涨，且take-trade收盘价高于MA20
             六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上
             七 碗底之后若放量下跌必须突破开盘价
