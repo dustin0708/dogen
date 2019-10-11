@@ -48,13 +48,12 @@ def __parse_policy_args(policy_args, arg_name):
 
 def score_analyze(basic, kdata, pick_index, take_index):
     """ 根据股票股价、市值、成交量等方面给股票打分:
-            * 基准分值60分，累积加分项；
             * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
-            * 市值限高50亿，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
+            * 市值限高50亿，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增，权重3；
             * 涨停放量估分，区间定为(1.0,1.1],(1.1,1.2],...,(1.9, +Inf)，分值由1~10递增；
             * 下跌量能估分，缩量加2.5分，否则减2.5；
     """
-    score = 60
+    score = 0
 
     take_price = kdata.iloc[take_index][dogen.P_CLOSE]
     if (take_price < 50):
@@ -62,7 +61,7 @@ def score_analyze(basic, kdata, pick_index, take_index):
 
     take_value = take_price * basic[dogen.OUTSTANDING]
     if (take_value < 50):
-        score += (10 - (int)(math.floor(take_value/5)))
+        score += (10 - (int)(math.floor(take_value/5)))*3
 
     vary_volume = kdata.iloc[pick_index][dogen.VOLUME] / kdata.iloc[pick_index+1][dogen.VOLUME]
     if (vary_volume > 2):
