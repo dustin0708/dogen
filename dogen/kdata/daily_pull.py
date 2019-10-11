@@ -62,13 +62,15 @@ def update_kdata(codes, full=False, start=None, end=None):
             ### 下载日线数据
             logger.debug("Begin download %s's kdata from %s to %s." % (code, start, end))
             kdata = dogen.download_kdata(basic, start=start, end=end)
-            
+            if kdata is None or kdata.index.size <= 0:
+                continue
+
             ### 截取新增数据插入, 数据已存在会导致出错
             if from_trade is not None and last_trade is not None:
                 kdata = kdata.loc[(kdata.index<from_trade) | (kdata.index>last_trade)]
             
             ### 写数据库
-            if kdata is not None:
+            if kdata is not None and kdata.index.size > 0:
                 db.insert_stock_basic(code, basic)
                 db.insert_stock_kdata(code, kdata, kdata.index)
                 success_list.append(code)

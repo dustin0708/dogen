@@ -136,12 +136,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
         return True
 
-    ### 特征七
-    tdata = kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]]
-    if tdata.index.size <= 0:
-        logger.debug("Don't include hl-trade")
-        return True
-
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -261,7 +255,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 2) take-trade相对于pick-trade收盘价涨幅由maxi_take2pick限制（默认15%）
             五 最近交易日若有放量下跌，其后必须有交易日突破开盘价；
             六 上涨趋势: MA10上涨
-            七 样本区间内必须有过涨停，仅限当前上涨区间和前一个下跌区间(根据反弹策略而定)；
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日

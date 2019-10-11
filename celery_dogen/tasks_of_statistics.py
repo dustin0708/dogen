@@ -3,6 +3,7 @@
 import sys
 import time
 import dogen
+import pandas
 import traceback
 import celery_dogen
 
@@ -10,6 +11,20 @@ import celery_dogen
 from . import app
 from . import logger, mongo_server, mongo_database
 
+def dispatcher_poll_result(reply):
+    result = []
+    for i in range(0, len(reply)):
+        while not reply[i].ready():
+            time.sleep(0.05)
+            continue
+        result.extend(reply[i].result)
+    data = None
+    if len(result) > 0:
+        data = pandas.DataFrame.from_dict(result, orient='columns')
+        data.sort_values(by=dogen.RST_COL_RISE_RATE, ascending=False, inplace=True)
+        
+    return data
+    
 @app.task
 def daily_statistics_find_largerise_range(codes, start=None, end=None, save_result=False, args=None):
     """ 执行统计股票上涨区间任务
@@ -41,11 +56,5 @@ def dispatcher_of_daily_statistics_find_largerise_range(codes=None, start=None, 
             break
         reply.append(celery_dogen.daily_statistics_find_largerise_range.delay(codes[tasks*slice:(tasks+1)*slice], start=start, end=end, save_result=save_result, args=args))
 
-    result = []
-    for i in range(0, len(reply)):
-        while not reply[i].ready():
-            time.sleep(0.05)
-            continue
-        result.extend(reply[i].result)
-    
-    return result
+    ### 聚合子任务结果
+    return dispatcher_poll_result(reply)

@@ -23,12 +23,16 @@ MAXI_DAYS   = 'maxi_days'
 TAKE_VALID  = 'take_valid'
 HIGH_VALID  = 'high_valid'
 MINI_FALLS  = 'mini_falls'
+MAXI_CLOSE  = 'maxi_close'
+OUTSTANDING = 'market_value'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 180,      # 天
     TAKE_VALID: 0,      # 
     MINI_FALLS: 25,   # 1%
+    MAXI_CLOSE: 50,
+    OUTSTANDING: 100,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -38,20 +42,47 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
+def score_analyze(basic, kdata, pick_index, take_index):
+    """ 根据股票股价、市值、成交量等方面给股票打分:
+            * 基准分值50分，累积加分项;
+            * 股价限高50元，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增;
+            * 市值限高50亿，区间定为(50,45],(45,40],...,(5,0]，分值由1~10递增；
+    """
+    score = 50
+
+    take_price = kdata.iloc[take_index][dogen.P_CLOSE]
+    if (take_price < 50):
+        score += (10 - (int)(math.floor(take_price/5)))
+
+    take_value = take_price * basic[dogen.OUTSTANDING]
+    if (take_value < 50):
+        score += (10 - (int)(math.floor(take_value/5)))
+
+    return (int)(score)
+
 def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
+    maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
+    outstanding = __parse_policy_args(policy_args, OUTSTANDING)
+
     ### 特征三
-    tdata = kdata[0:high_index+1]
-    tdata = tdata[tdata[dogen.P_CLOSE] >=  tdata[dogen.L_HIGH]]
-    if tdata.index.size <= 0:
-        rise_range = dogen.get_last_rise_range(kdata, 20, max_fall=15, sIdx=high_index)
-        if rise_range is not None:
-            [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
-            if max_index != high_index or get_lhigh <= 0:
-                logger.debug("Don't include highlimit trade from %s to %s" % (kdata.index[high_index], kdata.index[0]))
+    if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
+        logger.debug("Too high close price at %s" % kdata.index[take_index])
+        return True
+    if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
+        logger.debug("Too large outstanding at %s" % kdata.index[take_index])
+        return True
+    
+    ### 特征四
+    rise_range = dogen.get_last_rise_range(kdata, 20, max_fall=20, sIdx=high_index)
+    if rise_range is not None:
+        [min_index, max_index, dec_close, get_hl, tmpId] = rise_range
+        if max_index == high_index:
+            if kdata.iloc[pick_index][dogen.P_CLOSE]*2 >= (kdata.iloc[min_index][dogen.P_CLOSE]+kdata.iloc[max_index][dogen.P_CLOSE]):
+                logger.debug("Invalid fall-range")
                 return True
             pass
         pass
-
+        
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -69,7 +100,7 @@ def include_analyze(basic, kdata, policy_args):
     else:
         [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
     for temp_index in range(pick_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.MA5] >= kdata.iloc[temp_index][dogen.MA20]:
+        if kdata.iloc[temp_index][dogen.MA5] > kdata.iloc[temp_index][dogen.MA20]:
             logger.debug("Shouldn't treat as rebound trend")
             return None
         pass
@@ -143,7 +174,7 @@ def stock_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result[dogen.RST_COL_SCORE]       = 60
+    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index)
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
@@ -159,7 +190,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 3) pick-trade之后保持横盘或向上, 振幅大于5%以上的上涨交易日;
 
         >>> 排它条件
-            三 前一个下降区间或上涨区间存在涨停交易日;
+            三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
+            四 最低价低于前上涨区间中间价
+
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日

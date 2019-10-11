@@ -240,7 +240,7 @@ def include_analyze(basic, kdata, policy_args):
             pass
         pass
     if take_index is None or take_index > take_valid:
-        logger.debug("Don't match valid fallback trade")
+        logger.debug("Don't match valid take trade")
         return None
     
     return [pick_index, take_index]
