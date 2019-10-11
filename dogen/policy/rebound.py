@@ -47,6 +47,7 @@ def score_analyze(basic, kdata, pick_index, take_index, high_index, policy_args)
             * 股价估分，总计25分；
             * 市值估分，总计25分；
             * 涨停估分，总计10分；
+            * 跌幅估分，总分40分；
     """
     maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
@@ -68,6 +69,11 @@ def score_analyze(basic, kdata, pick_index, take_index, high_index, policy_args)
     temp_kdata = kdata[0:pick_index+15]
     if temp_kdata[temp_kdata[dogen.P_CLOSE] >= temp_kdata[dogen.L_HIGH]].index.size > 0:
         score += (temp_score)
+
+    temp_score = 40
+    fall_value = dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[high_index][dogen.P_CLOSE])
+    if fall_value <= 100:
+        score += (temp_score*fall_value/100)
 
     return (int)(score)
 
