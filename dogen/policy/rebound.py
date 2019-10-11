@@ -71,7 +71,7 @@ def score_analyze(basic, kdata, pick_index, take_index, high_index, policy_args)
         score += (temp_score)
 
     temp_score = 40
-    fall_value = dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[high_index][dogen.P_CLOSE])
+    fall_value = -dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[high_index][dogen.P_CLOSE])
     if fall_value <= 100:
         score += (temp_score*fall_value/100)
 
