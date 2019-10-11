@@ -127,6 +127,9 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
         logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
         return True
+    if kdata.iloc[temp_index][dogen.R_CLOSE] * 3 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
+        logger.debug("Invalid take-trade with up shadow at %s" % kdata.index[take_index])
+        return True
 
     ### 特征六
     if pick_index >= 5:
@@ -214,9 +217,6 @@ def include_analyze(basic, kdata, policy_args):
                 heap_rises = 0
             else:
                 heap_rises += temp_close
-            ### 不能是上影线
-            if kdata.iloc[temp_index][dogen.R_CLOSE] * 3 < dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_HIGH], kdata.iloc[temp_index+1][dogen.P_CLOSE]):
-                continue
             if heap_rises >= 5:
                 take_index = temp_index
             if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
