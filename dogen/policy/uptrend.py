@@ -49,6 +49,7 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计25分；
             * 市值估分，总计25分；
+            * 涨停估分，总计10分；
     """
     maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)

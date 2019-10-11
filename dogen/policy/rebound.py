@@ -42,10 +42,11 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def score_analyze(basic, kdata, pick_index, take_index, policy_args):
+def score_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计25分；
             * 市值估分，总计25分；
+            * 涨停估分，总计10分；
     """
     maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
@@ -62,6 +63,11 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
     take_value = take_price * basic[dogen.OUTSTANDING]
     if (take_value <= outstanding):
         score += (temp_score - (int)(math.floor(take_value/temp_slice)))
+
+    temp_score = 10
+    temp_kdata = kdata[0:pick_index+15]
+    if temp_kdata[temp_kdata[dogen.P_CLOSE] >= temp_kdata[dogen.L_HIGH]].index.size > 0:
+        score += (temp_score)
 
     return (int)(score)
 
@@ -178,7 +184,7 @@ def stock_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index, policy_args)
+    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index, high_index, policy_args)
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
