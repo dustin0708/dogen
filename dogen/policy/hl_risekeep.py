@@ -151,6 +151,10 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Invalid R-Close at %s" % kdata.index[temp_index])
             return True
         pass
+    tdata = kdata[0: mini_index]
+    if tdata[tdata[dogen.R_AMP] >= 5].index.size <= 0:
+        logger.debug("Don't include trade with up to 5% R-AMP")
+        return True
 
     ### 特征九
     if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
@@ -281,7 +285,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             五 维持上涨趋势：MA5上涨，MA20上涨
             六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上
             七 碗底之后若放量下跌必须突破开盘价
-            八 没有超过7%的单日涨幅
+            八 回调最低价之后，没有超过7%的单日涨幅, 存在振幅5个点以上交易日 
             九 take-trade交易日不能是放量上影线
 
         参数说明：
