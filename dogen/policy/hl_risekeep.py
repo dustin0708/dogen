@@ -146,14 +146,12 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征八
-    for temp_index in range(mini_index-1, -1, -1):
-        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 7:
-            logger.debug("Invalid R-Close at %s" % kdata.index[temp_index])
-            return True
-        pass
     tdata = kdata[0: mini_index]
+    if tdata[tdata[dogen.R_CLOSE] >= 7].index.size > 0:
+        logger.debug("Do include trade with 7% R-CLOSE since %s" % kdata.index[mini_index])
+        return True
     if tdata[tdata[dogen.R_AMP] >= 5].index.size <= 0:
-        logger.debug("Don't include trade with up to 5% R-AMP")
+        logger.debug("Don't include trade with 5% R-AMP since %s" % kdata.index[mini_index])
         return True
 
     ### 特征九
