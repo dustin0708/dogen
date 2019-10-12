@@ -25,8 +25,8 @@ TAKE_VALID  = 'take_valid'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 45,      # 天
-    TAKE_VALID: 10,     # 
+    MAXI_DAYS: 90,      # 天
+    TAKE_VALID: 22,     # 
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -39,10 +39,6 @@ def __parse_policy_args(policy_args, arg_name):
 def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
-    if kdata.iloc[0][dogen.MA5] < kdata.iloc[1][dogen.MA5]:
-        logger.debug("Invalid MA5 at %s" % kdata.index[0])
-        return True
-
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -57,23 +53,13 @@ def include_analyze(basic, kdata, policy_args):
     else:
         dogen.drop_fresh_stock_trades(basic, kdata)
 
-    ### 特征三：
-    take_index = None
-    heap_rises = 0
-    for temp_index in range(kdata.index.size-1, -1, -1):
-        if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH] > 0:
-            take_index = temp_index
-        if kdata.iloc[temp_index][dogen.R_CLOSE] < 0:
-            heap_rises = 0
-        else:
-            heap_rises+= kdata.iloc[temp_index][dogen.R_CLOSE]
-        if heap_rises >= 5 or kdata.iloc[temp_index][dogen.R_CLOSE] > 3:
-            take_index = temp_index
-        pass
-    if take_index is None or take_index > take_valid:
-        logger.debug("Don't get valid take-trade")
+    ### 特征二
+    if kdata.index.size > take_valid:
+        logger.debug("Isn't fresh")
         return None
-    
+    else:
+        take_index = -1
+
     return [take_index, take_index]
 
 def stock_analyze(basic, kdata, policy_args):
@@ -107,10 +93,7 @@ def stock_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 上市新股开板策略, 满足特征：
             一 $MAXI_DAYS交易日内开板
-            二 买入信号take-trade:
-                1) 涨停;
-                2) 连续放量上涨超过10个点;
-            三 上涨趋势：MA5上涨
+            二 一个月交易日内
 
 
         参数说明：
