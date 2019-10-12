@@ -99,6 +99,8 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Too large rise-range")
             return True
         pass
+
+    ### 特征五
     if kdata.iloc[take_index][dogen.P_CLOSE] < kdata.iloc[pick_index][dogen.P_CLOSE]*(1-0.03):
         logger.debug("Too low P-CLOSE at take-trade %s" % kdata.index[take_index])
         return True
@@ -106,14 +108,19 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     if temp_rises > 15:
         logger.debug("Too high-close price at take-trade %s" % kdata.index[take_index])
         return True
-
-    ### 特征五
     if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]:
         logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
         return True
     if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
         logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
         return True
+    if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
+        h2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_HIGH], kdata.iloc[take_index][dogen.P_LOW])
+        c2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[take_index][dogen.P_LOW])
+        if c2l*2 < h2l:
+            logger.debug("Get up shadow at %s" % kdata.index[take_index])
+            return True
+        pass
 
     ### 特征六
     if pick_index >= 5:
@@ -158,15 +165,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         tdata = kdata[temp_index-4:temp_index-1]
         if tdata[tdata[dogen.P_CLOSE] >= hl_price].index.size > 0:
             logger.debug("Too large heap-close from %s to %s" % (tdata.index[-1], tdata.index[0]))
-            return True
-        pass
-
-    ### 特征九
-    if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
-        h2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_HIGH], kdata.iloc[take_index][dogen.P_LOW])
-        c2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[take_index][dogen.P_LOW])
-        if c2l*2 < h2l:
-            logger.debug("Get up shadow at %s" % kdata.index[take_index])
             return True
         pass
 
@@ -285,13 +283,14 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 股价成本合理：
-                1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
-                2) take-trade交易日收盘价高于涨停价-3%，但不超过最低价+15%;
-            五 维持上涨趋势：MA5上涨，MA20上涨
+                1) 在最近一个月内，最高涨幅由maxi_rise限制； 
+            五 take-trade限制:
+                1) take-trade交易日收盘价高于涨停价-3%，但不超过回调最低价+15%;
+                2) 维持上涨趋势：MA5上涨，MA20上涨
+                3) 排除放量上影线
             六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上
             七 碗底之后若放量下跌必须突破开盘价
             八 回调最低价之后，没有超过7%的单日涨幅, 存在振幅5个点以上交易日，每三日累积涨幅不超过前一日涨停价
-            九 take-trade交易日不能是放量上影线
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
