@@ -65,6 +65,12 @@ def drop_fresh_stock_trades(basic, kdata, inplace=True):
         pass
     return kdata
 
+def caculate_l_high(price, limit=10):
+    return round(price*(1+limit/100.0), 2)
+
+def caculate_l_low(price, limit=10):
+    return round(price*(1-limit/100.0), 2)
+
 def caculate_percentage(num, den, fraction=2):
     """计算百分比
     """

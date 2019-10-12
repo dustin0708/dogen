@@ -33,7 +33,7 @@ ARGS_DEAULT_VALUE = {
     TAKE_VALID: 0,      # 
     HL_VALID: 4,        #
     VOLUME_SCALE: 1.5,  # 倍
-    MINI_FALLS: 3.99,   # 1%
+    `MINI_FALLS`: 3.99,   # 1%
     MAXI_RISE: 35,   # 1%
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
@@ -50,9 +50,11 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计25分；
             * 市值估分，总计25分；
+            * 下跌估分，总计20分(默认最多四个下跌交易日)；
     """
     maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
+    hl_valid    = __parse_policy_args(policy_args, HL_VALID)
     score = 0
 
     temp_score = 25
@@ -66,6 +68,11 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
     take_value = take_price * basic[dogen.OUTSTANDING]
     if (take_value <= outstanding):
         score += (temp_score - (int)(math.floor(take_value/temp_slice)))
+
+    temp_score = 20
+    temp_slice = temp_score / hl_valid
+    if (pick_index <= hl_valid):
+        score += (pick_index * temp_slice)
 
     return (int)(score)
 

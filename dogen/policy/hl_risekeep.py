@@ -33,7 +33,7 @@ ARGS_DEAULT_VALUE = {
     MINI_HL: 3,      # 
     HL_VALID: 15,        #
     TAKE_VALID: 0,  # 倍
-    MAXI_RISE: 35,   # 1%
+    MAXI_RISE: 30,   # 1%
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -153,6 +153,13 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     if tdata[tdata[dogen.R_AMP] >= 5].index.size <= 0:
         logger.debug("Don't include trade with 5% R-AMP since %s" % kdata.index[mini_index])
         return True
+    for temp_index in range(mini_index, 0, -1):
+        hl_price = dogen.caculate_l_high(kdata.iloc[temp_index][dogen.P_CLOSE])
+        tdata = kdata[temp_index-4:temp_index-1]
+        if tdata[tdata[dogen.P_CLOSE] >= hl_price].index.size > 0:
+            logger.debug("Too large heap-close from %s to %s" % (tdata.index[-1], tdata.index[0]))
+            return True
+        pass
 
     ### 特征九
     if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
@@ -283,7 +290,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             五 维持上涨趋势：MA5上涨，MA20上涨
             六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上
             七 碗底之后若放量下跌必须突破开盘价
-            八 回调最低价之后，没有超过7%的单日涨幅, 存在振幅5个点以上交易日 
+            八 回调最低价之后，没有超过7%的单日涨幅, 存在振幅5个点以上交易日，每三日累积涨幅不超过前一日涨停价
             九 take-trade交易日不能是放量上影线
 
         参数说明：
