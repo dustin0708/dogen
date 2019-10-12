@@ -128,15 +128,11 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         if temp_falls > -3:
             logger.debug("Get invalid lowest trade at %s" % kdata.index[mini_index])
             return True
-        temp_index = pick_index
-        if kdata.iloc[pick_index][dogen.P_CLOSE] < kdata.iloc[pick_index-1][dogen.P_CLOSE]:
-            temp_index = pick_index - 1
-        tdata = kdata[take_index:temp_index+1].sort_index()
+        tdata = kdata[take_index:pick_index+1].sort_index()
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
         if polyf[0] < 0.008:
-            logger.debug("Invalid polyfit(2) shape from %s to %s" % (kdata.index[temp_index], kdata.index[take_index]))
+            logger.debug("Invalid polyfit(2) shape from %s to %s" % (kdata.index[pick_index], kdata.index[take_index]))
             return True
-        pass
 
     ### 特征七
     for temp_index in range(mini_index-1, -1, -1):
@@ -288,7 +284,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) take-trade交易日收盘价高于涨停价-3%，但不超过回调最低价+15%;
                 2) 维持上涨趋势：MA5上涨，MA20上涨
                 3) 排除放量上影线
-            六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上
+            六 形态限制：
+                1) 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上，二次拟合系数大于0.008；
+                2) 涨停之后回调超过-3之后，只允许一次突破前高;
             七 碗底之后若放量下跌必须突破开盘价
             八 回调最低价之后交易日必须满足下面条件:
                 1) 没有超过7%的单日涨幅
