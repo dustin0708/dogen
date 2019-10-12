@@ -94,8 +94,8 @@ def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_arg
     if rise_range is not None:
         [min_index, max_index, dec_close, get_hl, tmpId] = rise_range
         if max_index == high_index:
-            if kdata.iloc[pick_index][dogen.P_CLOSE]*2 >= (kdata.iloc[min_index][dogen.P_CLOSE]+kdata.iloc[max_index][dogen.P_CLOSE]):
-                logger.debug("Invalid fall-range")
+            if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[min_index][dogen.P_CLOSE]) >= 50:
+                logger.debug("Too high close-price at %s" % kdata.index[pick_index])
                 return True
             pass
         pass
@@ -207,7 +207,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
 
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            四 最低价低于前上涨区间中间价
+            四 限制大幅上涨后的回调最低价必须不超过前低的150%
 
 
         参数说明：
