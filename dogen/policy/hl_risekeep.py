@@ -217,7 +217,7 @@ def include_analyze(basic, kdata, policy_args):
             and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
                 take_index-= 1
             ### 最近收盘价比take_index(不能取更新后值)高更新
-            elif take_index <= 3 and take_index > 1\
+            elif take_index <= 3\
             and kdata.iloc[0][dogen.R_CLOSE] > 0\
             and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[0][dogen.P_OPEN]\
             and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
