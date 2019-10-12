@@ -152,6 +152,15 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             return True
         pass
 
+    ### 特征九
+    if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
+        h2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_HIGH], kdata.iloc[take_index][dogen.P_LOW])
+        c2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[take_index][dogen.P_LOW])
+        if c2l*2 < h2l:
+            logger.debug("Get up shadow at %s" % kdata.index[take_index])
+            return True
+        pass
+
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -273,6 +282,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             六 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上
             七 碗底之后若放量下跌必须突破开盘价
             八 没有超过7%的单日涨幅
+            九 take-trade交易日不能是放量上影线
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
