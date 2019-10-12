@@ -95,7 +95,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
     if rise_range is not None:
         [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
-        if pick_index >= min_index and pick_index <= max_index:
+        if pick_index <= min_index and pick_index >= max_index:
             logger.debug("Too large rise-range")
             return True
         pass
@@ -286,7 +286,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 3) 排除放量上影线
             六 形态限制：
                 1) 涨停之后保持碗底弧形上涨趋势, 碗底收盘价低于涨停价-3个点以上，二次拟合系数大于0.008；
-                2) 涨停之后回调超过-3之后，只允许一次突破前高;
+                2) 涨停之后回调超过-3之后，只允许一次突破前高;(暂未实现)
             七 碗底之后若放量下跌必须突破开盘价
             八 回调最低价之后交易日必须满足下面条件:
                 1) 没有超过7%的单日涨幅
