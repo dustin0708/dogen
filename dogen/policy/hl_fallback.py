@@ -33,8 +33,8 @@ ARGS_DEAULT_VALUE = {
     TAKE_VALID: 0,      # 
     HL_VALID: 4,        #
     VOLUME_SCALE: 1.5,  # 倍
-    `MINI_FALLS`: 3.99,   # 1%
-    MAXI_RISE: 35,   # 1%
+    MINI_FALLS: 3.99,   # 1%
+    MAXI_RISE: 30,   # 1%
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
 }
