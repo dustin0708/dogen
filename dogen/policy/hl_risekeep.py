@@ -151,10 +151,10 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     ### 特征八
     tdata = kdata[0: mini_index]
     if tdata[tdata[dogen.R_CLOSE] >= 7].index.size > 0:
-        logger.debug("Do include trade with 7% R-CLOSE since %s" % kdata.index[mini_index])
+        logger.debug("Do include trade with 7 percentage R-CLOSE since %s" % kdata.index[mini_index])
         return True
     if tdata[tdata[dogen.R_AMP] >= 5].index.size <= 0:
-        logger.debug("Don't include trade with 5% R-AMP since %s" % kdata.index[mini_index])
+        logger.debug("Don't include trade with 5 percentage R-AMP since %s" % kdata.index[mini_index])
         return True
     for temp_index in range(mini_index, 0, -1):
         hl_price = dogen.caculate_l_high(kdata.iloc[temp_index][dogen.P_CLOSE])

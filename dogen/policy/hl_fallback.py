@@ -141,7 +141,10 @@ def include_analyze(basic, kdata, policy_args):
             logger.debug("Invalid R_AMP at %s" % kdata.index[pick_index])
             return None
         ### 取最低回调价
-        mini_close = kdata.iloc[pick_index+1][dogen.P_CLOSE]
+        if (pick_index+1) >= kdata.index.size:
+            mini_close = 0
+        else:
+            mini_close = kdata.iloc[pick_index+1][dogen.P_CLOSE]
     if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
         pick_index -= 1
         if pick_index == 0:
