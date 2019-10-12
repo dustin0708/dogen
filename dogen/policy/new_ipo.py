@@ -45,6 +45,10 @@ def include_analyze(basic, kdata, policy_args):
     ### 参数解析
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
 
+    if kdata.index.size <= 0:
+        logger.debug("Don't open")
+        return None
+
     ### 特征一
     time_market= time.strftime("%Y-%m-%d", time.strptime(basic.loc['timeToMarket'], "%Y%m%d"))
     if time_market > kdata.index[0] or time_market < kdata.index[-1]:
