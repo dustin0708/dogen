@@ -46,41 +46,35 @@ def score_analyze(basic, kdata, pick_index, take_index, high_index, policy_args)
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计25分；
             * 市值估分，总计25分；
-            * 跌幅估分，总分20分，按100%计算；
-            * 区间估分，总分20分，按半年为上限计算(22*6)；
-            * 涨停估分，总计10分；
+            * 跌幅估分，总分25分，按100%计算；
+            * 区间估分，总分25分，按半年为上限计算(22*6)；
     """
     maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     score = 0
 
-    temp_score = 20.0
+    temp_score = 25.0
     temp_slice = maxi_close / temp_score
     take_price = kdata.iloc[take_index][dogen.P_CLOSE]
     if (take_price <= maxi_close):
         score += (temp_score - (int)(math.floor(take_price/temp_slice)))
 
-    temp_score = 20.0
+    temp_score = 25.0
     temp_slice = outstanding / temp_score
     take_value = take_price * basic[dogen.OUTSTANDING]
     if (take_value <= outstanding):
         score += (temp_score - (int)(math.floor(take_value/temp_slice)))
 
-    temp_score = 20.0
+    temp_score = 25.0
     fall_value = -dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[high_index][dogen.P_CLOSE])
     if fall_value <= 100:
         score += (temp_score*fall_value/100)
 
-    temp_score = 20.0
+    temp_score = 25.0
     half_year  = 22*6
     if high_index < half_year:
         score += (temp_score*high_index/half_year)
     else:
-        score += (temp_score)
-
-    temp_score = 20.0
-    temp_kdata = kdata[0:high_index+15]
-    if temp_kdata[temp_kdata[dogen.P_CLOSE] >= temp_kdata[dogen.L_HIGH]].index.size > 0:
         score += (temp_score)
 
     return (int)(score)
@@ -108,6 +102,17 @@ def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_arg
             pass
         pass
         
+    ### 特征五
+    maxi_index = 22*3
+    if (high_index+15) < maxi_index:
+        maxi_index = high_index+15
+    if maxi_index >= kdata.index.size:
+        maxi_index = kdata.index.size-1
+    tdata = kdata[0:maxi_index]
+    if tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size <= 0:
+        logger.debug("Don't include hl-trade from %s to %s" % (kdata.index[max_index]))
+        return True
+
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -216,6 +221,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 限制大幅上涨后的回调最低价必须不超过前低的150%
+            五 必须有涨停交易日:
+                1) 下降区间在三个月以内，取收盘最高价前15个交易日区间；
+                2) 下降区间在三个月以上，则三个月内必须有涨停;
 
 
         参数说明：
