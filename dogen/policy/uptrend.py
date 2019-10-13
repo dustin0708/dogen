@@ -32,7 +32,6 @@ ARGS_DEAULT_VALUE = {
     PICK_VALID: 15,      
     TAKE_VALID: 0,      # 
     MAXI_RISE: 30,
-    MAX_TAKE2PICK: 20,
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
 }
