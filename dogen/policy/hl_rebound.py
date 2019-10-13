@@ -41,7 +41,7 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def score_analyze(basic, kdata, pick_index, take_index, policy_args):
+def score_analyze(basic, kdata, pick_index, take_index, from_index, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计25分；
             * 市值估分，总计25分；
@@ -64,7 +64,7 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     return (int)(score)
 
-def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
+def exclude_analyze(basic, kdata, pick_index, take_index, from_index, policy_args):
     """ 根据日线做排除性校验
     """
     maxi_close   = __parse_policy_args(policy_args, MAXI_CLOSE)
@@ -73,6 +73,14 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     ### 净资产为负数的
     if basic[dogen.BVPS] <= 0:
         logger.debug("Invalid bvps")
+        return True
+
+    ### 特征三
+    if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
+        logger.debug("Too high close price at %s" % kdata.index[take_index])
+        return True
+    if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
+        logger.debug("Too large outstanding at %s" % kdata.index[take_index])
         return True
 
     return False
@@ -84,7 +92,7 @@ def include_analyze(basic, kdata, policy_args):
 
     ### 特征一
     pick_index = dogen.get_last_column_min(kdata, dogen.P_CLOSE, eIdx=pick_valid+1)
-    rise_range = dogen.get_last_rise_range(kdata, 15, sIdx=pick_index)
+    rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=pick_index)
     if rise_range is None:
         logger.debug("Don't get valid rise-range")
         return None
@@ -142,7 +150,7 @@ def include_analyze(basic, kdata, policy_args):
         logger.debug("Don't get valid take-trade")
         return None
 
-    return [pick_index, take_index]
+    return [pick_index, take_index, from_index]
 
 def stock_analyze(basic, kdata, policy_args):    
     ### 基本条件选取
@@ -151,10 +159,10 @@ def stock_analyze(basic, kdata, policy_args):
         logger.debug("include_analyze() return None")
         return None
     else:
-        [pick_index, take_index] = get_index
+        [pick_index, take_index, from_index] = get_index
 
     ### 排它条件过滤
-    if exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
+    if exclude_analyze(basic, kdata, pick_index, take_index, from_index, policy_args):
         logger.debug("exclude_analyze() return True")
         return None
 
@@ -166,7 +174,7 @@ def stock_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index, policy_args) # 打分
+    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index, from_index, policy_args) # 打分
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
