@@ -33,7 +33,7 @@ ARGS_DEAULT_VALUE = {
     MINI_HL: 3,      # 
     HL_VALID: 15,        #
     TAKE_VALID: 0,  # 倍
-    MAXI_RISE: 30,   # 1%
+    MAXI_RISE: 36,   # 1%
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
 }
