@@ -98,7 +98,7 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [min_index, max_index, inc_close, get_lhigh, tmp_id] = rise_range
-        if get_lhigh <= 0:
+        if get_lhigh <= 1:
             logger.debug("Don't include hl-trade")
             return None
         if kdata.iloc[min_index][dogen.P_CLOSE] < kdata.iloc[pick_index][dogen.P_CLOSE]:
