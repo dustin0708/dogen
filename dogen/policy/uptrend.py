@@ -112,7 +112,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     for temp_index in range(pick_index, -1, -1):
         if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
             continue
-        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]*1.1:
+        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
             continue
         logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
         return True
