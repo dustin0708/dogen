@@ -110,11 +110,22 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     ### 特征六
     for temp_index in range(pick_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.R_CLOSE] > -3 or kdata.iloc[temp_index+1][dogen.R_CLOSE] < 0:
+        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
             continue
         if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]*1.1:
             continue
         logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
+        return True
+
+    ### 特征七
+    fall_range = dogen.get_last_fall_range(kdata, 10, sIdx=pick_index)
+    if fall_range is None:
+        logger.debug("Don't get valid fall-range")
+        return True
+    [max_index, min_index, dec_close, get_llow, tmp_id] = fall_range
+    rise_serial= dogen.get_maxi_serial_range(kdata, 4, sIdx=pick_index, eIdx=min_index)
+    if rise_serial is None:
+        logger.debug("Don't get valid serial rise-range")
         return True
 
     return False
@@ -237,6 +248,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 维持上涨趋势：MA10上涨
                 2) 排除放量上影线
             六 pick-trade之后无放量下跌交易日；
+            七 pick-trade之前最低价之后交易区间存在4连阳；
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
