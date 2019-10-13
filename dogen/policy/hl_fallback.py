@@ -50,26 +50,26 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计25分；
             * 市值估分，总计25分；
-            * 下跌估分，总计20分(默认最多四个下跌交易日)；
+            * 下跌估分，总计50分(默认最多四个下跌交易日)；
     """
     maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     hl_valid    = __parse_policy_args(policy_args, HL_VALID)
     score = 0
 
-    temp_score = 25
+    temp_score = 25.0
     temp_slice = maxi_close / temp_score
     take_price = kdata.iloc[take_index][dogen.P_CLOSE]
     if (take_price <= maxi_close):
         score += (temp_score - (int)(math.floor(take_price/temp_slice)))
 
-    temp_score = 25
+    temp_score = 25.0
     temp_slice = outstanding / temp_score
     take_value = take_price * basic[dogen.OUTSTANDING]
     if (take_value <= outstanding):
         score += (temp_score - (int)(math.floor(take_value/temp_slice)))
 
-    temp_score = 20
+    temp_score = 50.0
     temp_slice = temp_score / hl_valid
     if (pick_index <= hl_valid):
         score += (pick_index * temp_slice)

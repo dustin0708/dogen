@@ -31,7 +31,7 @@ ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 180,      # 天
     PICK_VALID: 15,      
     TAKE_VALID: 0,      # 
-    MAXI_RISE: 30,
+    MAXI_RISE: 50,
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -53,13 +53,13 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     score = 0
 
-    temp_score = 25
+    temp_score = 25.0
     temp_slice = maxi_close / temp_score
     take_price = kdata.iloc[take_index][dogen.P_CLOSE]
     if (take_price <= maxi_close):
         score += (temp_score - (int)(math.floor(take_price/temp_slice)))
 
-    temp_score = 25
+    temp_score = 25.0
     temp_slice = outstanding / temp_score
     take_value = take_price * basic[dogen.OUTSTANDING]
     if (take_value <= outstanding):
