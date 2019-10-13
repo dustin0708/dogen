@@ -124,7 +124,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征八
-    for temp_index in range(4+3, 0, -1):
+    for temp_index in range(6, 0, -1):
         hl_price = dogen.caculate_l_high(kdata.iloc[temp_index][dogen.P_CLOSE])
         tdata = kdata[temp_index-4:temp_index-1]
         if tdata[tdata[dogen.P_CLOSE] >= hl_price].index.size > 0 and temp_index <= 4:
