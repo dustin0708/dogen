@@ -48,7 +48,6 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
     """
     maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
-    hl_valid    = __parse_policy_args(policy_args, HL_VALID)
     score = 0
 
     temp_score = 25.0
