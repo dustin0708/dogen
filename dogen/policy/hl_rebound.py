@@ -104,7 +104,7 @@ def include_analyze(basic, kdata, policy_args):
         if kdata.iloc[min_index][dogen.P_CLOSE] < kdata.iloc[pick_index][dogen.P_CLOSE]:
             logger.debug("Invalid pick-Trade at %s" % kdata.index[pick_index])
             return None
-        pass
+        from_index = min_index        
 
     ### 特征二
     heap_rises = 0
