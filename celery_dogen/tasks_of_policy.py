@@ -238,4 +238,44 @@ def dispatcher_of_new_ipo_match(codes=None, start=None, end=None, save_result=Fa
     return dispatcher_poll_result(reply)
 
 
+@app.task
+def hl_rebound_match(codes, start=None, end=None, save_result=False, policy_args=None):
+    """ 调用hl_rebound策略
+    """
+    logger.info("%s called with arguments: len(codes)=%d, start=%s, end=%s, save_result=%s, policy_args=%s" % ('hl_rebound_match', len(codes), start, end, save_result, policy_args))
+    return dogen.hl_rebound.match(codes, start=start, end=end, save_result=save_result, policy_args=policy_args)
 
+@app.task
+def dispatcher_of_hl_rebound_match(codes=None, start=None, end=None, save_result=False, policy_args=None, slice=1000):
+    """ rebound策略任务拆分
+
+        参数说明：
+            start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
+            end - 样本截止交易日(数据库样本可能早于该日期, 如停牌)
+            save_result - 保存命中结果
+        
+        返回结果：
+            列表数据如[{item-1}, {item-2}, ..., {item-n}]，根据股票的流通市值、收盘价、成交量、涨跌幅等数据决策。
+    """
+    ### 数据库连接初始化
+    db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
+    if not db.connect():
+        logger.error("Cannot connect to mongo-server %s" % mongo_server)
+        return None
+    
+    ### 获取代码列表
+    if codes is None:
+        codes = db.lookup_stock_codes()
+        codes.sort()
+
+    ### 拆分任务, 聚合结果
+    logger.info('%s called to dispatch %d codes into sub-task with slice=%d' % ('dispatcher_of_hl_rebound_match', len(codes), slice))
+    reply = []
+    while True:
+        tasks = len(reply)
+        if (tasks * slice) >= len(codes):
+            break
+        reply.append(celery_dogen.hl_rebound_match.delay(codes[tasks*slice:(tasks+1)*slice], start=start, end=end, save_result=save_result, policy_args=policy_args))
+
+    ### 聚合子任务结果
+    return dispatcher_poll_result(reply)
