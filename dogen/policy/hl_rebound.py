@@ -27,7 +27,7 @@ OUTSTANDING = 'outstanding'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 90,      # 天
+    MAXI_DAYS: 180,      # 天
     PICK_VALID: 15,
     TAKE_VALID: 0,      # 
     MAXI_CLOSE: 50,
