@@ -110,7 +110,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_arg
         maxi_index = kdata.index.size-1
     tdata = kdata[0:maxi_index]
     if tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size <= 0:
-        logger.debug("Don't include hl-trade from %s to %s" % (kdata.index[max_index]))
+        logger.debug("Don't include hl-trade from %s to %s" % (kdata.index[max_index], kdata.index[0]))
         return True
 
     return False
