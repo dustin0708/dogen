@@ -118,12 +118,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征七
-    fall_range = dogen.get_last_fall_range(kdata, 10, sIdx=pick_index)
-    if fall_range is None:
-        logger.debug("Don't get valid fall-range")
-        return True
-    [max_index, min_index, dec_close, get_llow, tmp_id] = fall_range
-    rise_serial= dogen.get_maxi_serial_range(kdata, 4, sIdx=pick_index, eIdx=min_index)
+    rise_serial= dogen.get_maxi_serial_range(kdata, 4, sIdx=pick_index, eIdx=22)
     if rise_serial is None:
         logger.debug("Don't get valid serial rise-range")
         return True
