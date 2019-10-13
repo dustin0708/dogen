@@ -130,6 +130,9 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         if tdata[tdata[dogen.P_CLOSE] >= hl_price].index.size > 0 and temp_index <= 4:
             logger.debug("Too large heap-close from %s to %s" % (tdata.index[-1], tdata.index[0]))
             return True
+        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 5 and kdata.iloc[temp_index-1][dogen.R_CLOSE] > -3:
+            logger.debug("Invalid rise trade at %s" % kdata.index[temp_index])
+            return True
         pass
 
     return False
@@ -253,7 +256,10 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 2) 排除放量上影线
             六 pick-trade之后无放量下跌交易日；
             七 一个月内存在4连阳；
-            八 最近一周每三日累积涨幅不超过前一日涨停价
+            八 最近一周交易日校验:
+                1) 每三日累积涨幅不超过前一日涨停价
+                2) 有涨幅超过5个点，次日必须下跌-3以上
+
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
