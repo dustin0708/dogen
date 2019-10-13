@@ -79,7 +79,7 @@ def score_analyze(basic, kdata, pick_index, take_index, high_index, policy_args)
         score += (temp_score)
 
     temp_score = 20.0
-    temp_kdata = kdata[0:high_index+1]
+    temp_kdata = kdata[0:high_index+10]
     if temp_kdata[temp_kdata[dogen.P_CLOSE] >= temp_kdata[dogen.L_HIGH]].index.size > 0:
         score += (temp_score)
 
