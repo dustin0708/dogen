@@ -81,7 +81,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 def include_analyze(basic, kdata, policy_args):
     ### 策略参数处理
     take_valid  = __parse_policy_args(policy_args, TAKE_VALID)
-    pick_valid  = __parse_policy_args(policy_args, Pick_VALID)
+    pick_valid  = __parse_policy_args(policy_args, PICK_VALID)
 
     ### 特征一
     pick_index = dogen.get_last_column_min(kdata, dogen.P_CLOSE, eIdx=pick_valid+1)
