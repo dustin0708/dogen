@@ -22,6 +22,7 @@ from dogen import logger, mongo_server, mongo_database
 MAXI_DAYS   = 'maxi_days'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
+MAXI_RISE   = 'maxi_rise'
 MAXI_CLOSE  = 'maxi_close'
 OUTSTANDING = 'market_value'
 
@@ -30,7 +31,7 @@ ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 180,      # 天
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
-    MINI_FALLS: 10,   # 1%
+    MAXI_RISE: 36,   # 1%
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -68,6 +69,7 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     return (int)(score)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
+    maxi_rise   = __parse_policy_args(policy_args, MAXI_RISE)
     maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
@@ -81,6 +83,15 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         return True
     
     ### 特征四
+    rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
+    if rise_range is not None:
+        [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
+        if pick_index <= min_index and pick_index >= max_index:
+            logger.debug("Too large rise-range")
+            return True
+        pass
+
+    ### 特征五
     rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
     if rise_range is not None:
         [min_index, max_index, dec_close, get_hl, tmpId] = rise_range
@@ -91,7 +102,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
             pass
         pass
         
-    ### 特征五
+    ### 特征六
     tdata = kdata[0:high_index+15]
     if tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size <= 0:
         logger.debug("Don't include hl-trade from %s" % kdata.index[high_index])
@@ -213,8 +224,10 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
 
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            四 限制大幅上涨后的回调最低价必须不超过前低的150%
-            五 必须有涨停交易日:
+            四 股价成本合理：
+                1) 在最近一个月内，最高涨幅由maxi_rise限制； 
+            五 限制大幅上涨后的回调最低价必须不超过前低的150%
+            六 必须有涨停交易日:
                 1) 下降区间在三个月以内，取收盘最高价前15个交易日区间；
                 2) 下降区间在三个月以上，则三个月内必须有涨停;
 
