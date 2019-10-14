@@ -104,6 +104,12 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
         logger.debug("Too much incr-percentage from %s to %s" % (kdata.index[from_index], kdata.index[pick_index]))
         return True
 
+    ### 特征六
+    max_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
+    if kdata.iloc[max_index][dogen.P_CLOSE] > kdata.iloc[high_index][dogen.P_CLOSE]:
+        logger.debug("Too high close-trade at %s" % kdata.index[max_index])
+        return True
+
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -239,8 +245,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            四 无放量下跌区间
+            四 无放量下跌区间(开盘价1.5%以上算)
             五 pick-trade收盘价低于from_index收盘价的150%
+            六 pick-trade之后最高价不可突破前高
 
 
         参数说明：
