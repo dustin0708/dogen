@@ -151,6 +151,9 @@ def get_last_rise_range(kdata, min_rise, max_fall=10.0, sIdx=0, eIdx=None):
                 tmp_index = i
                 break
             get_lhigh = 0
+            ### 当日涨停也要计算
+            if (kdata.iloc[i].loc[P_CLOSE] >= kdata.iloc[i].loc[L_HIGH]):
+                get_lhigh += 1
             max_index = i
             min_index = i
 
@@ -209,6 +212,8 @@ def get_last_fall_range(kdata, min_fall, max_rise=10.0, sIdx=0, eIdx=None):
             max_index = i
         if (kdata.iloc[i].loc[P_CLOSE] <= kdata.iloc[min_index].loc[P_CLOSE]):
             get_llow  = 0
+            if (kdata.iloc[i].loc[P_CLOSE] <= kdata.iloc[i].loc[L_LOW]):
+                get_llow += 1
             max_index = i
             min_index = i
         
