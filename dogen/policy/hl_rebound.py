@@ -28,7 +28,7 @@ OUTSTANDING = 'outstanding'
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 180,      # 天
-    PICK_VALID: 15,
+    PICK_VALID: 10,
     TAKE_VALID: 0,      # 
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
@@ -116,6 +116,9 @@ def include_analyze(basic, kdata, policy_args):
             return None
         if (min_index-max_index) < 15:
             logger.debug("Don't include enough rise trades")
+            return None
+        if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[max_index][dogen.P_CLOSE]) > -9:
+            logger.debug("Don't fall enough from %s" % kdata.index[max_index])
             return None
         rise_range = [min_index, max_index]
 
@@ -206,7 +209,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         >>> 基本条件
             一 区间分两段：
                 1) 上涨区间涨幅在15%以上，且存在涨停交易日，区间在15个交易日以上；
-                2) 下跌区间趋稳或反弹上涨(见第二条)；
+                2) 下跌区间跌幅在10%以上，走势趋稳或反弹上涨(见第二条)；
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 最低价后最多5个交易日，单日涨停（不限最小区间长度）；
                 2) 最低价后至少5个交易日，累积上涨超过5个点，或者单日涨幅超过3个点(MA5上涨)；
