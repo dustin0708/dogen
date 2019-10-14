@@ -27,7 +27,7 @@ OUTSTANDING = 'outstanding'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 180,      # 天
+    MAXI_DAYS: 90,      # 天
     PICK_VALID: 10,
     TAKE_VALID: 0,      # 
     MAXI_CLOSE: 50,
@@ -104,12 +104,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
         logger.debug("Too much incr-percentage from %s to %s" % (kdata.index[from_index], kdata.index[pick_index]))
         return True
 
-    ### 特征六
-    max_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
-    if kdata.iloc[max_index][dogen.P_CLOSE] > kdata.iloc[high_index][dogen.P_CLOSE]:
-        logger.debug("Too high close-trade at %s" % kdata.index[max_index])
-        return True
-
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -138,13 +132,10 @@ def include_analyze(basic, kdata, policy_args):
             logger.debug("Invalid rise-range from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
             return None
         if get_lhigh <= 0:
-            logger.debug("Don't include hl-trade")
+            logger.debug("Don't include hl-trade from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
             return None
         if (min_index-max_index) < 15:
-            logger.debug("Don't include enough rise trades")
-            return None
-        if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[max_index][dogen.P_CLOSE]) > -9:
-            logger.debug("Don't fall enough from %s" % kdata.index[max_index])
+            logger.debug("Don't include enough rise trades from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
             return None
         pass
 
@@ -247,7 +238,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 无放量下跌区间(开盘价1.5%以上算)
             五 pick-trade收盘价低于from_index收盘价的150%
-            六 pick-trade之后最高价不可突破前高
 
 
         参数说明：
