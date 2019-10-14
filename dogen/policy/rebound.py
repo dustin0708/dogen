@@ -103,7 +103,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         pass
         
     ### 特征六
-    tdata = kdata[0:high_index+15]
+    tdata = kdata[pick_index:high_index+15]
     if tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size <= 0:
         logger.debug("Don't include hl-trade from %s" % kdata.index[high_index])
         return True
