@@ -93,7 +93,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     if rise_range is not None:
         [min_index, max_index, dec_close, get_hl, tmpId] = rise_range
         if max_index == high_index:
-            if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[min_index][dogen.P_CLOSE]) >= 50:
+            if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[min_index][dogen.P_CLOSE]) >= 30:
                 logger.debug("Too high close-price at %s" % kdata.index[pick_index])
                 return True
             pass
@@ -104,6 +104,12 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     if tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size <= 0:
         logger.debug("Don't include hl-trade from %s" % kdata.index[high_index])
         return True
+
+    ### 特征七
+    temp_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
+    if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > 15:
+        logger.debug("Too high close at %s" % kdata.index[temp_index])
+        return None
 
     return False
 
@@ -231,6 +237,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             六 必须有涨停交易日:
                 1) 下降区间在三个月以内，取收盘最高价前15个交易日区间；
                 2) 下降区间在三个月以上，则三个月内必须有涨停;
+            七 pick-trade之后不超过前高
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
