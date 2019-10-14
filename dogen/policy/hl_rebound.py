@@ -91,7 +91,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
             continue
         if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
             continue
-        if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_OPEN], kdata.iloc[temp_index+1][dogen.P_CLOSE]) <= 0:
+        if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_OPEN], kdata.iloc[temp_index+1][dogen.P_CLOSE]) <= 1.5:
             continue
         maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=temp_index)
         if maxi_index is not None and kdata.iloc[temp_index][dogen.P_OPEN] <= kdata.iloc[maxi_index][dogen.P_CLOSE]:
