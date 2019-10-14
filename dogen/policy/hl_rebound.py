@@ -98,31 +98,24 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [min_index, max_index, inc_close, get_lhigh, tmp_id] = rise_range
-        if get_lhigh <= 1:
+        if get_lhigh <= 0:
             logger.debug("Don't include hl-trade")
             return None
-        if kdata.iloc[min_index][dogen.P_CLOSE] < kdata.iloc[pick_index][dogen.P_CLOSE]:
-            logger.debug("Invalid pick-Trade at %s" % kdata.index[pick_index])
+        if (max_index-min_index) < 15:
+            logger.debug("Don't include enough rise trades")
             return None
         from_index = min_index        
 
     ### 特征二
     heap_rises = 0
     take_index = None
-    for temp_index in range(pick_index, -1, -1):
-        temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
-        if temp_close < 0:
-            heap_rises = 0
-        else:
-            heap_rises += temp_close
-        if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index+1][dogen.MA5]:
-            continue
-        if heap_rises >= 5:
-            take_index = temp_index
-        if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
-            take_index = temp_index
+    if pick_index < 5:
+        for temp_index in range(pick_index, -1, -1):
+            if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[pick_index][dogen.L_HIGH]:
+                take_index = temp_index
+            pass
         pass
-    if pick_index >= 5:
+    else:
         tdata = kdata[0:pick_index+1].sort_index()
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 1)
         if polyf[0] >= 0:
@@ -132,6 +125,21 @@ def include_analyze(basic, kdata, policy_args):
                         take_index = temp_index
                     pass
                 pass
+            pass
+        pass
+    for temp_index in range(pick_index, -1, -1):
+        temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
+        if temp_close < 0:
+            heap_rises = 0
+        else:
+            heap_rises += temp_close
+        if heap_rises >= 5:
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
+            pass
+        if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
             pass
         pass
     if take_index is not None:
@@ -184,18 +192,15 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 涨停反弹策略，满足条件：
         >>> 基本条件
             一 区间分两段：
-                1) 上涨区间涨幅在15%以上，且存在涨停交易日；
-                2) 下跌击穿前低；
+                1) 上涨区间涨幅在15%以上，且存在涨停交易日，区间在15个交易日以上；
+                2) 下跌区间趋稳或反弹上涨(见第二条)；
             二 买入信号(take-trade)，有效期由take_valid限定:
-                1) 累积上涨超过5个点，或者单日涨幅超过3个点；
-                2) 若保持横盘，出现振幅大于5%的上涨交易日；
+                1) 最低价后最多5个交易日，单日涨停（不限最小区间长度）；
+                2) 最低价后至少5个交易日，累积上涨超过5个点，或者单日涨幅超过3个点(MA5上涨)；
+                3) 最低价后至少5个交易日，保持横盘，出现振幅大于5%的上涨交易日(MA5上涨)；
         
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            四 股价成本合理：
-                1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
-                2) 不可回调过高，take-trade收盘价高于涨停前交易日
-            五 take-trade交易日MA5上涨;
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
