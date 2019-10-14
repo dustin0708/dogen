@@ -104,13 +104,21 @@ def include_analyze(basic, kdata, policy_args):
     pick_valid  = __parse_policy_args(policy_args, PICK_VALID)
 
     ### 特征一
-    pick_index = dogen.get_last_column_min(kdata, dogen.P_CLOSE, eIdx=pick_valid+1)
-    rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=pick_index)
+    fall_range = dogen.get_last_fall_range(kdata, 8.99, max_rise=15, eIdx=pick_valid+1)
+    if fall_range is None:
+        logger.debug("Don't get valid fall-range")
+        return None
+    else:
+        [high_index, pick_index, dec_close, get_llow, tmp_id] = fall_range
+    rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
     if rise_range is None:
         logger.debug("Don't get valid rise-range")
         return None
     else:
         [min_index, max_index, inc_close, get_lhigh, tmp_id] = rise_range
+        if max_index != high_index:
+            logger.debug("Invalid rise-range from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
+            return None
         if get_lhigh <= 0:
             logger.debug("Don't include hl-trade")
             return None
