@@ -69,7 +69,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
     """
     maxi_close   = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding  = __parse_policy_args(policy_args, OUTSTANDING)
-    [from_index, high_index] = rise_range
+    [from_index, high_index, inc_close, get_lhigh, tmp_id] = rise_range
 
     ### 净资产为负数的
     if basic[dogen.BVPS] <= 0:
@@ -93,7 +93,15 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
             continue
         if kdata.iloc[temp_index][dogen.P_OPEN] <= kdata.iloc[temp_index+1][dogen.P_CLOSE]:
             continue
+        maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=temp_index)
+        if maxi_index is not None and kdata.iloc[temp_index][dogen.P_OPEN] <= kdata.iloc[maxi_index][dogen.P_CLOSE]:
+            continue
         logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
+        return True
+
+    ### 特征五
+    if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[from_index][dogen.P_CLOSE]) > 50:
+        logger.debug("Too much incr-percentage from %s to %s" % (kdata.index[from_index], kdata.index[pick_index]))
         return True
 
     return False
@@ -110,6 +118,10 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [high_index, pick_index, dec_close, get_llow, tmp_id] = fall_range
+        if pick_index > pick_valid:
+            logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
+            return None
+        pass
     rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
     if rise_range is None:
         logger.debug("Don't get valid rise-range")
@@ -128,7 +140,7 @@ def include_analyze(basic, kdata, policy_args):
         if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[max_index][dogen.P_CLOSE]) > -9:
             logger.debug("Don't fall enough from %s" % kdata.index[max_index])
             return None
-        rise_range = [min_index, max_index]
+        pass
 
     ### 特征二
     heap_rises = 0
@@ -157,6 +169,8 @@ def include_analyze(basic, kdata, policy_args):
             heap_rises = 0
         else:
             heap_rises += temp_close
+        if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index+1][dogen.MA5]:
+            continue
         if heap_rises >= 5:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
@@ -226,6 +240,8 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 无放量下跌区间
+            五 pick-trade收盘价低于from_index收盘价的150%
+
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
