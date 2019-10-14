@@ -127,6 +127,10 @@ def include_analyze(basic, kdata, policy_args):
         if pick_index > pick_valid:
             logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
             return None
+        temp_range = dogen.get_last_fall_range(kdata, 10, max_rise=15, eIdx=pick_index+10)
+        if temp_range is None:
+            logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
+            return None
         pass
 
     ### 特征二
@@ -216,7 +220,7 @@ def stock_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 反弹策略, 满足条件：
         >>> 基本条件
-            一 下跌10个点以上;
+            一 下跌10个点以上，且pick-trade之前10个交易日内有下跌10个点;
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 最低价后最多5个交易日，单日涨停（不限最小区间长度）；
                 2) 最低价后至少5个交易日，累积上涨超过5个点，或者单日涨幅超过3个点(MA5上涨)；
