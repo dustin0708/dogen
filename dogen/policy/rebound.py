@@ -21,8 +21,7 @@ from dogen import logger, mongo_server, mongo_database
 ### 策略参数名
 MAXI_DAYS   = 'maxi_days'
 TAKE_VALID  = 'take_valid'
-HIGH_VALID  = 'high_valid'
-MINI_FALLS  = 'mini_falls'
+PICK_VALID  = 'pick_valid'
 MAXI_CLOSE  = 'maxi_close'
 OUTSTANDING = 'market_value'
 
@@ -30,7 +29,8 @@ OUTSTANDING = 'market_value'
 ARGS_DEAULT_VALUE = {
     MAXI_DAYS: 180,      # 天
     TAKE_VALID: 0,      # 
-    MINI_FALLS: 25,   # 1%
+    PICK_VALID: 10,
+    MINI_FALLS: 10,   # 1%
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -42,7 +42,7 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def score_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
+def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计25分；
             * 市值估分，总计25分；
@@ -65,23 +65,12 @@ def score_analyze(basic, kdata, pick_index, take_index, high_index, policy_args)
     if (take_value <= outstanding):
         score += (temp_score - (int)(math.floor(take_value/temp_slice)))
 
-    temp_score = 25.0
-    fall_value = -dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[high_index][dogen.P_CLOSE])
-    if fall_value <= 100:
-        score += (temp_score*fall_value/100)
-
-    temp_score = 25.0
-    half_year  = 22*6
-    if high_index < half_year:
-        score += (temp_score*high_index/half_year)
-    else:
-        score += (temp_score)
-
     return (int)(score)
 
-def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
+def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
     maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
+    [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
     ### 特征三
     if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
@@ -92,7 +81,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_arg
         return True
     
     ### 特征四
-    rise_range = dogen.get_last_rise_range(kdata, 20, max_fall=20, sIdx=high_index)
+    rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
     if rise_range is not None:
         [min_index, max_index, dec_close, get_hl, tmpId] = rise_range
         if max_index == high_index:
@@ -103,14 +92,9 @@ def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_arg
         pass
         
     ### 特征五
-    maxi_index = 22*3
-    if (high_index+15) < maxi_index:
-        maxi_index = high_index+15
-    if maxi_index >= kdata.index.size:
-        maxi_index = kdata.index.size-1
-    tdata = kdata[0:maxi_index]
+    tdata = kdata[0:high_index+15]
     if tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size <= 0:
-        logger.debug("Don't include hl-trade from %s to %s" % (kdata.index[max_index], kdata.index[0]))
+        logger.debug("Don't include hl-trade from %s" % kdata.index[high_index])
         return True
 
     return False
@@ -120,38 +104,30 @@ def include_analyze(basic, kdata, policy_args):
     """
     ### 参数解析
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
-    mini_falls = __parse_policy_args(policy_args, MINI_FALLS)
+    pick_valid = __parse_policy_args(policy_args, PICK_VALID)
 
     ### 特征一
-    fall_range = dogen.get_last_fall_range(kdata, mini_falls, max_rise=20)
+    fall_range = dogen.get_last_fall_range(kdata, 10, max_rise=15)
     if fall_range is None:
         logger.debug("Don't get valid fall-range")
         return None
     else:
         [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-    for temp_index in range(pick_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.MA5] > kdata.iloc[temp_index][dogen.MA20]:
-            logger.debug("Shouldn't treat as rebound trend")
+        if pick_index > pick_valid:
+            logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
             return None
         pass
 
     ### 特征二
     heap_rises = 0
     take_index = None
-    for temp_index in range(pick_index, -1, -1):
-        temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
-        if temp_close < 0:
-            heap_rises = 0
-        else:
-            heap_rises += temp_close
-        if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index+1][dogen.MA5]:
-            continue
-        if heap_rises >= 5:
-            take_index = temp_index
-        if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
-            take_index = temp_index
+    if pick_index < 5:
+        for temp_index in range(pick_index, -1, -1):
+            if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[pick_index][dogen.L_HIGH]:
+                take_index = temp_index
+            pass
         pass
-    if pick_index >= 5:
+    else:
         tdata = kdata[0:pick_index+1].sort_index()
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 1)
         if polyf[0] >= 0:
@@ -161,6 +137,23 @@ def include_analyze(basic, kdata, policy_args):
                         take_index = temp_index
                     pass
                 pass
+            pass
+        pass
+    for temp_index in range(pick_index, -1, -1):
+        temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
+        if temp_close < 0:
+            heap_rises = 0
+        else:
+            heap_rises += temp_close
+        if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index+1][dogen.MA5]:
+            continue
+        if heap_rises >= 5:
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
+            pass
+        if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
             pass
         pass
     if take_index is not None:
@@ -179,7 +172,7 @@ def include_analyze(basic, kdata, policy_args):
         logger.debug("Don't get valid take-trade")
         return None
 
-    return [pick_index, take_index, high_index]
+    return [pick_index, take_index, fall_range]
 
 def stock_analyze(basic, kdata, policy_args):
     ### 基本条件选取
@@ -188,10 +181,10 @@ def stock_analyze(basic, kdata, policy_args):
         logger.debug("include_analyze() return None")
         return None
     else:
-        [pick_index, take_index, high_index] = get_index
+        [pick_index, take_index, fall_range] = get_index
 
     ### 排它条件过滤
-    if exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
+    if exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
         logger.debug("exclude_analyze() return True")
         return None
 
@@ -203,7 +196,7 @@ def stock_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index, high_index, policy_args)
+    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
@@ -212,11 +205,11 @@ def stock_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 反弹策略, 满足条件：
         >>> 基本条件
-            一 下跌幅度达$MINI_FALLS;
+            一 下跌10个点以上;
             二 买入信号(take-trade)，有效期由take_valid限定:
-                1) 累积上涨5个点以上；
-                2) 单日上涨3个点以上；
-                3) pick-trade之后保持横盘或向上, 振幅大于5%以上的上涨交易日;
+                1) 最低价后最多5个交易日，单日涨停（不限最小区间长度）；
+                2) 最低价后至少5个交易日，累积上涨超过5个点，或者单日涨幅超过3个点(MA5上涨)；
+                3) 最低价后至少5个交易日，保持横盘，出现振幅大于5%的上涨交易日(MA5上涨)；
 
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
