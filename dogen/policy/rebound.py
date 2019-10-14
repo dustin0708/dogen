@@ -89,7 +89,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         return True
 
     ### 特征五
-    rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
+    rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=10, sIdx=high_index)
     if rise_range is not None:
         [min_index, max_index, dec_close, get_hl, tmpId] = rise_range
         if max_index == high_index:
