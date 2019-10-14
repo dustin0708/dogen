@@ -104,7 +104,7 @@ def include_analyze(basic, kdata, policy_args):
     pick_valid  = __parse_policy_args(policy_args, PICK_VALID)
 
     ### 特征一
-    fall_range = dogen.get_last_fall_range(kdata, 8.99, max_rise=15, eIdx=pick_valid+1)
+    fall_range = dogen.get_last_fall_range(kdata, 8.99, max_rise=15)
     if fall_range is None:
         logger.debug("Don't get valid fall-range")
         return None
@@ -217,7 +217,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         >>> 基本条件
             一 区间分两段：
                 1) 上涨区间涨幅在15%以上，且存在涨停交易日，区间在15个交易日以上；
-                2) 下跌区间跌幅在10%以上，走势趋稳或反弹上涨(见第二条)；
+                2) 下跌区间跌幅在9%以上，走势趋稳或反弹上涨(见第二条)；
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 最低价后最多5个交易日，单日涨停（不限最小区间长度）；
                 2) 最低价后至少5个交易日，累积上涨超过5个点，或者单日涨幅超过3个点(MA5上涨)；
