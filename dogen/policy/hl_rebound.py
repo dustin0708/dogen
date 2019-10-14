@@ -101,7 +101,7 @@ def include_analyze(basic, kdata, policy_args):
         if get_lhigh <= 0:
             logger.debug("Don't include hl-trade")
             return None
-        if (max_index-min_index) < 15:
+        if (min_index-max_index) < 15:
             logger.debug("Don't include enough rise trades")
             return None
         from_index = min_index        
