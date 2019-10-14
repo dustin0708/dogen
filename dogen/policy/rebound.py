@@ -85,11 +85,8 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     ### 特征四
     rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
     if rise_range is not None:
-        [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
-        if pick_index <= min_index and pick_index >= max_index:
-            logger.debug("Too large rise-range")
-            return True
-        pass
+        logger.debug("Too large rise-range")
+        return True
 
     ### 特征五
     rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
@@ -234,7 +231,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             六 必须有涨停交易日:
                 1) 下降区间在三个月以内，取收盘最高价前15个交易日区间；
                 2) 下降区间在三个月以上，则三个月内必须有涨停;
-
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
