@@ -25,6 +25,7 @@ PICK_VALID  = 'pick_valid'
 MAX_TAKE2low= 'max_take2low'
 MAX_HIGH2FROM='max_high2from'
 MAX_PICK2FROM='max_pick2from'
+MIN_PICK2FROM='min_pick2from'
 MIN_RCLOSE  = 'min_pclose'
 MAX_PCLOSE  = 'max_pclose'
 OUTSTANDING = 'market_value'
@@ -36,7 +37,8 @@ ARGS_DEAULT_VALUE = {
     PICK_VALID: 10,
     MAX_TAKE2low: 15,
     MAX_HIGH2FROM: 60,
-    MAX_PICK2FROM: 40,
+    MAX_PICK2FROM: 3,
+    MIN_PICK2FROM: -100,
     MIN_RCLOSE: -5,
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
@@ -78,6 +80,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     max_take2low= __parse_policy_args(policy_args, MAX_TAKE2low)
     max_high2from=__parse_policy_args(policy_args, MAX_HIGH2FROM)
     max_pick2from=__parse_policy_args(policy_args, MAX_PICK2FROM)
+    min_pick2from=__parse_policy_args(policy_args, MIN_PICK2FROM)
     min_rclose  = __parse_policy_args(policy_args, MIN_RCLOSE)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
@@ -95,14 +98,15 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     ### 特征四
     rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
     if rise_range is not None:
-        [min_index, max_index, inc_close, get_hl, tmpId] = rise_range
+        [from_index, max_index, inc_close, get_hl, tmpId] = rise_range
         if (max_index != high_index) or (inc_close > max_high2from):
-            logger.debug("Invalid rise range from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
+            logger.debug("Invalid rise range from %s to %s" % (kdata.index[from_index], kdata.index[max_index]))
             return True
-        if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[min_index][dogen.P_CLOSE]) > max_pick2from:
-            logger.debug("Too high close-price at %s" % kdata.index[pick_index])
+        tmp_pick2from = dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[from_index][dogen.P_CLOSE])
+        if (tmp_pick2from > max_pick2from) or (tmp_pick2from < min_pick2from):
+            logger.debug("Invalid from/pick-trade(%s/%s)" % (kdata.index[from_index], kdata.index[pick_index]))
             return True
-        from_index = min_index
+        pass
     if from_index < 22:
         logger.debug("Too short range from %s" % kdata.index[from_index])
         return True
