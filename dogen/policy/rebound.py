@@ -165,7 +165,7 @@ def include_analyze(basic, kdata, policy_args):
         tdata = kdata[0:pick_index+1].sort_index()
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 1)
         if polyf[0] >= 0:
-            take_index = temp_index
+            take_index = 0
         pass
     for temp_index in range(pick_index, -1, -1):
         temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
