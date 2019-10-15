@@ -21,9 +21,14 @@ from dogen import logger, mongo_server, mongo_database
 ### 策略参数名
 MAXI_DAYS   = 'maxi_days'
 MINI_HL     = 'mini_hl'
-HL_VALID     = 'hl_valid'
+HL_VALID    = 'hl_valid'
 TAKE_VALID  = 'take_valid'
 MAXI_RISE   = 'maxi_rise'
+MAX_TAKE2LOW= 'max_take2low'
+MIN_FALLS   = 'min_falls'
+MAX_RCLOSE  = 'max_rclose'
+MIN_RAMP    = 'min_ramp'
+MIN_POLYF2  = 'min_polyf2'
 MAXI_CLOSE  = 'maxi_close'
 OUTSTANDING = 'outstanding'
 
@@ -34,6 +39,11 @@ ARGS_DEAULT_VALUE = {
     HL_VALID: 15,        #
     TAKE_VALID: 0,  # 倍
     MAXI_RISE: 36,   # 1%
+    MAX_TAKE2LOW: 15,
+    MIN_FALLS: 3,
+    MAX_RCLOSE: 7,
+    MIN_RAMP: 5,
+    MIN_POLYF2: 0.008,
     MAXI_CLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -72,6 +82,11 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
     maxi_rise    = __parse_policy_args(policy_args, MAXI_RISE)
+    max_take2low = __parse_policy_args(policy_args, MAX_TAKE2LOW)
+    min_falls    = __parse_policy_args(policy_args, MIN_FALLS)
+    max_rclose   = __parse_policy_args(policy_args, MAX_RCLOSE)
+    min_ramp     = __parse_policy_args(policy_args, MIN_RAMP)
+    min_polyf2   = __parse_policy_args(policy_args, MIN_POLYF2)
     maxi_close   = __parse_policy_args(policy_args, MAXI_CLOSE)
     outstanding  = __parse_policy_args(policy_args, OUTSTANDING)
 
@@ -101,11 +116,11 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征五
-    if kdata.iloc[take_index][dogen.P_CLOSE] < kdata.iloc[pick_index][dogen.P_CLOSE]*(1-0.03):
+    if kdata.iloc[take_index][dogen.P_CLOSE] < kdata.iloc[pick_index][dogen.P_CLOSE]*(1-min_falls/100.0):
         logger.debug("Too low P-CLOSE at take-trade %s" % kdata.index[take_index])
         return True
     temp_rises = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[mini_index][dogen.P_CLOSE])
-    if temp_rises > 15:
+    if temp_rises > max_take2low:
         logger.debug("Too high-close price at take-trade %s" % kdata.index[take_index])
         return True
     if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]:
@@ -125,12 +140,12 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     ### 特征六
     if pick_index >= 5:
         temp_falls = dogen.caculate_incr_percentage(kdata.iloc[mini_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE])
-        if temp_falls > -3:
+        if temp_falls > -min_falls:
             logger.debug("Get invalid lowest trade at %s" % kdata.index[mini_index])
             return True
         tdata = kdata[take_index:pick_index+1].sort_index()
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
-        if polyf[0] < 0.008:
+        if polyf[0] < min_polyf2:
             logger.debug("Invalid polyfit(2) shape from %s to %s" % (kdata.index[pick_index], kdata.index[take_index]))
             return True
 
@@ -150,10 +165,10 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     ### 特征八
     tdata = kdata[0: mini_index]
-    if tdata[tdata[dogen.R_CLOSE] >= 7].index.size > 0:
+    if tdata[tdata[dogen.R_CLOSE] >= max_rclose].index.size > 0:
         logger.debug("Do include trade with 7 percentage R-CLOSE since %s" % kdata.index[mini_index])
         return True
-    if tdata[tdata[dogen.R_AMP] >= 5].index.size <= 0:
+    if tdata[tdata[dogen.R_AMP] >= min_ramp].index.size <= 0:
         logger.debug("Don't include trade with 5 percentage R-AMP since %s" % kdata.index[mini_index])
         return True
     for temp_index in range(mini_index, 0, -1):
