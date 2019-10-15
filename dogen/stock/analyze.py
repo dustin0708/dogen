@@ -207,10 +207,15 @@ def get_last_fall_range(kdata, min_fall, max_rise=10.0, sIdx=0, eIdx=None):
         if (kdata.iloc[i].loc[P_CLOSE] <= kdata.iloc[i].loc[L_LOW]):
             get_llow += 1
             
-        ## 更新最小值索引
+        ## 更新最大值索引
         if (kdata.iloc[i].loc[P_CLOSE] >  kdata.iloc[max_index].loc[P_CLOSE]):
             max_index = i
+
+        ## 最小值索引变更，找到就退出
         if (kdata.iloc[i].loc[P_CLOSE] <= kdata.iloc[min_index].loc[P_CLOSE]):
+            if (the_range is not None):
+                tmp_index = i
+                break
             get_llow  = 0
             if (kdata.iloc[i].loc[P_CLOSE] <= kdata.iloc[i].loc[L_LOW]):
                 get_llow += 1

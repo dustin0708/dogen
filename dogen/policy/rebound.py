@@ -150,7 +150,7 @@ def include_analyze(basic, kdata, policy_args):
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 1)
         if polyf[0] >= 0:
             for temp_index in range(pick_index, -1, -1):
-                if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+                if kdata.iloc[temp_index][dogen.R_CLOSE] > 0 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
                     if take_index is None or take_index > temp_index:
                         take_index = temp_index
                     pass
