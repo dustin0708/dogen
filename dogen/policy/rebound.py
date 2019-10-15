@@ -24,6 +24,7 @@ TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
 MAX_RISE    = 'max_rise'
 MAX_TAKE2low= 'max_take2low'
+MAX_HIGH2FROM='max_high2from'
 MAX_PICK2FROM='max_pick2from'
 MIN_RCLOSE  = 'min_pclose'
 MAX_PCLOSE  = 'max_pclose'
@@ -36,7 +37,8 @@ ARGS_DEAULT_VALUE = {
     PICK_VALID: 10,
     MAX_RISE: 36,   # 1%
     MAX_TAKE2low: 15,
-    MAX_PICK2FROM: 25,
+    MAX_HIGH2FROM: 60,
+    MAX_PICK2FROM: 40,
     MIN_RCLOSE: -5,
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
@@ -77,6 +79,7 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
 def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
     max_rise    = __parse_policy_args(policy_args, MAX_RISE)
     max_take2low= __parse_policy_args(policy_args, MAX_TAKE2low)
+    max_high2from=__parse_policy_args(policy_args, MAX_HIGH2FROM)
     max_pick2from=__parse_policy_args(policy_args, MAX_PICK2FROM)
     min_rclose  = __parse_policy_args(policy_args, MIN_RCLOSE)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
@@ -102,7 +105,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
     if rise_range is not None:
         [min_index, max_index, inc_close, get_hl, tmpId] = rise_range
-        if (max_index != high_index) or (inc_close > 2*max_pick2from):
+        if (max_index != high_index) or (inc_close > max_high2from):
             logger.debug("Invalid rise range from %s to %s" % (kdata.index[min_index], kdata.index[max_index]))
             return True
         if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[min_index][dogen.P_CLOSE]) > max_pick2from:
