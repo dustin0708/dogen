@@ -23,6 +23,7 @@ MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
 MAX_RISE    = 'max_rise'
+MIN_RCLOSE  = 'min_pclose'
 MAX_PCLOSE  = 'max_pclose'
 OUTSTANDING = 'market_value'
 
@@ -32,6 +33,7 @@ ARGS_DEAULT_VALUE = {
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
     MAX_RISE: 36,   # 1%
+    MIN_RCLOSE: -5,
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -69,7 +71,8 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     return (int)(score)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
-    max_rise   = __parse_policy_args(policy_args, MAX_RISE)
+    max_rise    = __parse_policy_args(policy_args, MAX_RISE)
+    min_rclose  = __parse_policy_args(policy_args, MIN_RCLOSE)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
@@ -109,7 +112,11 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     temp_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
     if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > 15:
         logger.debug("Too high close at %s" % kdata.index[temp_index])
-        return None
+        return True
+    tdata = kdata[pick_index: high_index]
+    if tdata[tdata[dogen.R_CLOSE] <= min_rclose].index.size <= 0:
+        logger.debug("Don't get trade with pclose lower than %d" % min_rclose)
+        return True
 
     return False
 
@@ -237,7 +244,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             六 必须有涨停交易日:
                 1) 下降区间在三个月以内，取收盘最高价前15个交易日区间；
                 2) 下降区间在三个月以上，则三个月内必须有涨停;
-            七 pick-trade之后不超过前高
+            七 pick-trade校验:
+                1) pick-trade之后最高价不超过15%;
+                2) pick-trade之前回调区间存在跌5%以上交易日;
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
