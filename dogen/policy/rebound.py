@@ -79,6 +79,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
+    from_index = high_index
 
     ### 特征三
     if kdata.iloc[take_index][dogen.P_CLOSE] > max_pclose:
@@ -122,7 +123,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         return True
 
     ### 特征八
-    if high_index < 22 and from_index < 22:
+    if from_index < 22:
         logger.debug("Too short range from %s" % kdata.index[from_index])
         return True
 
