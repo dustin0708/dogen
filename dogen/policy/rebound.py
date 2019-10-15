@@ -187,7 +187,7 @@ def include_analyze(basic, kdata, policy_args):
             take_index = 0
         pass
     if take_index is None or take_index > take_valid:
-        logger.debug("Don't get valid take-trade")
+        logger.debug("Don't get valid take-trade since %s" % kdata.index[pick_index])
         return None
 
     return [pick_index, take_index, fall_range]
