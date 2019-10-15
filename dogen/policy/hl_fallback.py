@@ -9,33 +9,33 @@ import traceback
 from dogen import logger, mongo_server, mongo_database
 
 """ 参数说明：
-        * maxi_days: 自然日数（交易日和非交易日），若start取有效值，该字段无效
+        * max_trades: 自然日数（交易日和非交易日），若start取有效值，该字段无效
         * take_valid: 命中交易日有效期, 0表示最后一天命中有效
         * hl_valid: 最后一个涨停有效交易日数
         * volume_scale: 涨停后一交易日上涨时，放量最小倍数
         * mini_falls： 回调最小幅度，单位1%
-        * maxi_rise: 涨停之前最大涨幅
+        * max_rise: 涨停之前最大涨幅
 """
 
 ### 策略参数名
-MAXI_DAYS   = 'maxi_days'
+MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 HL_VALID    = 'hl_valid'
 VOLUME_SCALE= 'volume_scale'
-MINI_FALLS  = 'mini_falls'
-MAXI_RISE   = 'maxi_rise'
-MAXI_CLOSE  = 'maxi_close'
+MIN_FALLS   = 'min_falls'
+MAX_RISE    = 'max_rise'
+MAX_PCLOSE  = 'max_pclose'
 OUTSTANDING = 'outstanding'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 90,      # 天
+    MAX_TRADES: 90,      # 天
     TAKE_VALID: 0,      # 
     HL_VALID: 4,        #
     VOLUME_SCALE: 1.5,  # 倍
-    MINI_FALLS: 3.99,   # 1%
-    MAXI_RISE: 36,   # 1%
-    MAXI_CLOSE: 50,
+    MIN_FALLS: 3.99,   # 1%
+    MAX_RISE: 36,   # 1%
+    MAX_PCLOSE: 50,
     OUTSTANDING: 100,
 }
 
@@ -52,15 +52,15 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
             * 市值估分，总计25分；
             * 下跌估分，总计50分(默认最多四个下跌交易日)；
     """
-    maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
+    max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     hl_valid    = __parse_policy_args(policy_args, HL_VALID)
     score = 0
 
     temp_score = 25.0
-    temp_slice = maxi_close / temp_score
+    temp_slice = max_pclose / temp_score
     take_price = kdata.iloc[take_index][dogen.P_CLOSE]
-    if (take_price <= maxi_close):
+    if (take_price <= max_pclose):
         score += (temp_score - (int)(math.floor(take_price/temp_slice)))
 
     temp_score = 25.0
@@ -79,8 +79,8 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
 def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     """ 根据日线做排除性校验
     """
-    maxi_rise    = __parse_policy_args(policy_args, MAXI_RISE)
-    maxi_close   = __parse_policy_args(policy_args, MAXI_CLOSE)
+    max_rise     = __parse_policy_args(policy_args, MAX_RISE)
+    max_pclose   = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding  = __parse_policy_args(policy_args, OUTSTANDING)
 
     ### 净资产为负数的
@@ -89,7 +89,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征三
-    if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
+    if kdata.iloc[take_index][dogen.P_CLOSE] > max_pclose:
         logger.debug("Too high close price at %s" % kdata.index[take_index])
         return True
     if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
@@ -97,7 +97,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
     
     ### 特征四
-    rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
+    rise_range = dogen.get_last_rise_range(kdata, max_rise, max_fall=max_rise/2, eIdx=22)
     if rise_range is not None:
         [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
         if pick_index <= min_index and pick_index >= max_index:
@@ -122,7 +122,7 @@ def include_analyze(basic, kdata, policy_args):
     take_valid  = __parse_policy_args(policy_args, TAKE_VALID)
     hl_valid    = __parse_policy_args(policy_args, HL_VALID)
     volume_scale= __parse_policy_args(policy_args, VOLUME_SCALE)
-    mini_falls  = __parse_policy_args(policy_args, MINI_FALLS)
+    min_falls  = __parse_policy_args(policy_args, MIN_FALLS)
 
     ### 特征一
     index = dogen.get_highlimit_trades(kdata, eIdx=hl_valid+1)
@@ -173,7 +173,7 @@ def include_analyze(basic, kdata, policy_args):
         else:
             heap_falls+= abs(this_close)
         ### 达到回调要求, 命中
-        if heap_falls >= mini_falls:
+        if heap_falls >= min_falls:
             take_index = temp_index
         ### 若放量下跌即终止
         if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
@@ -218,7 +218,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         >>> 基本条件
             一 仅有一个涨停在hl_valid交易日内, 涨停后限一个交易日上涨，放量限制最小volume_scale倍；
             二 买入信号(take-trade)，有效期由take_valid限定:
-                1) 连续缩量下跌[mini_falls, maxi_falls]，放量下跌或上涨即终止；
+                1) 连续缩量下跌[min_falls, maxi_falls]，放量下跌或上涨即终止；
         
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
@@ -255,7 +255,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             if end is None:
                 end = dogen.date_today()
             if start is None:
-                start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAXI_DAYS))
+                start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAX_TRADES))
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             if kdata is None:
                 continue

@@ -10,7 +10,7 @@ import traceback
 from dogen import logger, mongo_server, mongo_database
 
 """ 参数说明：
-        * maxi_days: 自然日数（交易日和非交易日），若start取有效值，该字段无效
+        * max_trades: 自然日数（交易日和非交易日），若start取有效值，该字段无效
         * take_valid: 命中交易日有效期, 0表示最后一天命中有效
         * hl_valid: 最后一个涨停有效交易日数
         * volume_scale: 涨停后一交易日上涨时，放量最小倍数
@@ -19,20 +19,20 @@ from dogen import logger, mongo_server, mongo_database
 """
 
 ### 策略参数名
-MAXI_DAYS   = 'maxi_days'
+MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
-MAXI_RISE   = 'maxi_rise'
-MAXI_CLOSE  = 'maxi_close'
+MAX_RISE    = 'max_rise'
+MAX_PCLOSE  = 'max_pclose'
 OUTSTANDING = 'market_value'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 90,      # 天
+    MAX_TRADES: 90,      # 天
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
-    MAXI_RISE: 36,   # 1%
-    MAXI_CLOSE: 50,
+    MAX_RISE: 36,   # 1%
+    MAX_PCLOSE: 50,
     OUTSTANDING: 100,
 }
 
@@ -50,14 +50,14 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
             * 跌幅估分，总分25分，按100%计算；
             * 区间估分，总分25分，按半年为上限计算(22*6)；
     """
-    maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
+    max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     score = 0
 
     temp_score = 25.0
-    temp_slice = maxi_close / temp_score
+    temp_slice = max_pclose / temp_score
     take_price = kdata.iloc[take_index][dogen.P_CLOSE]
-    if (take_price <= maxi_close):
+    if (take_price <= max_pclose):
         score += (temp_score - (int)(math.floor(take_price/temp_slice)))
 
     temp_score = 25.0
@@ -69,13 +69,13 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     return (int)(score)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
-    maxi_rise   = __parse_policy_args(policy_args, MAXI_RISE)
-    maxi_close  = __parse_policy_args(policy_args, MAXI_CLOSE)
+    max_rise   = __parse_policy_args(policy_args, MAX_RISE)
+    max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
     ### 特征三
-    if kdata.iloc[take_index][dogen.P_CLOSE] > maxi_close:
+    if kdata.iloc[take_index][dogen.P_CLOSE] > max_pclose:
         logger.debug("Too high close price at %s" % kdata.index[take_index])
         return True
     if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
@@ -83,7 +83,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         return True
     
     ### 特征四
-    rise_range = dogen.get_last_rise_range(kdata, maxi_rise, max_fall=maxi_rise/2, eIdx=22)
+    rise_range = dogen.get_last_rise_range(kdata, max_rise, max_fall=max_rise/2, eIdx=22)
     if rise_range is not None:
         logger.debug("Too large rise-range")
         return True
@@ -266,7 +266,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             if end is None:
                 end = dogen.date_today()
             if start is None:
-                start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAXI_DAYS))
+                start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAX_TRADES))
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             if kdata is None:
                 continue

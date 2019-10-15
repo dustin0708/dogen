@@ -10,7 +10,7 @@ import traceback
 from dogen import logger, mongo_server, mongo_database
 
 """ 参数说明：
-        * maxi_days: 自然日数（交易日和非交易日），若start取有效值，该字段无效
+        * max_trades: 自然日数（交易日和非交易日），若start取有效值，该字段无效
         * take_valid: 命中交易日有效期, 0表示最后一天命中有效
         * hl_valid: 最后一个涨停有效交易日数
         * volume_scale: 涨停后一交易日上涨时，放量最小倍数
@@ -19,13 +19,13 @@ from dogen import logger, mongo_server, mongo_database
 """
 
 ### 策略参数名
-MAXI_DAYS   = 'maxi_days'
+MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAXI_DAYS: 90,      # 天
+    MAX_TRADES: 90,      # 天
     TAKE_VALID: 22,     # 
 }
 
@@ -127,7 +127,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             if end is None:
                 end = dogen.date_today()
             if start is None:
-                start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAXI_DAYS))
+                start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAX_TRADES))
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             if kdata is None:
                 continue
