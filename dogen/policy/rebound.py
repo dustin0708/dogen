@@ -117,6 +117,10 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > max_take2low:
         logger.debug("Too high close at %s" % kdata.index[temp_index])
         return True
+    if (pick_index+5) > high_index:
+        temp_index = high_index
+    else:
+        temp_index = pick_index+5
     tdata = kdata[pick_index: high_index]
     if tdata[tdata[dogen.R_CLOSE] <= min_rclose].index.size <= 0:
         logger.debug("Don't get trade with pclose lower than %d" % min_rclose)
