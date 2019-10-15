@@ -30,7 +30,7 @@ OUTSTANDING = 'market_value'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAX_TRADES: 90,      # 天
+    MAX_TRADES: 180,      # 天
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
     MAX_RISE: 36,   # 1%
