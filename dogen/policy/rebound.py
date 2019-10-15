@@ -121,7 +121,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         temp_index = high_index
     else:
         temp_index = pick_index+5
-    tdata = kdata[pick_index: high_index]
+    tdata = kdata[pick_index: temp_index]
     if tdata[tdata[dogen.R_CLOSE] <= min_rclose].index.size <= 0:
         logger.debug("Don't get trade with pclose lower than %d" % min_rclose)
         return True
