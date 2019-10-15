@@ -22,7 +22,6 @@ from dogen import logger, mongo_server, mongo_database
 MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
-MAX_RISE    = 'max_rise'
 MAX_TAKE2low= 'max_take2low'
 MAX_HIGH2FROM='max_high2from'
 MAX_PICK2FROM='max_pick2from'
@@ -32,10 +31,9 @@ OUTSTANDING = 'market_value'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAX_TRADES: 180,      # 天
+    MAX_TRADES: 150,      # 天
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
-    MAX_RISE: 36,   # 1%
     MAX_TAKE2low: 15,
     MAX_HIGH2FROM: 60,
     MAX_PICK2FROM: 40,
@@ -77,7 +75,6 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     return (int)(score)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
-    max_rise    = __parse_policy_args(policy_args, MAX_RISE)
     max_take2low= __parse_policy_args(policy_args, MAX_TAKE2low)
     max_high2from=__parse_policy_args(policy_args, MAX_HIGH2FROM)
     max_pick2from=__parse_policy_args(policy_args, MAX_PICK2FROM)
@@ -96,12 +93,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         return True
     
     ### 特征四
-    #temp_range = dogen.get_last_rise_range(kdata, max_rise, max_fall=max_rise/2, eIdx=22)
-    #if temp_range is not None:
-    #    logger.debug("Too large rise-range")
-    #    return True
-
-    ### 特征五
     rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
     if rise_range is not None:
         [min_index, max_index, inc_close, get_hl, tmpId] = rise_range
@@ -112,14 +103,17 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
             logger.debug("Too high close-price at %s" % kdata.index[pick_index])
             return True
         from_index = min_index
-        
-    ### 特征六
+    if from_index < 22:
+        logger.debug("Too short range from %s" % kdata.index[from_index])
+        return True
+
+    ### 特征五
     tdata = kdata[pick_index:high_index+15]
     if tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size <= 0:
         logger.debug("Don't include hl-trade from %s" % kdata.index[high_index])
         return True
 
-    ### 特征七
+    ### 特征六
     temp_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
     if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > max_take2low:
         logger.debug("Too high close at %s" % kdata.index[temp_index])
@@ -133,10 +127,17 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         logger.debug("Don't get trade with pclose lower than %d" % min_rclose)
         return True
 
-    ### 特征八
-    if from_index < 22:
-        logger.debug("Too short range from %s" % kdata.index[from_index])
-        return True
+    ### 特征七
+    hl_count = 0
+    for temp_index in range(high_index, from_index):
+        if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
+            hl_count += 1
+        else:
+            hl_count  = 0
+        if hl_count >= 2:
+            logger.debug("get serial hl-trade from %s to %s" % (kdata.index[from_index], kdata.index[high_index]))
+            return False
+        pass
 
     return False
 
@@ -258,16 +259,16 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
 
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            四 股价成本合理：
-                1) 在最近一个月内，最高涨幅由maxi_rise限制； 
-            五 限制大幅上涨后的回调最低价必须不超过前低的150%
-            六 必须有涨停交易日:
+            四 上涨区间校验:
+                1) 限制大幅上涨后的回调最低价必须不超过前低的150%;
+                2) 无论上涨区间是否存在, 至少包括一个月数据;
+            五 必须有涨停交易日:
                 1) 下降区间在三个月以内，取收盘最高价前15个交易日区间；
                 2) 下降区间在三个月以上，则三个月内必须有涨停;
-            七 pick-trade校验:
+            六 pick-trade校验:
                 1) pick-trade之后最高价不超过15%;
                 2) pick-trade之前一周回调区间存在跌5%以上交易日;
-            八 下跌区间+前一上涨区间在一个月以上(22交易日)
+            七 上涨区间无连板
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
