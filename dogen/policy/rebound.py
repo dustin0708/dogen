@@ -23,6 +23,7 @@ MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
 MAX_RISE    = 'max_rise'
+MAX_TAKE2low= 'max_take2low'
 MIN_RCLOSE  = 'min_pclose'
 MAX_PCLOSE  = 'max_pclose'
 OUTSTANDING = 'market_value'
@@ -33,6 +34,7 @@ ARGS_DEAULT_VALUE = {
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
     MAX_RISE: 36,   # 1%
+    MAX_TAKE2low: 15,
     MIN_RCLOSE: -5,
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
@@ -72,6 +74,7 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
     max_rise    = __parse_policy_args(policy_args, MAX_RISE)
+    max_take2low= __parse_policy_args(policy_args, MAX_TAKE2low)
     min_rclose  = __parse_policy_args(policy_args, MIN_RCLOSE)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
@@ -86,8 +89,8 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         return True
     
     ### 特征四
-    rise_range = dogen.get_last_rise_range(kdata, max_rise, max_fall=max_rise/2, eIdx=22)
-    if rise_range is not None:
+    temp_range = dogen.get_last_rise_range(kdata, max_rise, max_fall=max_rise/2, eIdx=22)
+    if temp_range is not None:
         logger.debug("Too large rise-range")
         return True
 
@@ -100,7 +103,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
                 logger.debug("Too high close-price at %s" % kdata.index[pick_index])
                 return True
             pass
-        pass
+        from_index = min_index
         
     ### 特征六
     tdata = kdata[pick_index:high_index+15]
@@ -110,12 +113,17 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
 
     ### 特征七
     temp_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
-    if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > 15:
+    if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > max_take2low:
         logger.debug("Too high close at %s" % kdata.index[temp_index])
         return True
     tdata = kdata[pick_index: high_index]
     if tdata[tdata[dogen.R_CLOSE] <= min_rclose].index.size <= 0:
         logger.debug("Don't get trade with pclose lower than %d" % min_rclose)
+        return True
+
+    ### 特征八
+    if high_index < 22 and from_index < 22:
+        logger.debug("Too short range from %s" % kdata.index[from_index])
         return True
 
     return False
@@ -247,6 +255,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             七 pick-trade校验:
                 1) pick-trade之后最高价不超过15%;
                 2) pick-trade之前回调区间存在跌5%以上交易日;
+            八 下跌区间+前一上涨区间在一个月以上(22交易日)
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
