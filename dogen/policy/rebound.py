@@ -136,7 +136,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
             hl_count  = 0
         if hl_count >= 2:
             logger.debug("get serial hl-trade from %s to %s" % (kdata.index[from_index], kdata.index[high_index]))
-            return False
+            return True
         pass
 
     return False
