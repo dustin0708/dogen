@@ -94,8 +94,22 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     if kdata.iloc[take_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING] > outstanding:
         logger.debug("Too large outstanding at %s" % kdata.index[take_index])
         return True
-    
+
     ### 特征四
+    temp_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
+    if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > max_take2low:
+        logger.debug("Too high close at %s" % kdata.index[temp_index])
+        return True
+    if (pick_index+5) > high_index:
+        temp_index = high_index
+    else:
+        temp_index = pick_index+5
+    tdata = kdata[pick_index: temp_index]
+    if tdata[tdata[dogen.R_CLOSE] <= min_rclose].index.size <= 0:
+        logger.debug("Don't get trade with pclose lower than %d" % min_rclose)
+        return True
+
+    ### 特征五
     rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
     if rise_range is not None:
         [from_index, max_index, inc_close, get_hl, tmpId] = rise_range
@@ -111,24 +125,10 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         logger.debug("Too short range from %s" % kdata.index[from_index])
         return True
 
-    ### 特征五
+    ### 特征六
     tdata = kdata[pick_index:high_index+15]
     if tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size <= 0:
         logger.debug("Don't include hl-trade from %s" % kdata.index[high_index])
-        return True
-
-    ### 特征六
-    temp_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
-    if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > max_take2low:
-        logger.debug("Too high close at %s" % kdata.index[temp_index])
-        return True
-    if (pick_index+5) > high_index:
-        temp_index = high_index
-    else:
-        temp_index = pick_index+5
-    tdata = kdata[pick_index: temp_index]
-    if tdata[tdata[dogen.R_CLOSE] <= min_rclose].index.size <= 0:
-        logger.debug("Don't get trade with pclose lower than %d" % min_rclose)
         return True
 
     ### 特征七
@@ -178,14 +178,10 @@ def include_analyze(basic, kdata, policy_args):
             pass
         pass
     elif dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[0][dogen.MA5]) < 3:
-        tdata = kdata[0:pick_index+1].sort_index()
-        polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 1)
-        if polyf[0] >= 0:
-            for temp_index in range(pick_index, -1, -1):
-                if kdata.iloc[temp_index][dogen.R_CLOSE] > 0 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
-                    if take_index is None or take_index > temp_index:
-                        take_index = temp_index
-                    pass
+        for temp_index in range(pick_index, -1, -1):
+            if kdata.iloc[temp_index][dogen.R_CLOSE] > 0 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+                if take_index is None or take_index > temp_index:
+                    take_index = temp_index
                 pass
             pass
         pass
@@ -263,15 +259,15 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
 
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            四 上涨区间校验:
-                1) 限制大幅上涨后的回调最低价必须不超过前低的150%;
-                2) 无论上涨区间是否存在, 至少包括一个月数据;
-            五 必须有涨停交易日:
-                1) 下降区间在三个月以内，取收盘最高价前15个交易日区间；
-                2) 下降区间在三个月以上，则三个月内必须有涨停;
-            六 pick-trade校验:
+            四 pick-trade校验:
                 1) pick-trade之后最高价不超过15%;
                 2) pick-trade之前一周回调区间存在跌5%以上交易日;
+            五 上涨区间校验:
+                1) 限制大幅上涨后的回调最低价必须不超过前低的150%;
+                2) 无论上涨区间是否存在, 至少包括一个月数据;
+            六 必须有涨停交易日:
+                1) 下降区间在三个月以内，取收盘最高价前15个交易日区间；
+                2) 下降区间在三个月以上，则三个月内必须有涨停;
             七 上涨区间无连板
 
         参数说明：
