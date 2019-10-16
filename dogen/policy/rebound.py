@@ -171,7 +171,7 @@ def include_analyze(basic, kdata, policy_args):
     ### 特征二
     heap_rises = 0
     take_index = None
-    if pick_index < 5:
+    if pick_index+1 < 5:
         for temp_index in range(pick_index-1, -1, -1):
             if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[pick_index-1][dogen.L_HIGH]:
                 take_index = temp_index
