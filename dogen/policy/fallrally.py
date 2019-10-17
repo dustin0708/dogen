@@ -33,10 +33,10 @@ OUTSTANDING = 'market_value'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAX_TRADES: 180,      # 天
+    MAX_TRADES: 150,      # 天
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
-    MIN_FALLEN: 40,
+    MIN_FALLEN: 25,
     MAX_TAKE2low: 15,
     MAX_HIGH2FROM: 60,
     MAX_PICK2FROM: 5,
@@ -102,6 +102,48 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > max_take2low:
         logger.debug("Too high close at %s" % kdata.index[temp_index])
         return True
+    if (pick_index+5) > high_index:
+        temp_index = high_index
+    else:
+        temp_index = pick_index+5
+    tdata = kdata[pick_index: temp_index]
+    if tdata[tdata[dogen.R_CLOSE] <= min_rclose].index.size <= 0:
+        logger.debug("Don't get trade with pclose lower than %d" % min_rclose)
+        return True
+
+    ### 特征五
+    rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
+    if rise_range is not None:
+        [from_index, max_index, inc_close, get_hl, tmpId] = rise_range
+        if (max_index != high_index) or (inc_close > max_high2from):
+            logger.debug("Invalid rise range from %s to %s" % (kdata.index[from_index], kdata.index[max_index]))
+            return True
+        tmp_pick2from = dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[from_index][dogen.P_CLOSE])
+        if (tmp_pick2from > max_pick2from) or (tmp_pick2from < min_pick2from):
+            logger.debug("Invalid from/pick-trade(%s/%s)" % (kdata.index[from_index], kdata.index[pick_index]))
+            return True
+        pass
+    if from_index < 22:
+        logger.debug("Too short range from %s" % kdata.index[from_index])
+        return True
+
+    ### 特征六
+    tdata = kdata[pick_index:high_index+15]
+    if tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size <= 0:
+        logger.debug("Don't include hl-trade from %s" % kdata.index[high_index])
+        return True
+
+    ### 特征七
+    hl_count = 0
+    for temp_index in range(high_index, from_index):
+        if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
+            hl_count += 1
+        else:
+            hl_count  = 0
+        if hl_count >= 2:
+            logger.debug("get serial hl-trade from %s to %s" % (kdata.index[from_index], kdata.index[high_index]))
+            return True
+        pass
 
     return False
 
