@@ -95,9 +95,9 @@ def __process_kdata(basic, kdata):
         value.append(ma5)
         value.append(ma10)
         value.append(ma20)
-        value.append(dif[samples-1-i])
-        value.append(dea[samples-1-i])
-        value.append(macd[samples-1-i]*2)
+        value.append(round(dif[samples-1-i], 2))
+        value.append(round(dea[samples-1-i], 2))
+        value.append(round(macd[samples-1-i]*2, 2))
         tdata = pandas.DataFrame([value], columns=colum)
         ndata = ndata.append(tdata)
         pass
