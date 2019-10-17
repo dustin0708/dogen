@@ -23,11 +23,6 @@ MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
 MIN_FALLEN  = 'min_fallen'
-MAX_TAKE2low= 'max_take2low'
-MAX_HIGH2FROM='max_high2from'
-MAX_PICK2FROM='max_pick2from'
-MIN_PICK2FROM='min_pick2from'
-MIN_RCLOSE  = 'min_pclose'
 MAX_PCLOSE  = 'max_pclose'
 OUTSTANDING = 'market_value'
 
@@ -37,11 +32,6 @@ ARGS_DEAULT_VALUE = {
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
     MIN_FALLEN: 40,
-    MAX_TAKE2low: 15,
-    MAX_HIGH2FROM: 60,
-    MAX_PICK2FROM: 5,
-    MIN_PICK2FROM: -100,
-    MIN_RCLOSE: -5,
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
 }
