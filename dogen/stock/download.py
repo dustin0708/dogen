@@ -1,6 +1,8 @@
 #-*-coding:utf-8-*-
 
 import sys
+import talib
+import dogen
 import pandas
 import tushare
 
@@ -34,12 +36,26 @@ def __process_kdata(basic, kdata):
     colum.append(MA10)
     colum.append(MA20)
     
+    colum.append(DIF)
+    colum.append(DEA)
+    colum.append(MACD)
+
+    # 样本总数
+    samples = kdata.index.size
+
+    # 计算macd
+    [dif, dea, macd] = talib.MACD(kdata[P_CLOSE])
+    dif.fillna(0, inplace=True)
+    dea.fillna(0, inplace=True)
+    macd.fillna(0, inplace=True)
+
+    # 初始化目标数据 
     ndata = pandas.DataFrame(columns=colum)
-    kdata.sort_index(ascending=False, inplace=True)
-    
+
     # 追加最后一行, 避免越界
+    kdata.sort_index(ascending=False, inplace=True)
     kdata = kdata.append(kdata.iloc[-1])
-    for i in range(0, kdata.index.size - 1):
+    for i in range(0, samples):
         date  = kdata.index[i]
         open  = kdata.iloc[ i ].loc[P_OPEN]
         close = kdata.iloc[ i ].loc[P_CLOSE]
@@ -49,11 +65,11 @@ def __process_kdata(basic, kdata):
         
         last_close = kdata.iloc[i+1].loc[P_CLOSE]
         if basic.name.startswith('68',0):
-            L_high     = round(1.2 * last_close, 2)
-            L_low      = round(0.8 * last_close, 2)
+            L_high = dogen.caculate_l_high(last_close, limit=20)
+            L_low  = dogen.caculate_l_low(last_close, limit=20)
         else:
-            L_high     = round(1.1 * last_close, 2)
-            L_low      = round(0.9 * last_close, 2)
+            L_high = dogen.caculate_l_high(last_close)
+            L_low  = dogen.caculate_l_low(last_close)
         
         diff_close = (close - last_close)/last_close
         R_close    = round(100 * diff_close, 2)
@@ -79,9 +95,13 @@ def __process_kdata(basic, kdata):
         value.append(ma5)
         value.append(ma10)
         value.append(ma20)
+        value.append(dif[samples-1-i])
+        value.append(dea[samples-1-i])
+        value.append(macd[samples-1-i])
         tdata = pandas.DataFrame([value], columns=colum)
         ndata = ndata.append(tdata)
         pass
+
     ndata.set_index('date', inplace=True)
     return ndata
 
