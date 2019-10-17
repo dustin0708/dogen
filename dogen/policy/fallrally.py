@@ -89,6 +89,11 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
     from_index = high_index
 
+    ### 净资产为负数的
+    if basic[dogen.BVPS] < 0.5:
+        logger.debug("Invalid bvps")
+        return True
+
     ### 特征三
     if kdata.iloc[take_index][dogen.P_CLOSE] > max_pclose:
         logger.debug("Too high close price at %s" % kdata.index[take_index])

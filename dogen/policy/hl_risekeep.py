@@ -94,7 +94,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     mini_index = dogen.get_last_column_min(kdata, dogen.P_CLOSE, sIdx=take_index, eIdx=pick_index)
 
     ### 净资产为负数的
-    if basic[dogen.BVPS] <= 0:
+    if basic[dogen.BVPS] < 0.5:
         logger.debug("Invalid bvps")
         return True
         

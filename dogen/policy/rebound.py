@@ -79,15 +79,14 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     return (int)(score)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
-    max_take2low= __parse_policy_args(policy_args, MAX_TAKE2low)
-    max_high2from=__parse_policy_args(policy_args, MAX_HIGH2FROM)
-    max_pick2from=__parse_policy_args(policy_args, MAX_PICK2FROM)
-    min_pick2from=__parse_policy_args(policy_args, MIN_PICK2FROM)
-    min_rclose  = __parse_policy_args(policy_args, MIN_RCLOSE)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-    from_index = high_index
+
+    ### 净资产为负数的
+    if basic[dogen.BVPS] < 0.5:
+        logger.debug("Invalid bvps")
+        return True
 
     ### 特征三
     if kdata.iloc[take_index][dogen.P_CLOSE] > max_pclose:

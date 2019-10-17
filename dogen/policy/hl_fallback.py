@@ -84,7 +84,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     outstanding  = __parse_policy_args(policy_args, OUTSTANDING)
 
     ### 净资产为负数的
-    if basic[dogen.BVPS] <= 0:
+    if basic[dogen.BVPS] < 0.5:
         logger.debug("Invalid bvps")
         return True
 
