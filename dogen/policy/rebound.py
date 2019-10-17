@@ -22,6 +22,7 @@ from dogen import logger, mongo_server, mongo_database
 MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
+MIN_FALLEN  = 'min_fallen'
 MAX_TAKE2low= 'max_take2low'
 MAX_HIGH2FROM='max_high2from'
 MAX_PICK2FROM='max_pick2from'
@@ -35,6 +36,7 @@ ARGS_DEAULT_VALUE = {
     MAX_TRADES: 150,      # 天
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
+    MIN_FALLEN: 25,
     MAX_TAKE2low: 15,
     MAX_HIGH2FROM: 60,
     MAX_PICK2FROM: 5,
@@ -151,19 +153,16 @@ def include_analyze(basic, kdata, policy_args):
     ### 参数解析
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
     pick_valid = __parse_policy_args(policy_args, PICK_VALID)
+    min_fallen = __parse_policy_args(policy_args, MIN_FALLEN)
 
     ### 特征一
-    fall_range = dogen.get_last_fall_range(kdata, 10, max_rise=15)
+    fall_range = dogen.get_last_fall_range(kdata, min_fallen, max_rise=min_fallen)
     if fall_range is None:
         logger.debug("Don't get valid fall-range")
         return None
     else:
         [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
         if pick_index > pick_valid:
-            logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
-            return None
-        temp_range = dogen.get_last_fall_range(kdata, 10, max_rise=15, eIdx=pick_index+10)
-        if temp_range is None:
             logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
             return None
         pass
@@ -173,7 +172,7 @@ def include_analyze(basic, kdata, policy_args):
     take_index = None
     if pick_index+1 < 5:
         for temp_index in range(pick_index-1, -1, -1):
-            if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[pick_index-1][dogen.L_HIGH]:
+            if kdata.iloc[temp_index][dogen.P_CLOSE] >= dogen.caculate_l_high(kdata.iloc[pick_index][dogen.P_CLOSE]):
                 take_index = temp_index
             pass
         pass
