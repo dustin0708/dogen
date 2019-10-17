@@ -23,6 +23,7 @@ MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
 MIN_FALLEN  = 'min_fallen'
+MAX_TAKE2LOW= 'max_take2low'
 MAX_PCLOSE  = 'max_pclose'
 OUTSTANDING = 'market_value'
 
@@ -32,6 +33,7 @@ ARGS_DEAULT_VALUE = {
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
     MIN_FALLEN: 40,
+    MAX_TAKE2LOW: 15,
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -69,6 +71,7 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     return (int)(score)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
+    max_take2low= __parse_policy_args(policy_args, MAX_TAKE2LOW)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
