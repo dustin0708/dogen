@@ -123,6 +123,11 @@ def include_analyze(basic, kdata, policy_args):
     pick_valid = __parse_policy_args(policy_args, PICK_VALID)
     min_fallen = __parse_policy_args(policy_args, MIN_FALLEN)
 
+    ### 预处理
+    if kdata.iloc[0][dogen.MA5] > kdata.iloc[0][dogen.MA20]:
+        logger.debug("Invalid MA5&MA20 at %s" % kdata.index[0])
+        return None
+
     ### 特征一
     fall_range = dogen.get_last_fall_range(kdata, min_fallen, max_rise=min_fallen)
     if fall_range is None:
