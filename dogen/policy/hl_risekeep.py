@@ -116,7 +116,10 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征五
-    if kdata.iloc[take_index][dogen.P_CLOSE] < kdata.iloc[pick_index][dogen.P_CLOSE]*(1-min_falls/100.0):
+    high_index = pick_index
+    if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
+        high_index = pick_index-1
+    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[high_index][dogen.P_CLOSE]) < -min_falls:
         logger.debug("Too low P-CLOSE at take-trade %s" % kdata.index[take_index])
         return True
     temp_rises = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[mini_index][dogen.P_CLOSE])
