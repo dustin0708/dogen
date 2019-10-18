@@ -49,11 +49,13 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计25分；
             * 市值估分，总计25分；
-            * 跌幅估分，总分25分，按100%计算；
-            * 区间估分，总分25分，按半年为上限计算(22*6)；
+            * 涨停估分，总分20分，一个涨停板5分；
+            * MACD估分，总分15分，一个交易日3分（要求大于-0.1）；
+            * MA5估分，总分15分，上涨一次5分；
     """
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
+    [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
     score = 0
 
     temp_score = 25.0
@@ -67,6 +69,22 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     take_value = take_price * basic[dogen.OUTSTANDING]
     if (take_value <= outstanding):
         score += (temp_score - (int)(math.floor(take_value/temp_slice)))
+
+    temp_score = 20
+    temp_slice = 5
+    tdata = kdata[pick_index: high_index+1]
+    count = tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size
+    if (count > temp_score/temp_slice):
+        count = temp_score/temp_slice
+    if (count > 0):
+        score += temp_slice*count
+
+    for temp_index in range(2, -1, -1):
+        if kdata.iloc[temp_index][dogen.MACD] >= -0.1:
+            score += 3
+        if kdata.iloc[temp_index][dogen.MA5] >= kdata.iloc[temp_index+1][dogen.MA5]:
+            score += 5
+        pass
 
     return (int)(score)
 
