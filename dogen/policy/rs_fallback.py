@@ -113,6 +113,18 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
         logger.debug("Too low pclose at %s" % kdata.index[pick_index])
         return True
 
+    ### 特征五
+    heap_lhigh = 0
+    for temp_index range(high_index, from_index):
+        if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
+            heap_lhigh+= 1
+        else:
+            heap_lhigh = 0
+        if heap_lhigh > 1:
+            logger.debug("Shouldn't include serial hl-trade")
+            return True
+        pass
+
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -242,6 +254,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             四 pick-trade校验:
                 1) pick-trade之后最高价不超过15%;
                 2) pick-trade收盘价高于from_trade；
+            五 排除连板
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
