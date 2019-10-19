@@ -153,7 +153,7 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [from_index, max_index, inc_close, get_lhigh, tmpId] = rise_range
-        if max_index != high_index:
+        if max_index != high_index or (from_index+pick_index)<2*high_index:
             logger.debug("Invalid rise-range from %s to %s" % (kdata.index[from_index], kdata.index[max_index]))
             return None
         pass
@@ -161,36 +161,21 @@ def include_analyze(basic, kdata, policy_args):
     ### 特征二
     heap_rises = 0
     take_index = None
-    if pick_index+1 < 5:
-        for temp_index in range(pick_index-1, -1, -1):
-            if kdata.iloc[temp_index][dogen.P_CLOSE] >= dogen.caculate_l_high(kdata.iloc[pick_index][dogen.P_CLOSE]):
+    for temp_index in range(pick_index, -1, -1):
+        temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
+        if temp_close < 0:
+            heap_rises = 0
+        else:
+            heap_rises += temp_close
+        if heap_rises >= 5:
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
+            pass
+        if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
+            if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
         pass
-    else:
-        if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[0][dogen.MA5]) < 3:
-            for temp_index in range(pick_index, -1, -1):
-                if kdata.iloc[temp_index][dogen.R_CLOSE] > 0 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
-                    if take_index is None or take_index > temp_index:
-                        take_index = temp_index
-                    pass
-                pass
-            pass
-        for temp_index in range(pick_index, -1, -1):
-            temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
-            if temp_close < 0:
-                heap_rises = 0
-            else:
-                heap_rises += temp_close
-            if heap_rises >= 5:
-                if take_index is None or take_index > temp_index:
-                    take_index = temp_index
-                pass
-            if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
-                if take_index is None or take_index > temp_index:
-                    take_index = temp_index
-                pass
-            pass
     if take_index is not None:
         ### take_index之后缩量下跌(限一个交易日)，也符合策略
         if take_index == 1\
