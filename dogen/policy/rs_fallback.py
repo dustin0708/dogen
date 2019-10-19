@@ -22,26 +22,20 @@ from dogen import logger, mongo_server, mongo_database
 MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
+MIN_RISE    = 'min_rise'
 MIN_FALLEN  = 'min_fallen'
-MAX_TAKE2low= 'max_take2low'
-MAX_HIGH2FROM='max_high2from'
-MAX_PICK2FROM='max_pick2from'
-MIN_PICK2FROM='min_pick2from'
-MIN_RCLOSE  = 'min_pclose'
+MAX_TAKE2LOW= 'max_take2low'
 MAX_PCLOSE  = 'max_pclose'
 OUTSTANDING = 'market_value'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MAX_TRADES: 150,      # 天
+    MAX_TRADES: 90,      # 天
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
-    MIN_FALLEN: 25,
-    MAX_TAKE2low: 15,
-    MAX_HIGH2FROM: 60,
-    MAX_PICK2FROM: 5,
-    MIN_PICK2FROM: -100,
-    MIN_RCLOSE: -5,
+    MIN_RISE: 15,
+    MIN_FALLEN: 10,
+    MAX_TAKE2LOW: 15,
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -53,41 +47,49 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
+def score_analyze(basic, kdata, pick_index, take_index, rise_range, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计25分；
             * 市值估分，总计25分；
-            * 跌幅估分，总分25分，按100%计算；
-            * 区间估分，总分25分，按半年为上限计算(22*6)；
+            * 涨停估分，总分25分，一个涨停板5分；
+            * MACD估分，总分25分，一个5分；
     """
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
-    score = 0
+    [from_index, high_index, inc_close, get_lhigh, tmpId] = rise_range
 
-    temp_score = 25.0
-    temp_slice = max_pclose / temp_score
-    take_price = kdata.iloc[take_index][dogen.P_CLOSE]
-    if (take_price <= max_pclose):
-        score += (temp_score - (int)(math.floor(take_price/temp_slice)))
+    score  = dogen.score_by_pclose(25, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
+    score += dogen.score_by_outstanding(25, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
 
-    temp_score = 25.0
-    temp_slice = outstanding / temp_score
-    take_value = take_price * basic[dogen.OUTSTANDING]
-    if (take_value <= outstanding):
-        score += (temp_score - (int)(math.floor(take_value/temp_slice)))
+    temp_score = 25
+    temp_slice = 5
+    tdata = kdata[high_index: from_index]
+    count = tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size
+    if (count > temp_score/temp_slice):
+        count = temp_score/temp_slice
+    if (count > 0):
+        score += temp_slice*count
+
+    temp_score = 25
+    if (pick_index+1)<5:
+        score += temp_score
+    else:
+        temp_slice = 5
+        for temp_index in range(0, (int)(temp_score/temp_slice)):
+            if kdata.iloc[temp_index][dogen.MACD] < -0.1:
+                continue
+            if kdata.iloc[temp_index][dogen.MACD] < kdata.iloc[temp_index+1][dogen.MACD]:
+                continue
+            score += temp_slice
+        pass
 
     return (int)(score)
 
-def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
-    max_take2low= __parse_policy_args(policy_args, MAX_TAKE2low)
-    max_high2from=__parse_policy_args(policy_args, MAX_HIGH2FROM)
-    max_pick2from=__parse_policy_args(policy_args, MAX_PICK2FROM)
-    min_pick2from=__parse_policy_args(policy_args, MIN_PICK2FROM)
-    min_rclose  = __parse_policy_args(policy_args, MIN_RCLOSE)
+def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_args):
+    max_take2low= __parse_policy_args(policy_args, MAX_TAKE2LOW)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
-    [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-    from_index = high_index
+    [from_index, high_index, inc_close, get_lhigh, tmpId] = rise_range
 
     ### 净资产为负数的
     if basic[dogen.BVPS] < 0.5:
@@ -107,48 +109,9 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > max_take2low:
         logger.debug("Too high close at %s" % kdata.index[temp_index])
         return True
-    if (pick_index+5) > high_index:
-        temp_index = high_index
-    else:
-        temp_index = pick_index+5
-    tdata = kdata[pick_index: temp_index]
-    if tdata[tdata[dogen.R_CLOSE] <= min_rclose].index.size <= 0:
-        logger.debug("Don't get trade with pclose lower than %d" % min_rclose)
+    if kdata.iloc[pick_index][dogen.P_CLOSE] < kdata.iloc[from_index][dogen.P_CLOSE]:
+        logger.debug("Too low pclose at %s" % kdata.index[pick_index])
         return True
-
-    ### 特征五
-    rise_range = dogen.get_last_rise_range(kdata, 15, max_fall=15, sIdx=high_index)
-    if rise_range is not None:
-        [from_index, max_index, inc_close, get_hl, tmpId] = rise_range
-        if (max_index != high_index) or (inc_close > max_high2from):
-            logger.debug("Invalid rise range from %s to %s" % (kdata.index[from_index], kdata.index[max_index]))
-            return True
-        tmp_pick2from = dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[from_index][dogen.P_CLOSE])
-        if (tmp_pick2from > max_pick2from) or (tmp_pick2from < min_pick2from):
-            logger.debug("Invalid from/pick-trade(%s/%s)" % (kdata.index[from_index], kdata.index[pick_index]))
-            return True
-        pass
-    if from_index < 22:
-        logger.debug("Too short range from %s" % kdata.index[from_index])
-        return True
-
-    ### 特征六
-    tdata = kdata[pick_index:high_index+15]
-    if tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size <= 0:
-        logger.debug("Don't include hl-trade from %s" % kdata.index[high_index])
-        return True
-
-    ### 特征七
-    hl_count = 0
-    for temp_index in range(high_index, from_index):
-        if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
-            hl_count += 1
-        else:
-            hl_count  = 0
-        if hl_count >= 2:
-            logger.debug("get serial hl-trade from %s to %s" % (kdata.index[from_index], kdata.index[high_index]))
-            return True
-        pass
 
     return False
 
@@ -158,10 +121,11 @@ def include_analyze(basic, kdata, policy_args):
     ### 参数解析
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
     pick_valid = __parse_policy_args(policy_args, PICK_VALID)
+    min_rise   = __parse_policy_args(policy_args, MIN_RISE)
     min_fallen = __parse_policy_args(policy_args, MIN_FALLEN)
 
     ### 特征一
-    fall_range = dogen.get_last_fall_range(kdata, min_fallen, max_rise=min_fallen)
+    fall_range = dogen.get_last_fall_range(kdata, min_fallen, max_rise=min_rise)
     if fall_range is None:
         logger.debug("Don't get valid fall-range")
         return None
@@ -169,6 +133,16 @@ def include_analyze(basic, kdata, policy_args):
         [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
         if pick_index > pick_valid:
             logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
+            return None
+        pass
+    rise_range = dogen.get_last_rise_range(kdata, min_rise, max_fall=min_fallen, sIdx=high_index)
+    if rise_range is None:
+        logger.debug("Don't get valid rise-range")
+        return None
+    else:
+        [from_index, max_index, inc_close, get_lhigh, tmpId] = rise_range
+        if max_index != high_index:
+            logger.debug("Invalid rise-range from %s to %s" % (kdata.index[from_index], kdata.index[max_index]))
             return None
         pass
 
@@ -221,7 +195,7 @@ def include_analyze(basic, kdata, policy_args):
         logger.debug("Don't get valid take-trade since %s" % kdata.index[pick_index])
         return None
 
-    return [pick_index, take_index, fall_range]
+    return [pick_index, take_index, rise_range]
 
 def stock_analyze(basic, kdata, policy_args):
     ### 基本条件选取
@@ -230,10 +204,10 @@ def stock_analyze(basic, kdata, policy_args):
         logger.debug("include_analyze() return None")
         return None
     else:
-        [pick_index, take_index, fall_range] = get_index
+        [pick_index, take_index, rise_range] = get_index
 
     ### 排它条件过滤
-    if exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
+    if exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_args):
         logger.debug("exclude_analyze() return True")
         return None
 
@@ -245,16 +219,16 @@ def stock_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
+    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index, rise_range, policy_args)
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 上涨回调策略, 满足条件：
+    """ 反弹策略, 满足条件：
         >>> 基本条件
-            一 区间分两段：
+            一 区间分两段;
                 1) 上涨区间达15%以上;
                 2) 回调跌幅达10%以上;
                 3) 上涨交易日数多于回调;
@@ -267,14 +241,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 pick-trade校验:
                 1) pick-trade之后最高价不超过15%;
-                2) pick-trade之前一周回调区间存在跌5%以上交易日;
-            五 上涨区间校验:
-                1) 限制大幅上涨后的回调最低价必须不超过前低的150%;
-                2) 无论上涨区间是否存在, 至少包括一个月数据;
-            六 必须有涨停交易日:
-                1) 下降区间在三个月以内，取收盘最高价前15个交易日区间；
-                2) 下降区间在三个月以上，则三个月内必须有涨停;
-            七 上涨区间无连板
+                2) pick-trade收盘价高于from_trade；
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
