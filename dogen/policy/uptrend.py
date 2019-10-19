@@ -51,19 +51,9 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
     """
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
-    score = 0
 
-    temp_score = 25.0
-    temp_slice = max_pclose / temp_score
-    take_price = kdata.iloc[take_index][dogen.P_CLOSE]
-    if (take_price <= max_pclose):
-        score += (temp_score - (int)(math.floor(take_price/temp_slice)))
-
-    temp_score = 25.0
-    temp_slice = outstanding / temp_score
-    take_value = take_price * basic[dogen.OUTSTANDING]
-    if (take_value <= outstanding):
-        score += (temp_score - (int)(math.floor(take_value/temp_slice)))
+    score  = dogen.score_by_pclose(25, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
+    score += dogen.score_by_outstanding(25, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
 
     return (int)(score)
 

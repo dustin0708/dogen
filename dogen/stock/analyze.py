@@ -2,6 +2,7 @@
 
 import sys
 import time
+import math
 import copy
 
 
@@ -64,6 +65,16 @@ def drop_fresh_stock_trades(basic, kdata, inplace=True):
             kdata.drop(kdata.index[-1], inplace=True)
         pass
     return kdata
+
+def score_by_pclose(total_score, p_close, l_close):
+    if (p_close <= l_close):
+        return (int)(total_score * (1 - (math.floor(p_close/l_close))))
+    return 0
+
+def score_by_outstanding(total_score, c_out, l_out):
+    if (c_out <= l_out):
+        return (int)(total_score * (1 - (math.floor(c_out/l_out))))
+    return 0
 
 def caculate_l_high(price, limit=10):
     return round(price*(1+limit/100.0), 2)
