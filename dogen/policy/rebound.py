@@ -217,7 +217,7 @@ def stock_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 反弹策略, 满足条件：
         >>> 基本条件
-            一 下跌10个点以上，且pick-trade之前10个交易日内有下跌10个点;
+            一 下跌40个点以上;
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 最低价后最多5个交易日，单日涨停（不限最小区间长度）；
                 2) 最低价后至少5个交易日，累积上涨超过5个点，或者单日涨幅超过3个点(MA5上涨)；
@@ -227,14 +227,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 pick-trade校验:
                 1) pick-trade之后最高价不超过15%;
-                2) pick-trade之前一周回调区间存在跌5%以上交易日;
-            五 上涨区间校验:
-                1) 限制大幅上涨后的回调最低价必须不超过前低的150%;
-                2) 无论上涨区间是否存在, 至少包括一个月数据;
-            六 必须有涨停交易日:
-                1) 下降区间在三个月以内，取收盘最高价前15个交易日区间；
-                2) 下降区间在三个月以上，则三个月内必须有涨停;
-            七 上涨区间无连板
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日

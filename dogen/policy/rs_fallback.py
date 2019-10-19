@@ -252,9 +252,12 @@ def stock_analyze(basic, kdata, policy_args):
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 反弹策略, 满足条件：
+    """ 上涨回调策略, 满足条件：
         >>> 基本条件
-            一 下跌10个点以上，且pick-trade之前10个交易日内有下跌10个点;
+            一 区间分两段：
+                1) 上涨区间达15%以上;
+                2) 回调跌幅达10%以上;
+                3) 上涨交易日数多于回调;
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 最低价后最多5个交易日，单日涨停（不限最小区间长度）；
                 2) 最低价后至少5个交易日，累积上涨超过5个点，或者单日涨幅超过3个点(MA5上涨)；
