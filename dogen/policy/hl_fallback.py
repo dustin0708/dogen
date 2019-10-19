@@ -172,12 +172,12 @@ def include_analyze(basic, kdata, policy_args):
             break
         else:
             heap_falls+= abs(this_close)
-        ### 达到回调要求, 命中
-        if heap_falls >= min_falls:
-            take_index = temp_index
         ### 若放量下跌即终止
         if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
             break
+        ### 达到回调要求, 命中
+        if heap_falls >= min_falls:
+            take_index = temp_index
         pass
     if take_index is None or take_index > take_valid:
         logger.debug("Don't match valid fallback trade")
