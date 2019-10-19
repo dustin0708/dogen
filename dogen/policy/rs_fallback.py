@@ -115,7 +115,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
 
     ### 特征五
     heap_lhigh = 0
-    for temp_index range(high_index, from_index):
+    for temp_index in range(high_index, from_index):
         if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
             heap_lhigh+= 1
         else:
