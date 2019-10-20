@@ -66,6 +66,12 @@ def drop_fresh_stock_trades(basic, kdata, inplace=True):
         pass
     return kdata
 
+def forecast_macd(kdata):
+    this_macd = kdata.iloc[0][MACD]
+    prev_macd = kdata.iloc[1][MACD]
+    next_macd = this_macd*2 - prev_macd
+    return [0, 0, next_macd]
+
 def score_by_pclose(total_score, p_close, l_close):
     if (p_close <= l_close):
         return (int)(total_score * (1 - (math.floor(p_close/l_close))))

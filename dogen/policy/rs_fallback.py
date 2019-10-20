@@ -153,7 +153,7 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [from_index, max_index, inc_close, get_lhigh, tmpId] = rise_range
-        if max_index != high_index or (from_index+pick_index)<2*high_index:
+        if max_index != high_index or (from_index-high_index)<2*(high_index-pick_index):
             logger.debug("Invalid rise-range from %s to %s" % (kdata.index[from_index], kdata.index[max_index]))
             return None
         pass
