@@ -115,13 +115,32 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
 
     ### 特征五
     heap_lhigh = 0
+    temp_count = 0
     for temp_index in range(high_index, from_index):
         if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
             heap_lhigh+= 1
+            temp_count+= 1
         else:
             heap_lhigh = 0
         if heap_lhigh > 1:
             logger.debug("Shouldn't include serial hl-trade")
+            return True
+        pass
+    if temp_count <= 0:
+        logger.debug("Don't include hl-trade from %s to %s" % (kdata.index[from_index], kdata.index[high_index]))
+        return True
+
+    ### 特征六
+    for temp_index in range(from_index-1, high_index, -1):
+        ### 下跌
+        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
+            continue
+        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
+            continue
+        ### 放量下跌之后未被上涨突破
+        maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, sIdx=high_index, eIdx=temp_index)
+        if maxi_index is None or kdata.iloc[temp_index][dogen.P_OPEN] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
+            logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
             return True
         pass
 
@@ -153,7 +172,7 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [from_index, max_index, inc_close, get_lhigh, tmpId] = rise_range
-        if max_index != high_index or (from_index-high_index)<2*(high_index-pick_index):
+        if max_index != high_index:
             logger.debug("Invalid rise-range from %s to %s" % (kdata.index[from_index], kdata.index[max_index]))
             return None
         pass
@@ -240,6 +259,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) pick-trade之后最高价不超过15%;
                 2) pick-trade收盘价高于from_trade；
             五 排除连板
+            六 放量下跌必须突破
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
