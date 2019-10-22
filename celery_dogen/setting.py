@@ -49,6 +49,13 @@ beat_schedule = {
         'args': (None, None, None, True, 1000)
     },
 
+    ### 上涨回调策略
+    'exec-policy-rs-fallback': {
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_rs_fallback_match',
+        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'args': (None, None, None, True, 1000)
+    },
+
     ### 蓄势上涨策略
     'exec-policy-uptrend': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_uptrend_match',
