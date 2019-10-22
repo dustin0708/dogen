@@ -83,7 +83,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征四
-    temp_range = dogen.get_maxi_serial_range(kdata, min_serial)
+    temp_range = dogen.get_maxi_serial_range(kdata, min_serial, eIdx=pick_index+1)
     if temp_range is None:
         logger.debug("Don't get serial range")
         return True
