@@ -22,6 +22,7 @@ from dogen import logger, mongo_server, mongo_database
 MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
+MIN_LHIGH   = 'min_lhigh'
 MIN_RISE    = 'min_rise'
 MIN_FALLEN  = 'min_fallen'
 MAX_TAKE2LOW= 'max_take2low'
@@ -33,6 +34,7 @@ ARGS_DEAULT_VALUE = {
     MAX_TRADES: 90,      # 天
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
+    MIN_LHIGH: 1,
     MIN_RISE: 15,
     MIN_FALLEN: 10,
     MAX_TAKE2LOW: 15,
@@ -86,6 +88,7 @@ def score_analyze(basic, kdata, pick_index, take_index, rise_range, policy_args)
     return (int)(score)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_args):
+    min_lhigh   = __parse_policy_args(policy_args, MIN_LHIGH)
     max_take2low= __parse_policy_args(policy_args, MAX_TAKE2LOW)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
@@ -126,7 +129,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
             logger.debug("Shouldn't include serial hl-trade")
             return True
         pass
-    if temp_count <= 0:
+    if temp_count < min_lhigh:
         logger.debug("Don't include hl-trade from %s to %s" % (kdata.index[from_index], kdata.index[high_index]))
         return True
 
@@ -202,8 +205,9 @@ def include_analyze(basic, kdata, policy_args):
         and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
             take_index-= 1
         ### 最近收盘价比take_index(不能取更新后值)高更新
-        elif kdata.iloc[0][dogen.R_CLOSE] >= 0\
-        and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[0][dogen.P_OPEN]\
+        elif take_index <= 3\
+        and kdata.iloc[0][dogen.R_CLOSE] > 0\
+        and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[0][dogen.P_OPEN]\
         and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
             take_index = 0
         pass
