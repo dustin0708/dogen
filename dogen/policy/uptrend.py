@@ -131,7 +131,12 @@ def include_analyze(basic, kdata, policy_args):
     max_fallen = __parse_policy_args(policy_args, MAX_FALLEN)
 
     ### 特征一
-    rise_range = dogen.get_last_rise_range(kdata, min_rise, max_fall=max_fallen)
+    fall_range = dogen.get_last_fall_range(kdata, max_fallen, max_rise=min_rise)
+    if fall_range is None:
+        pick_index = kdata.index.size - 1
+    else:
+        [from_index, pick_index, dec_close, get_llow, tmpId] = fall_range
+    rise_range = dogen.get_last_rise_range(kdata, min_rise, max_fall=max_fallen, eIdx=pick_index+1)
     if rise_range is None:
         logger.debug("Don't get valid rise-range")
         return None
