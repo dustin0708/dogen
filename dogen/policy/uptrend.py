@@ -106,12 +106,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Get up shadow at %s" % kdata.index[take_index])
             return True
         pass
-    if kdata.iloc[take_index][dogen.R_CLOSE] >= 0:
-        high_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
-        if high_index != take_index:
-            logger.debug("Invalid take-trade at %s" % kdata.index[take_index])
-            return True
-        pass
 
     ### 特征六
     for temp_index in range(pick_index, -1, -1):
@@ -182,7 +176,7 @@ def include_analyze(basic, kdata, policy_args):
         if pick_index < pick_valid:
             logger.debug("Invalid rise-range from %s" % kdata.index[pick_index])
             return None
-        pass
+        high_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
 
     ### 特征二
     heap_rises = 0
@@ -202,6 +196,9 @@ def include_analyze(basic, kdata, policy_args):
                 take_index = temp_index
             pass
         pass
+    if high_index != take_index:
+        logger.debug("Invalid take-trade at %s" % kdata.index[take_index])
+        return None
     if take_index is not None:
         ### take_index之后缩量下跌(限一个交易日)，也符合策略
         if take_index == 1\
