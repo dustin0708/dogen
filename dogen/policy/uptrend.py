@@ -106,6 +106,12 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Get up shadow at %s" % kdata.index[take_index])
             return True
         pass
+    if kdata.iloc[take_index][dogen.R_CLOSE] >= 0:
+        high_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
+        if high_index != take_index:
+            logger.debug("Invalid take-trade at %s" % kdata.index[take_index])
+            return True
+        pass
 
     ### 特征六
     for temp_index in range(pick_index, -1, -1):
@@ -258,6 +264,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             五 take-trade限制:
                 1) 维持上涨趋势：MA5或MA20上涨
                 2) 排除放量上影线
+                3) 上涨一定是最高价
             六 pick-trade之后若放量下跌必须突破开盘价
             七 回调最低价之后交易日必须满足下面条件:
                 1) 没有超过7%的单日涨幅
