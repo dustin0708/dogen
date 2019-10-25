@@ -25,7 +25,6 @@ PICK_VALID  = 'pick_valid'
 MIN_LHIGH   = 'min_lhigh'
 MIN_RISE    = 'min_rise'
 MAX_FALLEN  = 'max_fallen'
-MIN_SERIAL  = 'min_serial'
 MAX_PCLOSE  = 'max_pclose'
 OUTSTANDING = 'market_value'
 
@@ -35,9 +34,8 @@ ARGS_DEAULT_VALUE = {
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
     MIN_LHIGH: 1,
-    MIN_RISE: 10,
+    MIN_RISE: 6,
     MAX_FALLEN: 10,
-    MIN_SERIAL: 4,
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -65,7 +63,6 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
 
 def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     min_lhigh   = __parse_policy_args(policy_args, MIN_LHIGH)
-    min_serial  = __parse_policy_args(policy_args, MIN_SERIAL)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
 
@@ -83,10 +80,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征四
-    temp_range = dogen.get_maxi_serial_range(kdata, min_serial, eIdx=pick_index+1)
-    if temp_range is None:
-        logger.debug("Don't get serial range")
-        return True
+
 
     ### 特征五
     heap_lhigh = 0
@@ -131,12 +125,7 @@ def include_analyze(basic, kdata, policy_args):
     max_fallen = __parse_policy_args(policy_args, MAX_FALLEN)
 
     ### 特征一
-    fall_range = dogen.get_last_fall_range(kdata, max_fallen, max_rise=min_rise)
-    if fall_range is None:
-        pick_index = kdata.index.size - 1
-    else:
-        [from_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-    rise_range = dogen.get_last_rise_range(kdata, min_rise, max_fall=max_fallen, eIdx=pick_index+1)
+    rise_range = dogen.get_last_rise_range(kdata, min_rise, max_fall=max_fallen, eIdx=22)
     if rise_range is None:
         logger.debug("Don't get valid rise-range")
         return None
@@ -160,7 +149,7 @@ def include_analyze(basic, kdata, policy_args):
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
-        if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
+        if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
