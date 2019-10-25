@@ -253,6 +253,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 累积上涨超过5%；
                 2) 单日涨幅超过3%，且振幅大于5%；
+                3) 必须在区间内收盘价最高
 
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
