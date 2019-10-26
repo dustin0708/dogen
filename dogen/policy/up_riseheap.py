@@ -40,7 +40,7 @@ ARGS_DEAULT_VALUE = {
     MAX_FALLEN: 10,
     MIN_RISE: 6,
     MAX_RISE: 36,   # 1%
-    MAX_RCLOSE: 7,
+    MAX_RCLOSE: 5,
     MIN_RAMP: 5,
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
@@ -122,7 +122,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征七
-    temp_index = 5
+    temp_index = 10
     tdata = kdata[0: temp_index]
     if tdata[tdata[dogen.R_CLOSE] >= max_rclose].index.size > 0:
         logger.debug("Do include trade with 7 percentage R-CLOSE since %s" % kdata.index[temp_index])
@@ -265,11 +265,11 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制； 
             五 take-trade限制:
-                1) 维持上涨趋势：MA5或MA20上涨
+                1) 维持上涨趋势：MA5上涨且在MA20之上
                 2) 排除放量上影线
             六 pick-trade之后若放量下跌必须突破开盘价
             七 回调最低价之后交易日必须满足下面条件:
-                1) 没有超过7%的单日涨幅
+                1) 没有超过5%的单日涨幅
                 2) 每三日累积涨幅不超过前一日涨停价
 
         参数说明：
