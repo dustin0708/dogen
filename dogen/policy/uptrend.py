@@ -127,9 +127,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     if tdata[tdata[dogen.R_CLOSE] >= max_rclose].index.size > 0:
         logger.debug("Do include trade with 7 percentage R-CLOSE since %s" % kdata.index[temp_index])
         return True
-    if tdata[tdata[dogen.R_AMP] >= min_ramp].index.size <= 0:
-        logger.debug("Don't include trade with 5 percentage R-AMP since %s" % kdata.index[temp_index])
-        return True
     for temp_index in range(temp_index, 0, -1):
         hl_price = dogen.caculate_l_high(kdata.iloc[temp_index][dogen.P_CLOSE])
         tdata = kdata[temp_index-4:temp_index-1]
@@ -260,7 +257,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 累积上涨超过5%；
                 2) 单日涨幅超过3%，且振幅大于5%；
-                3) 必须在区间内收盘价最高
+                3) 必须在区间内收盘价最高，且区间内收盘价最高
                 4) 缩量回调修正和上涨突破修正
 
         >>> 排它条件
@@ -270,12 +267,10 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             五 take-trade限制:
                 1) 维持上涨趋势：MA5或MA20上涨
                 2) 排除放量上影线
-                3) 上涨一定是最高价
             六 pick-trade之后若放量下跌必须突破开盘价
             七 回调最低价之后交易日必须满足下面条件:
                 1) 没有超过7%的单日涨幅
-                2) 存在振幅5个点以上交易日
-                3) 每三日累积涨幅不超过前一日涨停价
+                2) 每三日累积涨幅不超过前一日涨停价
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
