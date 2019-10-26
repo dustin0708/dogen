@@ -53,8 +53,8 @@ def update_kdata(codes, full=False, start=None, end=None):
                     start = dogen.date_delta(end, -365)
                 pass
             else:
-                ### 增量下载需要保证数据处理加工的正确性（MA20）
-                start = dogen.date_delta(last_trade, -60)
+                ### 增量下载需要保证数据处理加工的正确性（MA20/MACD）
+                start = dogen.date_delta(last_trade, -90)
             
             ### 取basic
             basic = basics.loc[code]
