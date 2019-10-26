@@ -199,10 +199,14 @@ def include_analyze(basic, kdata, policy_args):
                 take_index = temp_index
             pass
         pass
-    if high_index != take_index:
-        logger.debug("Invalid take-trade at %s" % kdata.index[take_index])
-        return None
     if take_index is not None:
+        if high_index != take_index:
+            logger.debug("Invalid pclose of take-trade at %s" % kdata.index[take_index])
+            return None
+        maxi_index = dogen.get_last_column_max(kdata, dogen.VOLUME, sIdx=take_index, eIdx=take_index+10)
+        if maxi_index != take_index:
+            logger.debug("Invalid volume of take-trade at %s" % kdata.index[take_index])
+            return None
         ### take_index之后缩量下跌(限一个交易日)，也符合策略
         if take_index == 1\
         and kdata.iloc[take_index-1][dogen.R_CLOSE] < 0\
