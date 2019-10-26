@@ -31,7 +31,7 @@ OUTSTANDING = 'market_value'
 ARGS_DEAULT_VALUE = {
     MAX_TRADES: 180,      # 天
     TAKE_VALID: 0,      # 
-    PICK_VALID: 10,
+    PICK_VALID: 15,
     MIN_FALLEN: 40,
     MAX_TAKE2LOW: 15,
     MAX_PCLOSE: 50,
