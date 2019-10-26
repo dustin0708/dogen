@@ -125,7 +125,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     temp_index = 10
     tdata = kdata[0: temp_index]
     if tdata[tdata[dogen.R_CLOSE] >= max_rclose].index.size > 0:
-        logger.debug("Do include trade with 7 percentage R-CLOSE since %s" % kdata.index[temp_index])
+        logger.debug("Do include trade with %d percentage R-CLOSE since %s" % (max_rclose, kdata.index[temp_index]))
         return True
     for temp_index in range(temp_index, 0, -1):
         hl_price = dogen.caculate_l_high(kdata.iloc[temp_index][dogen.P_CLOSE])
@@ -152,6 +152,19 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("Don't include hl-trade from %s" % (kdata.index[pick_index]))
         return True
 
+    ### 特征九
+    if kdata.iloc[pick_index][dogen.MACD] < 0:
+        macd_count = 1
+    else:
+        macd_count = 0
+    for temp_index in range(pick_index-1, -1, -1):
+        if kdata.iloc[temp_index][dogen.MACD] < 0 and kdata.iloc[temp_index+1][dogen.MACD] > 0:
+            macd_count += 1
+        if macd_count > 1:
+            logger.debug("Invalid MACD since %s" % kdata.index[pick_index])
+            return True
+        pass
+    
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -271,6 +284,10 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             七 回调最低价之后交易日必须满足下面条件:
                 1) 没有超过5%的单日涨幅
                 2) 每三日累积涨幅不超过前一日涨停价
+            八 涨停检查：
+                1) 限制最多涨停数
+                2) 排除连板
+            九 MACD不能存在多段阴线
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
