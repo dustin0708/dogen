@@ -213,7 +213,6 @@ def include_analyze(basic, kdata, policy_args):
         elif take_index <= 3\
         and kdata.iloc[0][dogen.R_CLOSE] > 0\
         and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[0][dogen.P_OPEN]\
-        and kdata.iloc[0][dogen.VOLUME]  > kdata.iloc[1][dogen.VOLUME]\
         and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
             take_index = 0
         pass
