@@ -176,12 +176,15 @@ def include_analyze(basic, kdata, policy_args):
         if pick_index < pick_valid:
             logger.debug("Invalid rise-range from %s" % kdata.index[pick_index])
             return None
-        high_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
+        pass
 
     ### 特征二
     heap_rises = 0
     take_index = None
+    high_index = pick_index
     for temp_index in range(pick_index, -1, -1):
+        if kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[high_index][dogen.P_CLOSE]:
+            high_index = temp_index
         temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
         if temp_close < 0:
             heap_rises = 0
@@ -254,6 +257,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 累积上涨超过5%；
                 2) 单日涨幅超过3%，且振幅大于5%；
                 3) 必须在区间内收盘价最高
+                4) 缩量回调修正和上涨突破修正
 
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
