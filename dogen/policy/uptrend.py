@@ -96,7 +96,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     ### 特征五
     if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]\
-    and kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
+    or kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
         logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
         return True
     if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
