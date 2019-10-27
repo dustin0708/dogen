@@ -78,7 +78,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     ### 净资产为负数的
     if basic[dogen.BVPS] < 0.5:
         logger.debug("Invalid bvps")
-        return True
+        #return True
         
     ### 特征三
     if kdata.iloc[take_index][dogen.P_CLOSE] > max_pclose:
@@ -140,6 +140,8 @@ def include_analyze(basic, kdata, policy_args):
     take_index = None
     for temp_index in range(low_index, -1, -1):
         if kdata.iloc[temp_index][dogen.R_CLOSE] <= 0 or kdata.iloc[temp_index][dogen.R_CLOSE] >= 7:
+            continue
+        if kdata.iloc[temp_index][dogen.P_CLOSE] < kdata.iloc[temp_index][dogen.P_OPEN]:
             continue
         if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) < -3:
             continue
