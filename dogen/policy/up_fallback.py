@@ -111,6 +111,12 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
     if (from_index-high_index) < (high_index-take_index):
         logger.debug("Invalid rise/fall range trades")
         return True
+    tdata = kdata[pick_index:high_index]
+    rise_trade = tdata[tdata[dogen.R_CLOSE] > 0]
+    fall_trade = tdata[tdata[dogen.R_CLOSE] < 0]
+    if fall_trade < rise_trade*2:
+        logger.debug("Invalid fall-range")
+        return True
 
     ### 特征五
     heap_lhigh = 0
@@ -265,8 +271,9 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
 
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            四 take-trade校验:
+            四 区间校验:
                 1) 上涨区间长于下跌区间
+                2) 下跌区间阴盛阳衰
             五 涨停检查
                 1) 上涨区间排除连板
                 2) 三个月内有涨停
