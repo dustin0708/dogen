@@ -97,6 +97,18 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             return True
         pass
 
+    ### 特征五
+    for temp_index in range(pick_index, -1, -1):
+        ### 下跌
+        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
+            continue
+        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
+            continue
+        if kdata.iloc[temp_index][dogen.P_OPEN] <= kdata.iloc[temp_index+1][dogen.P_CLOSE]:
+            continue
+        logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
+        return True
+
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -127,7 +139,7 @@ def include_analyze(basic, kdata, policy_args):
     ### 特征二
     take_index = None
     for temp_index in range(low_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.R_CLOSE] <= 0:
+        if kdata.iloc[temp_index][dogen.R_CLOSE] <= 0 or kdata.iloc[temp_index][dogen.R_CLOSE] >= 7:
             continue
         if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) < -3:
             continue
@@ -169,15 +181,18 @@ def stock_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 两连涨停策略, 满足条件：
         >>> 基本条件
-            一 两周内两连板上涨，存在次板收盘价之下的回调;
+            一 两周内两连板上涨;
+                1) 存在次板收盘价之下的回调;
             二 买入信号(take-trade)，有效期由take_valid限定:
-                1) 收盘价在次板收盘价0.97倍之上，且涨幅大于2%；
+                1) 收盘价在次板收盘价0.97倍之上，且涨幅小于7%；
         
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制； 
-
+            五 形态校验:
+                1) 次板之后不存在放量下跌交易日；
+    
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
             end - 样本截止交易日(数据库样本可能早于该日期, 如停牌)
