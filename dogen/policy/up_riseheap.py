@@ -166,7 +166,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_arg
         pass
     
     ### 特征十
-    temp_falls = dogen.caculate_incr_percentage(kdata.iloc[high_index][dogen.P_CLOSE], kdata.index[pick_index][dogen.P_CLOSE])/2
+    temp_falls = dogen.caculate_incr_percentage(kdata.iloc[high_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE])/2
     temp_range = dogen.get_last_fall_range(kdata, temp_falls, eIdx=pick_index)
     if temp_range is not None:
         logger.debug("Too large fall-range since %s" % kdata.index[pick_index])
