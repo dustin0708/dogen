@@ -195,6 +195,8 @@ def include_analyze(basic, kdata, policy_args):
             heap_rises = 0
         else:
             heap_rises += temp_close
+        if kdata.iloc[temp_index][dogen.VOLUME] < kdata.iloc[temp_index+1][dogen.VOLUME]:
+            continue
         if heap_rises >= 5:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
