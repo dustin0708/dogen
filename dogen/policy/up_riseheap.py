@@ -22,7 +22,6 @@ from dogen import logger, mongo_server, mongo_database
 MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
 PICK_VALID  = 'pick_valid'
-MIN_LHIGH   = 'min_lhigh'
 MAX_FALLEN  = 'max_fallen'
 MIN_RISE    = 'min_rise'
 MAX_RISE    = 'max_rise'
@@ -36,7 +35,6 @@ ARGS_DEAULT_VALUE = {
     MAX_TRADES: 90,      # 天
     TAKE_VALID: 0,      # 
     PICK_VALID: 10,
-    MIN_LHIGH: 0,
     MAX_FALLEN: 10,
     MIN_RISE: 6,
     MAX_RISE: 36,   # 1%
@@ -68,7 +66,6 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
     return (int)(score)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
-    min_lhigh   = __parse_policy_args(policy_args, MIN_LHIGH)
     max_rclose  = __parse_policy_args(policy_args, MAX_RCLOSE)
     min_ramp    = __parse_policy_args(policy_args, MIN_RAMP)
     max_rise    = __parse_policy_args(policy_args, MAX_RISE)
@@ -137,19 +134,17 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     ### 特征八
     heap_lhigh = 0
-    temp_count = 0
     for temp_index in range(0, pick_index):
         if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
             heap_lhigh+= 1
-            temp_count+= 1
         else:
             heap_lhigh = 0
         if heap_lhigh > 1:
             logger.debug("Shouldn't include serial hl-trade")
             return True
         pass
-    if temp_count < min_lhigh:
-        logger.debug("Don't include hl-trade from %s" % (kdata.index[pick_index]))
+    if kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]].index.size <= 0:
+        logger.debug("Don't include hl-trade")
         return True
 
     ### 特征九
@@ -287,6 +282,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             八 涨停检查：
                 1) 限制最多涨停数
                 2) 排除连板
+                3) 三个月内有涨停
             九 MACD不能存在多段阴线
 
         参数说明：
