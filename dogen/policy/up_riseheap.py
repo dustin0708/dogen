@@ -67,7 +67,7 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
 
     return (int)(score)
 
-def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
+def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     min_lhigh   = __parse_policy_args(policy_args, MIN_LHIGH)
     max_rclose  = __parse_policy_args(policy_args, MAX_RCLOSE)
     min_ramp    = __parse_policy_args(policy_args, MIN_RAMP)
@@ -165,13 +165,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_arg
             return True
         pass
     
-    ### 特征十
-    temp_falls = dogen.caculate_incr_percentage(kdata.iloc[high_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE])/2
-    temp_range = dogen.get_last_fall_range(kdata, temp_falls, eIdx=pick_index)
-    if temp_range is not None:
-        logger.debug("Too large fall-range since %s" % kdata.index[pick_index])
-        return True
-
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -240,7 +233,7 @@ def include_analyze(basic, kdata, policy_args):
         logger.debug("Don't get valid take-trade since %s" % kdata.index[pick_index])
         return None
 
-    return [pick_index, take_index, high_index]
+    return [pick_index, take_index]
 
 def stock_analyze(basic, kdata, policy_args):
     ### 基本条件选取
@@ -249,10 +242,10 @@ def stock_analyze(basic, kdata, policy_args):
         logger.debug("include_analyze() return None")
         return None
     else:
-        [pick_index, take_index, high_index] = get_index
+        [pick_index, take_index] = get_index
 
     ### 排它条件过滤
-    if exclude_analyze(basic, kdata, pick_index, take_index, high_index, policy_args):
+    if exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("exclude_analyze() return True")
         return None
 
@@ -295,7 +288,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 限制最多涨停数
                 2) 排除连板
             九 MACD不能存在多段阴线
-            十 上涨区间不能存在最高涨幅一半以上的回调
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
