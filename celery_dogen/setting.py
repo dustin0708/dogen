@@ -29,8 +29,8 @@ beat_schedule = {
     },
 
     ### 涨停回调策略
-    'exec-policy-hl-fallback': {
-        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_fallback_match',
+    'exec-policy-hl-fallheap': {
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_fallheap_match',
         'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
         'args': (None, None, None, True, 1000)
     },
@@ -50,8 +50,8 @@ beat_schedule = {
     },
 
     ### 反弹策略
-    'exec-policy-rebound': {
-        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_rebound_match',
+    'exec-policy-rb-risekeep': {
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_rb_risekeep_match',
         'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
         'args': (None, None, None, True, 1000)
     },
