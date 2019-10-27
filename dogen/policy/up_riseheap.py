@@ -25,6 +25,7 @@ PICK_VALID  = 'pick_valid'
 MAX_FALLEN  = 'max_fallen'
 MIN_RISE    = 'min_rise'
 MAX_RISE    = 'max_rise'
+MIN_LHIGH   = 'min_lhigh'
 MAX_RCLOSE  = 'max_rclose'
 MIN_RAMP    = 'min_ramp'
 MAX_PCLOSE  = 'max_pclose'
@@ -38,6 +39,7 @@ ARGS_DEAULT_VALUE = {
     MAX_FALLEN: 10,
     MIN_RISE: 6,
     MAX_RISE: 36,   # 1%
+    MIN_LHIGH: 1,
     MAX_RCLOSE: 7,
     MIN_RAMP: 5,
     MAX_PCLOSE: 50,
@@ -67,6 +69,7 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
 
 def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     max_rclose  = __parse_policy_args(policy_args, MAX_RCLOSE)
+    min_lhigh   = __parse_policy_args(policy_args, MIN_LHIGH)
     min_ramp    = __parse_policy_args(policy_args, MIN_RAMP)
     max_rise    = __parse_policy_args(policy_args, MAX_RISE)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
@@ -143,8 +146,8 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Shouldn't include serial hl-trade")
             return True
         pass
-    if kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]].index.size <= 0:
-        logger.debug("Don't include hl-trade")
+    if kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]].index.size < min_lhigh:
+        logger.debug("Don't include %d hl-trade" % min_lhigh)
         return True
 
     ### 特征九
