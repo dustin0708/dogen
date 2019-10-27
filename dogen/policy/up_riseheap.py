@@ -186,10 +186,7 @@ def include_analyze(basic, kdata, policy_args):
     ### 特征二
     heap_rises = 0
     take_index = None
-    high_index = pick_index
     for temp_index in range(pick_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[high_index][dogen.P_CLOSE]:
-            high_index = temp_index
         temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
         if temp_close < 0:
             heap_rises = 0
@@ -207,6 +204,7 @@ def include_analyze(basic, kdata, policy_args):
             pass
         pass
     if take_index is not None:
+        high_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, sIdx=take_index, eIdx=pick_index)
         if high_index != take_index:
             logger.debug("Invalid pclose of take-trade at %s" % kdata.index[take_index])
             return None
