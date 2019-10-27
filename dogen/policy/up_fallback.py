@@ -108,22 +108,23 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
         return True
 
     ### 特征四
+    if (from_index-high_index) < (high_index-take_index):
+        logger.debug("Invalid rise/fall range trades")
+        return True
 
     ### 特征五
     heap_lhigh = 0
-    temp_count = 0
     for temp_index in range(high_index, from_index):
         if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
             heap_lhigh+= 1
-            temp_count+= 1
         else:
             heap_lhigh = 0
         if heap_lhigh > 1:
             logger.debug("Shouldn't include serial hl-trade")
             return True
         pass
-    if temp_count < min_lhigh:
-        logger.debug("Don't include hl-trade from %s to %s" % (kdata.index[from_index], kdata.index[high_index]))
+    if kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]].index.size < min_lhigh:
+        logger.debug("Don't include %d hl-trade" % min_lhigh)
         return True
 
     ### 特征六
@@ -139,6 +140,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
             logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
             return True
         pass
+
 
     return False
 
@@ -191,6 +193,8 @@ def include_analyze(basic, kdata, policy_args):
             heap_rises = 0
         else:
             heap_rises += temp_close
+        if kdata.iloc[temp_index][dogen.P_CLOSE] < kdata.iloc[temp_index][dogen.P_OPEN]:
+            continue
         if heap_rises >= 5:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
@@ -262,8 +266,10 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 take-trade校验:
-                1) 暂无
-            五 上涨区间排除连板
+                1) 上涨区间长于下跌区间
+            五 涨停检查
+                1) 上涨区间排除连板
+                2) 三个月内有涨停
             六 上涨区间放量下跌必须突破
 
         参数说明：
