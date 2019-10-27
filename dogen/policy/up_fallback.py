@@ -89,6 +89,7 @@ def score_analyze(basic, kdata, pick_index, take_index, rise_range, policy_args)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_args):
     min_lhigh   = __parse_policy_args(policy_args, MIN_LHIGH)
+    pick_valid  = __parse_policy_args(policy_args, PICK_VALID)
     max_take2low= __parse_policy_args(policy_args, MAX_TAKE2LOW)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
@@ -147,6 +148,13 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
             return True
         pass
 
+    ### 特征七
+    if pick_index+1 >= pick_valid:
+        [dif, dea, macd] = dogen.forecast_macd(kdata)
+        if kdata.iloc[0][dogen.MACD] < -0.1 and macd < -0.1:
+            logger.debug("Invalid MACD at %s" % kdata.index[0])
+            return True
+        pass
 
     return False
 
@@ -278,6 +286,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 上涨区间排除连板
                 2) 三个月内有涨停
             六 上涨区间放量下跌必须突破
+            七 
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
