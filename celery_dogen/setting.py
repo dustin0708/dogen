@@ -42,6 +42,13 @@ beat_schedule = {
         'args': (None, None, None, True, 1000)
     },
 
+    ### 两连板策略
+    'exec-policy-hl-twoserial': {
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_twoserial_match',
+        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'args': (None, None, None, True, 1000)
+    },
+
     ### 反弹策略
     'exec-policy-rebound': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_rebound_match',
