@@ -112,8 +112,8 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
         logger.debug("Invalid rise/fall range trades")
         return True
     tdata = kdata[pick_index:high_index]
-    rise_trade = tdata[tdata[dogen.R_CLOSE] > 0]
-    fall_trade = tdata[tdata[dogen.R_CLOSE] < 0]
+    rise_trade = tdata[tdata[dogen.R_CLOSE] > 0].index.size
+    fall_trade = tdata[tdata[dogen.R_CLOSE] < 0].index.size
     if fall_trade < rise_trade*2:
         logger.debug("Invalid fall-range")
         return True
