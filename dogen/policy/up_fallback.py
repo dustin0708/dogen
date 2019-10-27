@@ -33,7 +33,7 @@ OUTSTANDING = 'market_value'
 ARGS_DEAULT_VALUE = {
     MAX_TRADES: 90,      # 天
     TAKE_VALID: 0,      # 
-    PICK_VALID: 10,
+    PICK_VALID: 3,
     MIN_LHIGH: 0,
     MIN_RISE: 15,
     MIN_FALLEN: 10,
@@ -108,13 +108,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
         return True
 
     ### 特征四
-    temp_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=pick_index)
-    if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > max_take2low:
-        logger.debug("Too high close at %s" % kdata.index[temp_index])
-        return True
-    if kdata.iloc[pick_index][dogen.P_CLOSE] < kdata.iloc[from_index][dogen.P_CLOSE]:
-        logger.debug("Too low pclose at %s" % kdata.index[pick_index])
-        return True
 
     ### 特征五
     heap_lhigh = 0
@@ -158,6 +151,11 @@ def include_analyze(basic, kdata, policy_args):
     min_rise   = __parse_policy_args(policy_args, MIN_RISE)
     min_fallen = __parse_policy_args(policy_args, MIN_FALLEN)
 
+    ### 预处理
+    if kdata.iloc[0][dogen.MA5] > kdata.iloc[0][dogen.MA20]:
+        logger.debug("Invalid MA5&MA20 at %s" % kdata.index[0])
+        return None
+        
     ### 特征一
     fall_range = dogen.get_last_fall_range(kdata, min_fallen, max_rise=min_rise)
     if fall_range is None:
@@ -165,7 +163,8 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-        if pick_index > pick_valid:
+        tdata = kdata[0:pick_index]
+        if tdata[tdata[dogen.MA5] > tdata[dogen.MA20]].index.size > 0:
             logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
             return None
         pass
@@ -177,6 +176,9 @@ def include_analyze(basic, kdata, policy_args):
         [from_index, max_index, inc_close, get_lhigh, tmpId] = rise_range
         if max_index != high_index:
             logger.debug("Invalid rise-range from %s to %s" % (kdata.index[from_index], kdata.index[max_index]))
+            return None
+        if kdata.iloc[pick_index][dogen.P_CLOSE] < kdata.iloc[from_index][dogen.P_CLOSE]:
+            logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
             return None
         pass
 
@@ -253,17 +255,16 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 2) 回调跌幅达10%以上;
                 3) 上涨交易日数多于回调;
             二 买入信号(take-trade)，有效期由take_valid限定:
-                1) 最低价后最多5个交易日，单日涨停（不限最小区间长度）；
-                2) 最低价后至少5个交易日，累积上涨超过5个点，或者单日涨幅超过3个点(MA5上涨)；
-                3) 最低价后至少5个交易日，保持横盘，出现振幅大于5%的上涨交易日(MA5上涨)；
+                1) 最低价后最多3个交易日，单日涨停（不限最小区间长度）；
+                2) 最低价后至少3个交易日，累积上涨超过5个点，或者单日涨幅超过3个点；
+                3) 最低价后至少3个交易日，保持横盘，出现振幅大于5%的上涨交易日；
 
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
-            四 pick-trade校验:
-                1) pick-trade之后最高价不超过15%;
-                2) pick-trade收盘价高于from_trade；
-            五 排除连板
-            六 放量下跌必须突破
+            四 take-trade校验:
+                1) 暂无
+            五 上涨区间排除连板
+            六 上涨区间放量下跌必须突破
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
