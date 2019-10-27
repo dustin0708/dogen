@@ -74,12 +74,12 @@ def forecast_macd(kdata):
 
 def score_by_pclose(total_score, p_close, l_close):
     if (p_close <= l_close):
-        return (int)(total_score * (1 - (math.floor(p_close/l_close))))
+        return (int)(total_score * (1 - (p_close/l_close)))
     return 0
 
 def score_by_outstanding(total_score, c_out, l_out):
     if (c_out <= l_out):
-        return (int)(total_score * (1 - (math.floor(c_out/l_out))))
+        return (int)(total_score * (1 - (c_out/l_out)))
     return 0
 
 def caculate_l_high(price, limit=10):
