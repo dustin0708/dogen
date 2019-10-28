@@ -95,17 +95,13 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征五
-    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]\
-    or kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
+    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
         logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
         return True
-    if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
-        h2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_HIGH], kdata.iloc[take_index][dogen.P_LOW])
-        c2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[take_index][dogen.P_LOW])
-        if c2l*2 < h2l:
-            logger.debug("Get up shadow at %s" % kdata.index[take_index])
-            return True
-        pass
+    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]\
+    and kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
+        logger.debug("Invalid MA5&MA20 trend at %s" % kdata.index[take_index])
+        return True
 
     ### 特征六
     for temp_index in range(pick_index, -1, -1):
