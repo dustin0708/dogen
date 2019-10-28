@@ -38,7 +38,7 @@ ARGS_DEAULT_VALUE = {
     PICK_VALID: 10,
     MAX_FALLEN: 10,
     MIN_RISE: 6,
-    MAX_RISE: 36,   # 1%
+    MAX_RISE: 60,   # 1%
     MIN_LHIGH: 1,
     MAX_RCLOSE: 7,
     MIN_RAMP: 5,
