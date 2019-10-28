@@ -177,7 +177,7 @@ def include_analyze(basic, kdata, policy_args):
     for temp_index in range(pick_index, -1, -1):
         if kdata.iloc[temp_index+1][dogen.VOLUME]  < kdata.iloc[temp_index][dogen.VOLUME]:
             continue
-        if kdata.iloc[temp_index+1][dogen.R_CLOSE] < 0 or data.iloc[temp_index][dogen.R_CLOSE] > -3:
+        if kdata.iloc[temp_index+1][dogen.R_CLOSE] < 0 or kdata.iloc[temp_index][dogen.R_CLOSE] > -3:
             continue
         if kdata.iloc[temp_index+1][dogen.R_CLOSE] > abs(kdata.iloc[temp_index][dogen.R_CLOSE])*2:
             continue
