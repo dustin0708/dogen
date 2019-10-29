@@ -201,21 +201,29 @@ def include_analyze(basic, kdata, policy_args):
     ### 特征二
     heap_rises = 0
     take_index = None
-    for temp_index in range(pick_index, -1, -1):
-        temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
-        if temp_close < 0:
-            heap_rises = 0
-        else:
-            heap_rises += temp_close
-        if kdata.iloc[temp_index][dogen.P_CLOSE] < kdata.iloc[temp_index][dogen.P_OPEN]:
-            continue
-        if heap_rises >= 5:
-            if take_index is None or take_index > temp_index:
+    if pick_index+1 < pick_valid:
+        for temp_index in range(pick_index-1, -1, -1):
+            if kdata.iloc[temp_index][dogen.P_CLOSE] >= dogen.caculate_l_high(kdata.iloc[pick_index][dogen.P_CLOSE]):
                 take_index = temp_index
             pass
-        if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
-            if take_index is None or take_index > temp_index:
-                take_index = temp_index
+        pass
+    else:
+        for temp_index in range(pick_index, -1, -1):
+            temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
+            if temp_close < 0:
+                heap_rises = 0
+            else:
+                heap_rises += temp_close
+            if kdata.iloc[temp_index][dogen.P_CLOSE] < kdata.iloc[temp_index][dogen.P_OPEN]:
+                continue
+            if heap_rises >= 5:
+                if take_index is None or take_index > temp_index:
+                    take_index = temp_index
+                pass
+            if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
+                if take_index is None or take_index > temp_index:
+                    take_index = temp_index
+                pass
             pass
         pass
     if take_index is not None:
