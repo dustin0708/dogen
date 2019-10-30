@@ -32,7 +32,7 @@ ARGS_DEAULT_VALUE = {
     MAX_TRADES: 180,      # 天
     TAKE_VALID: 0,      # 
     PICK_VALID: 5,
-    MIN_FALLEN: 40,
+    MIN_FALLEN: 35,
     MAX_TAKE2LOW: 15,
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
