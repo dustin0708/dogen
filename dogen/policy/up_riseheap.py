@@ -99,6 +99,11 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     or kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
         logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
         return True
+    temp_diff1 = kdata.iloc[take_index+0][dogen.MA5] - kdata.iloc[take_index+0][dogen.MA20]
+    temp_diff2 = kdata.iloc[take_index+1][dogen.MA5] - kdata.iloc[take_index+1][dogen.MA20]
+    if temp_diff1 < temp_diff2:
+        logger.debug("Invalid MA5-MA20 at %s" % kdata.index[take_index])
+        return True
     if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
         h2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_HIGH], kdata.iloc[take_index][dogen.P_LOW])
         c2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[take_index][dogen.P_LOW])
@@ -267,7 +272,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制； 
             五 take-trade限制:
-                1) 维持上涨趋势：MA5上涨且在MA20之上
+                1) 维持上涨趋势：MA5上涨且在MA20之上，MA5-MA20上涨
                 2) 排除放量上影线
             六 pick-trade之后若放量下跌必须突破开盘价
             七 回调最低价之后交易日必须满足下面条件:
