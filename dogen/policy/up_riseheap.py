@@ -127,13 +127,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     if tdata[tdata[dogen.R_CLOSE] >= max_rclose].index.size > 0:
         logger.debug("Do include trade with %d percentage R-CLOSE since %s" % (max_rclose, kdata.index[temp_index]))
         return True
-    for temp_index in range(temp_index, 0, -1):
-        hl_price = dogen.caculate_l_high(kdata.iloc[temp_index][dogen.P_CLOSE])
-        tdata = kdata[temp_index-4:temp_index-1]
-        if tdata[tdata[dogen.P_CLOSE] >= hl_price].index.size > 0:
-            logger.debug("Too large heap-close from %s to %s" % (tdata.index[-1], tdata.index[0]))
-            return True
-        pass
 
     ### 特征八
     heap_lhigh = 0
@@ -279,7 +272,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             六 pick-trade之后若放量下跌必须突破开盘价
             七 回调最低价之后交易日必须满足下面条件:
                 1) 没有超过5%的单日涨幅
-                2) 每三日累积涨幅不超过前一日涨停价
             八 涨停检查：
                 1) 限制最多涨停数
                 2) 排除连板
