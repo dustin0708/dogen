@@ -203,7 +203,7 @@ def include_analyze(basic, kdata, policy_args):
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
-        if temp_close >= 3 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+        if temp_close >= 3:
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
@@ -269,7 +269,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             一 维持上涨趋势达两周以上，上涨区间无10%以上的回调；
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 累积上涨超过5%；
-                2) 单日涨幅超过3%，且振幅大于5%；
+                2) 单日涨幅超过3%；
                 3) 必须在区间内收盘价最高，且区间内收盘价最高
                 4) 缩量回调修正和上涨突破修正
 
