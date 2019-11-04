@@ -127,7 +127,7 @@ def include_analyze(basic, kdata, policy_args):
             logger.debug("Fallback didn't occur")
             return None
         ### 涨停振幅需大于5
-        if kdata.iloc[pick_index][dogen.R_AMP] < 5:
+        if kdata.iloc[pick_index][dogen.R_AMP] < 3:
             logger.debug("Invalid R_AMP at %s" % kdata.index[pick_index])
             return None
         ### 取最低回调价
@@ -162,12 +162,12 @@ def include_analyze(basic, kdata, policy_args):
             break
         else:
             heap_falls+= abs(this_close)
-        ### 若放量下跌即终止
-        if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
-            break
         ### 达到回调要求, 命中
         if heap_falls >= min_falls:
             take_index = temp_index
+        ### 若放量下跌即终止
+        if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
+            break
         pass
     if take_index is None or take_index > take_valid:
         logger.debug("Don't match valid fallback trade")
