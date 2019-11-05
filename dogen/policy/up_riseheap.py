@@ -94,6 +94,21 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("Too large rise-range")
         return True
 
+    ### 特征五
+    heap_trade = 0
+    for temp_index in range(pick_index, -1, -1):
+        if kdata.iloc[temp_index][dogen.R_CLOSE] > 0:
+            heap_trade = 0
+            continue
+        elif kdata.iloc[temp_index][dogen.R_CLOSE] == 0 and kdata.iloc[temp_index+1][dogen.R_CLOSE]>=0:
+            heap_trade = 0
+            continue
+        heap_trade += 1
+        if heap_trade >= 3:
+            logger.debug("Invalid serial-fall trade")
+            return True
+        pass
+
     ### 特征六
     for temp_index in range(pick_index, -1, -1):
         ### 下跌
@@ -235,6 +250,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制； 
+            五 排除三连跌
             六 pick-trade之后若放量下跌必须突破开盘价
             八 涨停检查：
                 1) 限制最多涨停数
