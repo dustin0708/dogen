@@ -155,7 +155,7 @@ def include_analyze(basic, kdata, policy_args):
             heap_rises = 0
         else:
             heap_rises += temp_close
-        if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index][dogen.MA20]
+        if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index][dogen.MA20]:
             continue
         if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index+1][dogen.MA5]:
             continue
