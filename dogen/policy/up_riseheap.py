@@ -94,24 +94,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("Too large rise-range")
         return True
 
-    ### 特征五
-    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]\
-    or kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index][dogen.MA20]:
-        logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
-        return True
-    temp_diff1 = kdata.iloc[take_index+0][dogen.MA5] - kdata.iloc[take_index+0][dogen.MA20]
-    temp_diff2 = kdata.iloc[take_index+1][dogen.MA5] - kdata.iloc[take_index+1][dogen.MA20]
-    if temp_diff1 < temp_diff2:
-        logger.debug("Invalid MA5-MA20 at %s" % kdata.index[take_index])
-        return True
-    if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
-        h2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_HIGH], kdata.iloc[take_index][dogen.P_LOW])
-        c2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[take_index][dogen.P_LOW])
-        if c2l*2 < h2l:
-            logger.debug("Get up shadow at %s" % kdata.index[take_index])
-            return True
-        pass
-
     ### 特征六
     for temp_index in range(pick_index, -1, -1):
         ### 下跌
@@ -125,13 +107,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
             return True
         pass
-
-    ### 特征七
-    temp_index = 10
-    tdata = kdata[0: temp_index]
-    if tdata[tdata[dogen.R_CLOSE] >= max_rclose].index.size > 0:
-        logger.debug("Do include trade with %d percentage R-CLOSE since %s" % (max_rclose, kdata.index[temp_index]))
-        return True
 
     ### 特征八
     heap_lhigh = 0
@@ -148,19 +123,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("Don't include %d hl-trade" % min_lhigh)
         return True
 
-    ### 特征九
-    if kdata.iloc[pick_index][dogen.MACD] < 0:
-        macd_count = 1
-    else:
-        macd_count = 0
-    for temp_index in range(pick_index-1, -1, -1):
-        if kdata.iloc[temp_index][dogen.MACD] < 0 and kdata.iloc[temp_index+1][dogen.MACD] > 0:
-            macd_count += 1
-        if macd_count > 1:
-            logger.debug("Invalid MACD since %s" % kdata.index[pick_index])
-            return True
-        pass
-    
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -193,9 +155,11 @@ def include_analyze(basic, kdata, policy_args):
             heap_rises = 0
         else:
             heap_rises += temp_close
-        if kdata.iloc[temp_index][dogen.VOLUME] < kdata.iloc[temp_index+1][dogen.VOLUME]:
+        if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index][dogen.MA20]
             continue
-        if kdata.iloc[temp_index][dogen.P_CLOSE] < kdata.iloc[temp_index][dogen.P_OPEN]:
+        if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index+1][dogen.MA5]:
+            continue
+        if kdata.iloc[temp_index][dogen.VOLUME] < kdata.iloc[temp_index+1][dogen.VOLUME]:
             continue
         if heap_rises >= 5:
             if take_index is None or take_index > temp_index:
@@ -271,17 +235,11 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制； 
-            五 take-trade限制:
-                1) 维持上涨趋势：MA5上涨且在MA20之上，MA5-MA20上涨
-                2) 排除放量上影线
             六 pick-trade之后若放量下跌必须突破开盘价
-            七 回调最低价之后交易日必须满足下面条件:
-                1) 没有超过5%的单日涨幅
             八 涨停检查：
                 1) 限制最多涨停数
                 2) 排除连板
                 3) 三个月内有涨停
-            九 MACD不能存在多段阴线
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
