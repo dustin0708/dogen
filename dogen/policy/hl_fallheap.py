@@ -238,7 +238,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 涨停回调策略，满足条件：
         >>> 基本条件
             一 仅有一个涨停在hl_valid交易日内；
-            二 买入信号(take-trade)，有效期由take_valid限定:
+            二 两种情况买入信号(take-trade)，有效期由take_valid限定:
                 1) 涨停后限一个交易日放量上涨，放量限制最小volume_scale倍，且接着连续缩量下跌幅度达min_falls，不低于涨停前一交易日收盘价；
                 2) 涨停后限一个交易日放量下跌，放量限制最小volume_scale倍，且接着连续缩量下跌幅度达min_falls，开盘价不高于涨停价3%；
         
