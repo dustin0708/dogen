@@ -100,19 +100,79 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         logger.debug("Invalid MA5&MA20 at %s" % kdata.index[take_index])
         return True
 
-    ### 特征六
-    if kdata.iloc[pick_index-1][dogen.P_OPEN] > kdata.iloc[pick_index][dogen.P_CLOSE]:
-        logger.debug("Invalid open price at %s" % kdata.index[pick_index-1])
-        return True
-
     return False
+
+def trade_analyze1(basic, kdata, pick_index, policy_args):
+    volume_scale = __parse_policy_args(policy_args, VOLUME_SCALE)
+    min_falls    = __parse_policy_args(policy_args, MIN_FALLS)
+
+    ### 取最低回调价
+    if (pick_index+1) >= kdata.index.size:
+        min_pclose = 0
+    else:
+        min_pclose = kdata.iloc[pick_index+1][dogen.P_CLOSE]
+
+    ### 特征二
+    if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
+        pick_index -= 1
+        if pick_index == 0:
+            logger.debug("Fallback didn't occur")
+            return None
+        if (kdata.iloc[pick_index+1][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index][dogen.VOLUME]:
+            logger.debug("Too small volume at " + kdata.index[pick_index])
+            return None
+        if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_OPEN]) <= -5:
+            logger.debug("Invalid open&close at %s" % kdata.index[pick_index])
+            return None
+        pass
+    
+    take_index = None
+    max_pclose = kdata.iloc[pick_index][dogen.P_CLOSE]*(1-min_falls*0.01)
+    for temp_index in range(pick_index-1, -1, -1):
+        if kdata.iloc[temp_index][dogen.P_CLOSE] < min_pclose:
+            logger.debug("Get invalid fall trade at %s" % kdata.index[temp_index])
+            return None
+        if kdata.iloc[temp_index][dogen.R_CLOSE] > 0 or kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
+            if take_index is not None:
+                take_index = temp_index
+            break
+        elif kdata.iloc[temp_index][dogen.P_CLOSE] <= max_pclose:
+            take_index = temp_index
+        pass
+
+    return [pick_index, take_index]
+
+def trade_analyze2(basic, kdata, pick_index, policy_args):
+    volume_scale = __parse_policy_args(policy_args, VOLUME_SCALE)
+    min_falls    = __parse_policy_args(policy_args, MIN_FALLS)
+
+    ### 特征二
+    if (kdata.iloc[pick_index][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index-1][dogen.VOLUME]:
+        logger.debug("Too small volume at %s" % kdata.index[pick_index-1])
+        return None
+    if dogen.caculate_incr_percentage(kdata.iloc[pick_index-1][dogen.P_OPEN], kdata.iloc[pick_index][dogen.P_CLOSE]) > 3:
+        logger.debug("Too high open price at %s" % kdata.index[pick_index-1])
+        return None
+
+    take_index = None
+    max_pclose = kdata.iloc[pick_index][dogen.P_CLOSE]*(1-min_falls*0.01)
+    if kdata.iloc[pick_index-1][dogen.P_CLOSE] <= max_pclose:
+        take_index = pick_index-1
+    for temp_index in range(pick_index-2, -1, -1):
+        if kdata.iloc[temp_index][dogen.R_CLOSE] > 0 or kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
+            if take_index is not None:
+                take_index = temp_index
+            break
+        elif kdata.iloc[temp_index][dogen.P_CLOSE] <= max_pclose:
+            take_index = temp_index
+        pass
+
+    return [pick_index, take_index]
 
 def include_analyze(basic, kdata, policy_args):
     ### 策略参数处理
-    take_valid  = __parse_policy_args(policy_args, TAKE_VALID)
     hl_valid    = __parse_policy_args(policy_args, HL_VALID)
-    volume_scale= __parse_policy_args(policy_args, VOLUME_SCALE)
-    min_falls  = __parse_policy_args(policy_args, MIN_FALLS)
+    take_valid  = __parse_policy_args(policy_args, TAKE_VALID)
 
     ### 特征一
     index = dogen.get_highlimit_trades(kdata, eIdx=hl_valid+1)
@@ -126,54 +186,25 @@ def include_analyze(basic, kdata, policy_args):
         if pick_index == 0:
             logger.debug("Fallback didn't occur")
             return None
-        ### 涨停振幅需大于5
-        if kdata.iloc[pick_index][dogen.R_AMP] < 5:
+        ### 涨停振幅要求
+        if kdata.iloc[pick_index][dogen.R_AMP] < 3:
             logger.debug("Invalid R_AMP at %s" % kdata.index[pick_index])
             return None
-        ### 取最低回调价
-        if (pick_index+1) >= kdata.index.size:
-            mini_close = 0
-        else:
-            mini_close = kdata.iloc[pick_index+1][dogen.P_CLOSE]
-    if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
-        pick_index -= 1
-        if pick_index == 0:
-            logger.debug("Fallback didn't occur")
-            return None
-        if (kdata.iloc[pick_index+1][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index][dogen.VOLUME]:
-            logger.debug("Too small volume at " + kdata.index[pick_index])
-            return None
-        if dogen.caculate_incr_percentage(kdata.iloc[pick_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_OPEN]) <= -5:
-            logger.debug("Invalid open&close at %s" % kdata.index[pick_index])
+        pass
+
+    if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0 or kdata.iloc[pick_index-1][dogen.VOLUME] < kdata.iloc[pick_index][dogen.VOLUME]:
+        list_index = trade_analyze1(basic, kdata, pick_index, policy_args)
+    else:
+        list_index = trade_analyze2(basic, kdata, pick_index, policy_args)
+
+    if list_index is not None:
+        [pick_index, take_index] = list_index
+        if take_index > take_valid:
+            logger.debug("Don't match valid fallback trade")
             return None
         pass
 
-    ### 特征二
-    heap_falls = 0
-    take_index = None
-    for temp_index in range(pick_index-1, -1, -1):
-        if kdata.iloc[temp_index][dogen.P_CLOSE] < mini_close:
-            logger.debug("Get invalid fall trade at %s" % kdata.index[temp_index])
-            return None
-        this_close = kdata.iloc[temp_index][dogen.R_CLOSE]
-        if this_close > 0:
-            if take_index is not None:
-                take_index = temp_index
-            break
-        else:
-            heap_falls+= abs(this_close)
-        ### 若放量下跌即终止
-        if kdata.iloc[temp_index][dogen.VOLUME] > kdata.iloc[temp_index+1][dogen.VOLUME]:
-            break
-        ### 达到回调要求, 命中
-        if heap_falls >= min_falls:
-            take_index = temp_index
-        pass
-    if take_index is None or take_index > take_valid:
-        logger.debug("Don't match valid fallback trade")
-        return None
-
-    return [pick_index, take_index]
+    return list_index
 
 def stock_analyze(basic, kdata, policy_args):    
     ### 基本条件选取
@@ -206,9 +237,10 @@ def stock_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 涨停回调策略，满足条件：
         >>> 基本条件
-            一 仅有一个涨停在hl_valid交易日内, 涨停后限一个交易日上涨，放量限制最小volume_scale倍；
-            二 买入信号(take-trade)，有效期由take_valid限定:
-                1) 连续缩量下跌[min_falls, maxi_falls]，放量下跌或上涨即终止；
+            一 仅有一个涨停在hl_valid交易日内；
+            二 两种情况买入信号(take-trade)，有效期由take_valid限定:
+                1) 涨停后限一个交易日放量上涨，放量限制最小volume_scale倍，且接着连续缩量下跌幅度达min_falls，不低于涨停前一交易日收盘价；
+                2) 涨停后限一个交易日放量下跌，放量限制最小volume_scale倍，且接着连续缩量下跌幅度达min_falls，开盘价不高于涨停价3%；
         
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
@@ -216,7 +248,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 在最近一个月内，最高涨幅由maxi_rise限制（默认35%）； 
                 2) 不可回调过高，take-trade收盘价高于涨停前交易日
             五 维持上涨趋势：take-trade交易日MA5或MA20上涨;
-            六 pick-trade后一交易日开盘价不可超过pick-trade收盘价
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
