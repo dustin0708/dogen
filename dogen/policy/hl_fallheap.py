@@ -199,7 +199,7 @@ def include_analyze(basic, kdata, policy_args):
 
     if list_index is not None:
         [pick_index, take_index] = list_index
-        if take_index > take_valid:
+        if take_index is None or take_index > take_valid:
             logger.debug("Don't match valid fallback trade")
             return None
         pass
