@@ -47,10 +47,10 @@ def update_kdata(codes, full=False, start=None, end=None):
                 ### 读取数据区间
                 from_trade, last_trade = db.lookup_stock_kdata_range(code)
         
-            ### 区间数据不存在, 默认下载end之前一年数据
+            ### 区间数据不存在, 默认下载end之前两年数据
             if full or from_trade is None or last_trade is None:
                 if start is None:
-                    start = dogen.date_delta(end, -365)
+                    start = dogen.date_delta(end, -365*2)
                 pass
             else:
                 ### 增量下载需要保证数据处理加工的正确性（MA20/MACD）
