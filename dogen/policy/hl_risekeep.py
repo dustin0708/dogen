@@ -152,33 +152,37 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             return True
 
     ### 特征七
-    for temp_index in range(mini_index-1, -1, -1):
-        ### 下跌
-        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
-            continue
-        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
-            continue
-        ### 放量下跌之后未被上涨突破
-        maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=temp_index)
-        if maxi_index is None or kdata.iloc[temp_index][dogen.P_OPEN] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
-            logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
-            return True
+    if pick_index >= 5:
+        for temp_index in range(mini_index-1, -1, -1):
+            ### 下跌
+            if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
+                continue
+            if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
+                continue
+            ### 放量下跌之后未被上涨突破
+            maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=temp_index)
+            if maxi_index is None or kdata.iloc[temp_index][dogen.P_OPEN] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
+                logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
+                return True
+            pass
         pass
 
     ### 特征八
-    tdata = kdata[0: mini_index]
-    if tdata[tdata[dogen.R_CLOSE] >= max_rclose].index.size > 0:
-        logger.debug("Do include trade with 7 percentage R-CLOSE since %s" % kdata.index[mini_index])
-        return True
-    if tdata[tdata[dogen.R_AMP] >= min_ramp].index.size <= 0:
-        logger.debug("Don't include trade with 5 percentage R-AMP since %s" % kdata.index[mini_index])
-        return True
-    for temp_index in range(mini_index, 0, -1):
-        hl_price = dogen.caculate_l_high(kdata.iloc[temp_index][dogen.P_CLOSE])
-        tdata = kdata[temp_index-4:temp_index-1]
-        if tdata[tdata[dogen.P_CLOSE] >= hl_price].index.size > 0:
-            logger.debug("Too large heap-close from %s to %s" % (tdata.index[-1], tdata.index[0]))
+    if pick_index >= 5:
+        tdata = kdata[0: mini_index]
+        if tdata[tdata[dogen.R_CLOSE] >= max_rclose].index.size > 0:
+            logger.debug("Do include trade with 7 percentage R-CLOSE since %s" % kdata.index[mini_index])
             return True
+        if tdata[tdata[dogen.R_AMP] >= min_ramp].index.size <= 0:
+            logger.debug("Don't include trade with 5 percentage R-AMP since %s" % kdata.index[mini_index])
+            return True
+        for temp_index in range(mini_index, 0, -1):
+            hl_price = dogen.caculate_l_high(kdata.iloc[temp_index][dogen.P_CLOSE])
+            tdata = kdata[temp_index-4:temp_index-1]
+            if tdata[tdata[dogen.P_CLOSE] >= hl_price].index.size > 0:
+                logger.debug("Too large heap-close from %s to %s" % (tdata.index[-1], tdata.index[0]))
+                return True
+            pass
         pass
 
     ### 特征九
