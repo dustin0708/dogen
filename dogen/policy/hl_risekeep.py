@@ -113,28 +113,30 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         pass
 
     ### 特征五
-    high_index = pick_index
-    if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
-        high_index = pick_index-1
-    if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[high_index][dogen.P_CLOSE]) < -min_falls:
-        logger.debug("Too low P-CLOSE at take-trade %s" % kdata.index[take_index])
-        return True
-    temp_rises = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[mini_index][dogen.P_CLOSE])
-    if temp_rises > max_take2low:
-        logger.debug("Too high-close price at take-trade %s" % kdata.index[take_index])
-        return True
-    if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]:
-        logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
-        return True
-    if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
-        logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
-        return True
-    if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
-        h2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_HIGH], kdata.iloc[take_index][dogen.P_LOW])
-        c2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[take_index][dogen.P_LOW])
-        if c2l*2 < h2l:
-            logger.debug("Get up shadow at %s" % kdata.index[take_index])
+    if pick_index >= 5:
+        high_index = pick_index
+        if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0:
+            high_index = pick_index-1
+        if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[high_index][dogen.P_CLOSE]) < -min_falls:
+            logger.debug("Too low P-CLOSE at take-trade %s" % kdata.index[take_index])
             return True
+        temp_rises = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[mini_index][dogen.P_CLOSE])
+        if temp_rises > max_take2low:
+            logger.debug("Too high-close price at take-trade %s" % kdata.index[take_index])
+            return True
+        if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]:
+            logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
+            return True
+        if kdata.iloc[take_index][dogen.MA20] < kdata.iloc[take_index+1][dogen.MA20]:
+            logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
+            return True
+        if kdata.iloc[take_index][dogen.VOLUME] > kdata.iloc[take_index+1][dogen.VOLUME]*1.1:
+            h2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_HIGH], kdata.iloc[take_index][dogen.P_LOW])
+            c2l = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[take_index][dogen.P_LOW])
+            if c2l*2 < h2l:
+                logger.debug("Get up shadow at %s" % kdata.index[take_index])
+                return True
+            pass
         pass
 
     ### 特征六
