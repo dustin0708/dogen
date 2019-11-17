@@ -217,8 +217,8 @@ def include_analyze(basic, kdata, policy_args):
     
     ### 特征二
     take_index = None
-    if pick_index < 5:
-        if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > 3:
+    if pick_index < 5 and pick_index >= 3:
+        if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) > 5:
             logger.debug("Invalid trade at %s" % kdata.index[0])
             return None
         tdata = kdata[0: pick_index]
@@ -226,7 +226,7 @@ def include_analyze(basic, kdata, policy_args):
         if tdata.index.size > 0:
             logger.debug("Invalid trade at %s" % tdata.index[0])
             return None
-        pass ###take_index = 0
+        take_index = 0
     else:
         heap_rises = 0
         for temp_index in range(pick_index-1, -1, -1):
