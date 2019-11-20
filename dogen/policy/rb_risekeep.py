@@ -70,17 +70,9 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
         score += temp_slice*count
 
     temp_score = 25
-    if (pick_index+1)<pick_valid:
+    [dif, dea, macd] = dogen.forecast_macd(kdata)
+    if macd >= -0.01:
         score += temp_score
-    else:
-        temp_slice = 5
-        for temp_index in range(0, (int)(temp_score/temp_slice)):
-            if kdata.iloc[temp_index][dogen.MACD] < -0.1:
-                continue
-            if kdata.iloc[temp_index][dogen.MACD] < kdata.iloc[temp_index+1][dogen.MACD]:
-                continue
-            score += temp_slice
-        pass
 
     return (int)(score)
 
