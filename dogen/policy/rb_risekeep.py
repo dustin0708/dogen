@@ -220,7 +220,7 @@ def stock_analyze(basic, kdata, policy_args):
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
     """ 反弹策略, 满足条件：
         >>> 基本条件
-            一 下跌40个点以上;
+            一 下跌min_falls以上，最低价之后ma5不大于ma20;
             二 买入信号(take-trade)，有效期由take_valid限定:
                 1) 最低价后最多5个交易日，单日涨停（不限最小区间长度）；
                 2) 最低价后至少5个交易日，累积上涨超过5个点，或者单日涨幅超过3个点(MA5上涨)；
