@@ -21,7 +21,8 @@ from dogen import logger, mongo_server, mongo_database
 ### 策略参数名
 MAX_TRADES  = 'max_trades'
 TAKE_VALID  = 'take_valid'
-PICK_VALID  = 'pick_valid'
+PICK_START  = 'pick_start'
+PICK_END    = 'pick_end'
 MIN_FALLEN  = 'min_fallen'
 MAX_TAKE2LOW= 'max_take2low'
 MAX_PCLOSE  = 'max_pclose'
@@ -31,7 +32,8 @@ OUTSTANDING = 'market_value'
 ARGS_DEAULT_VALUE = {
     MAX_TRADES: 360,      # 天
     TAKE_VALID: 0,      # 
-    PICK_VALID: 5,
+    PICK_START: 5,
+    PICK_END: 10,
     MIN_FALLEN: 35,
     MAX_TAKE2LOW: 15,
     MAX_PCLOSE: 50,
@@ -54,7 +56,7 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     """
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
-    pick_valid  = __parse_policy_args(policy_args, PICK_VALID)
+    pick_start  = __parse_policy_args(policy_args, PICK_START)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
     score  = dogen.score_by_pclose(25, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
@@ -77,7 +79,7 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     return (int)(score)
 
 def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
-    pick_valid  = __parse_policy_args(policy_args, PICK_VALID)
+    pick_start  = __parse_policy_args(policy_args, PICK_START)
     max_take2low= __parse_policy_args(policy_args, MAX_TAKE2LOW)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
@@ -103,7 +105,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
         return True
 
     ### 特征五
-    if pick_index+1 >= pick_valid:
+    if pick_index+1 >= pick_start:
         [dif, dea, macd] = dogen.forecast_macd(kdata)
         if kdata.iloc[0][dogen.MACD] < -0.1 and macd < -0.1:
             logger.debug("Invalid MACD at %s" % kdata.index[0])
@@ -117,7 +119,8 @@ def include_analyze(basic, kdata, policy_args):
     """
     ### 参数解析
     take_valid = __parse_policy_args(policy_args, TAKE_VALID)
-    pick_valid = __parse_policy_args(policy_args, PICK_VALID)
+    pick_start = __parse_policy_args(policy_args, PICK_START)
+    pick_end   = __parse_policy_args(policy_args, PICK_END)
     min_fallen = __parse_policy_args(policy_args, MIN_FALLEN)
 
     ### 预处理
@@ -132,6 +135,9 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
+        if pick_index >= pick_end:
+            logger.debug("Too early pick-trade at %s" % kdata.index[pick_index])
+            return None
         tdata = kdata[0:pick_index]
         if tdata[tdata[dogen.MA5] > tdata[dogen.MA20]].index.size > 0:
             logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
@@ -141,13 +147,19 @@ def include_analyze(basic, kdata, policy_args):
     ### 特征二
     heap_rises = 0
     take_index = None
-    if pick_index+1 < pick_valid:
+    if pick_index+1 < pick_start:
         for temp_index in range(pick_index-1, -1, -1):
             if kdata.iloc[temp_index][dogen.P_CLOSE] >= dogen.caculate_l_high(kdata.iloc[pick_index][dogen.P_CLOSE]):
                 take_index = temp_index
             pass
         pass
     else:
+        rise_range = dogen.get_last_rise_range(kdata, 5, eIdx=pick_index+1)
+        if rise_range is not None:
+            [min_index, max_index, inc_close, get_lhigh, tmpIdx] = rise_range
+            if take_index is None or take_index > max_index:
+                take_index = max_index
+            pass
         if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[0][dogen.MA5]) < 3:
             for temp_index in range(pick_index, -1, -1):
                 if kdata.iloc[temp_index][dogen.R_CLOSE] > 0 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
@@ -156,20 +168,13 @@ def include_analyze(basic, kdata, policy_args):
                     pass
                 pass
             pass
-        for temp_index in range(pick_index, -1, -1):
-            temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
-            if temp_close < 0:
-                heap_rises = 0
-            else:
-                heap_rises += temp_close
-            if heap_rises >= 5:
-                if take_index is None or take_index > temp_index:
-                    take_index = temp_index
-                pass
-            if temp_close >= 3 and kdata.iloc[temp_index][dogen.P_CLOSE] > kdata.iloc[temp_index][dogen.P_OPEN]:
-                if take_index is None or take_index > temp_index:
-                    take_index = temp_index
-                pass
+        tdata = kdata[0:pick_index]
+        tdata = tdata[tdata[dogen.R_CLOSE] >= 3]
+        if tdata.index.size > 0:
+            temp_trade = tdata.index[0]
+            temp_index = kdata.index.get_loc(temp_trade)
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
             pass
     if take_index is not None:
         ### take_index之后缩量下跌(限一个交易日)，也符合策略
