@@ -82,12 +82,12 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     temp_score = 20
     temp_slice = 4
     score += temp_score
-    macds = [kdata.iloc[1][dogen.MACD], kdata.iloc[0][dogen.MACD]]
+    macds = [kdata.iloc[0][dogen.MACD], kdata.iloc[1][dogen.MACD]]
     for temp_index in range(0, temp_slice):
         if macds[0] >= -0.01:
             break
         score -= temp_score/temp_slice
-        macds.append(dogen.forecast_macd(macds))
+        macds.insert(0, dogen.forecast_macd(macds))
 
     return (int)(score)
 
