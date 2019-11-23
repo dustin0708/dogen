@@ -172,7 +172,7 @@ def include_analyze(basic, kdata, policy_args):
                 pass
             pass
         tdata = kdata[0:pick_index]
-        tdata = tdata[(tdata[dogen.R_CLOSE] >= 3) & (tdata[dogen.R_AMP] >= 5)]
+        tdata = tdata[tdata[dogen.R_CLOSE] >= 3]
         if tdata.index.size > 0:
             temp_trade = tdata.index[0]
             temp_index = kdata.index.get_loc(temp_trade)
