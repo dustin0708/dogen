@@ -49,21 +49,22 @@ def __parse_policy_args(policy_args, arg_name):
 
 def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
-            * 股价估分，总计25分；
-            * 市值估分，总计25分；
-            * 涨停估分，总分25分，一个涨停板12.5分；
-            * MACD估分，总分25分，一个5分；
+            * 股价估分，总计20分；
+            * 市值估分，总计20分；
+            * 涨停估分，总分20分，一个涨停板10分；
+            * 区间估分，总分20分，以22*3为期限；
+            * MACD估分，总分20分；
     """
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     pick_start  = __parse_policy_args(policy_args, PICK_START)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
-    score  = dogen.score_by_pclose(25, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
-    score += dogen.score_by_outstanding(25, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
+    score  = dogen.score_by_pclose(20, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
+    score += dogen.score_by_outstanding(20, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
 
-    temp_score = 25
-    temp_slice = 12.5
+    temp_score = 20
+    temp_slice = 10
     tdata = kdata[pick_index: high_index+1]
     count = tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size
     if (count > temp_score/temp_slice):
@@ -71,10 +72,20 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     if (count > 0):
         score += temp_slice*count
 
-    temp_score = 25
-    [dif, dea, macd] = dogen.forecast_macd(kdata)
-    if macd >= -0.01:
+    temp_score = 20
+    temp_slice = 22*3
+    if high_index > temp_slice:
         score += temp_score
+    else:
+        score += temp_score*(high_index/temp_slice)
+
+    temp_score = 20
+    score += temp_score
+    macds = [kdata.iloc[1][dogen.MACD], kdata.iloc[0][dogen.MACD]]
+    for temp_index in range(0, 4):
+        if macds[0] >= -0.01:
+            break
+        macds.append(dogen.forecast_macd(macds))
 
     return (int)(score)
 
@@ -106,7 +117,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
 
     ### 特征五
     if pick_index+1 >= pick_start:
-        [dif, dea, macd] = dogen.forecast_macd(kdata)
+        macd = dogen.forecast_macd(kdata[dogen.MACD])
         if kdata.iloc[0][dogen.MACD] < -0.1 and macd < -0.1:
             logger.debug("Invalid MACD at %s" % kdata.index[0])
             return True
@@ -161,7 +172,7 @@ def include_analyze(basic, kdata, policy_args):
         if rise_range is not None:
             [min_index, max_index, inc_close, get_lhigh, tmpIdx] = rise_range
             if take_index is None or take_index > max_index:
-                take_index = max_index
+                take_index = max_index 
             pass
         if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[0][dogen.MA5]) < 3:
             for temp_index in range(pick_index, -1, -1):
