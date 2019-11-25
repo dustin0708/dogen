@@ -168,6 +168,12 @@ def include_analyze(basic, kdata, policy_args):
             if kdata.iloc[temp_index][dogen.P_CLOSE] >= dogen.caculate_l_high(kdata.iloc[pick_index][dogen.P_CLOSE]):
                 take_index = temp_index
             pass
+        rise_range = dogen.get_last_rise_range(kdata, 5, eIdx=pick_index+1)
+        if (rise_range is not None) and (dogen.forecast_macd(kdata[dogen.MACD]) >= 0):
+            [min_index, max_index, inc_close, get_lhigh, tmpIdx] = rise_range
+            if take_index is None or take_index > max_index:
+                take_index = max_index 
+            pass
         pass
     else:
         rise_range = dogen.get_last_rise_range(kdata, 5, eIdx=pick_index+1)
