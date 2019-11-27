@@ -99,7 +99,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
     ### 净资产为负数的
-    if basic[dogen.BVPS] < 0.5:
+    if basic[dogen.BVPS] < 0:
         logger.debug("Invalid bvps")
         return True
 
