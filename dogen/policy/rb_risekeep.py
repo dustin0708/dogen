@@ -120,30 +120,10 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
     ### 特征五
     if pick_index+1 >= pick_start:
         macd = dogen.forecast_macd(kdata[dogen.MACD])
-        if kdata.iloc[0][dogen.MACD] < -0.1 and macd < -0.1:
+        if kdata.iloc[0][dogen.MACD] < -0.01 and macd < -0.01:
             logger.debug("Invalid MACD at %s" % kdata.index[0])
             return True
         pass
-
-    return False
-
-def take_analyze(basic, kdata, pick_index, policy_args):
-
-    pick_start = __parse_policy_args(policy_args, PICK_START)
-
-    rise_range = dogen.get_last_rise_range(kdata, 5, eIdx=pick_index+1)
-    if rise_range is not None:
-        return True
-
-    tdata = kdata[0:pick_index]
-    tdata = tdata[tdata[dogen.R_CLOSE] >= 3]
-    if tdata.index.size > 0:
-        return True
-
-    tdata = kdata[0:pick_index]
-    tdata = tdata[(tdata[dogen.R_AMP] >= 5)&(tdata[dogen.R_CLOSE] >= 0)]
-    if tdata.index.size > 0:
-        return True
 
     return False
 
@@ -181,14 +161,55 @@ def include_analyze(basic, kdata, policy_args):
         pass
 
     ### 特征二
-    if take_analyze(basic, kdata, pick_index, policy_args) is not True:
-        logger.debug("Don't match valid condition")
-        return None
-    if kdata.iloc[0][dogen.MACD] < kdata.iloc[1][dogen.MACD]:
-        return None
-    if kdata.iloc[0][dogen.MACD] < -0.01 and dogen.forecast_macd(kdata[dogen.MACD])<-0.01:
-        return None
-    take_index=0
+    heap_rises = 0
+    take_index = None
+    if pick_index+1 < pick_start:
+        for temp_index in range(pick_index-1, -1, -1):
+            if kdata.iloc[temp_index][dogen.P_CLOSE] >= dogen.caculate_l_high(kdata.iloc[pick_index][dogen.P_CLOSE]):
+                take_index = temp_index
+            pass
+        rise_range = dogen.get_last_rise_range(kdata, 5, eIdx=pick_index+1)
+        if (rise_range is not None) and (dogen.forecast_macd(kdata[dogen.MACD]) >= 0):
+            [min_index, max_index, inc_close, get_lhigh, tmpIdx] = rise_range
+            if take_index is None or take_index > max_index:
+                take_index = max_index 
+            pass
+        pass
+    else:
+        rise_range = dogen.get_last_rise_range(kdata, 5, eIdx=pick_index+1)
+        if rise_range is not None:
+            [min_index, max_index, inc_close, get_lhigh, tmpIdx] = rise_range
+            if take_index is None or take_index > max_index:
+                take_index = max_index 
+            pass
+        if dogen.caculate_incr_percentage(kdata.iloc[0][dogen.P_CLOSE], kdata.iloc[0][dogen.MA5]) < 3:
+            for temp_index in range(pick_index, -1, -1):
+                if kdata.iloc[temp_index][dogen.R_CLOSE] > 0 and kdata.iloc[temp_index][dogen.R_AMP] >= 5:
+                    if take_index is None or take_index > temp_index:
+                        take_index = temp_index
+                    pass
+                pass
+            pass
+        tdata = kdata[0:pick_index]
+        tdata = tdata[tdata[dogen.R_CLOSE] >= 3]
+        if tdata.index.size > 0:
+            temp_trade = tdata.index[0]
+            temp_index = kdata.index.get_loc(temp_trade)
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
+            pass
+    if take_index is not None:
+        ### take_index之后缩量下跌(限一个交易日)，也符合策略
+        if take_index == 1\
+        and kdata.iloc[take_index-1][dogen.R_CLOSE] < 0\
+        and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
+            take_index-= 1
+        ### 最近收盘价比take_index(不能取更新后值)高更新
+        elif kdata.iloc[0][dogen.R_CLOSE] >= 0\
+        and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[0][dogen.P_OPEN]\
+        and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
+            take_index = 0
+        pass
     if take_index is None or take_index > take_valid:
         logger.debug("Don't get valid take-trade since %s" % kdata.index[pick_index])
         return None
