@@ -119,6 +119,10 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
 
     ### 特征五
     if pick_index+1 >= pick_start:
+        tdata = kdata[kdata[dogen.MACD] >= 0]
+        if tdata.index.size > 3:
+            logger.debug("Too many trades with MACD upper to zero")
+            return True
         macd = dogen.forecast_macd(kdata[dogen.MACD])
         if kdata.iloc[0][dogen.MACD] < -0.1 and macd < -0.1:
             logger.debug("Invalid MACD at %s" % kdata.index[0])
@@ -257,7 +261,10 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 pick-trade校验:
                 1) pick-trade之后最高价不超过15%;
-            五 若当前MACD值低于-0.1，那么其预测值必须大于-0.1
+            五 MACD校验:
+                1) 若当前MACD值低于-0.1，那么其预测值必须大于-0.1
+                2) MACD大于0交易日不超过3个
+            
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
