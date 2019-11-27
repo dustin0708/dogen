@@ -194,7 +194,7 @@ def include_analyze(basic, kdata, policy_args):
             pass
         ### MACD点校验
         temp_index = 0
-        if (kdata.iloc[temp_index][dogen.MACD]<=-0.01) and (dogen.forecast_macd(kdata[temp_index:-1][dogen.MACD])>=-0.01):
+        if (kdata.iloc[temp_index][dogen.MACD]<-0.01) and (dogen.forecast_macd(kdata[temp_index:-1][dogen.MACD])>=-0.01):
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
