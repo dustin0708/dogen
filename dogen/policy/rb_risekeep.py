@@ -209,7 +209,8 @@ def include_analyze(basic, kdata, policy_args):
         and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[0][dogen.P_OPEN]\
         and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
             take_index = 0
-        if (kdata.iloc[0][dogen.MACD]<-0.01) and (dogen.forecast_macd(kdata[dogen.MACD])>=-0.01):
+        ### MACD点校验
+        if (kdata.iloc[0][dogen.MACD]<=-0.01) and (dogen.forecast_macd(kdata[dogen.MACD])>=-0.01):
             take_index = 0
         pass
     if take_index is None or take_index > take_valid:
