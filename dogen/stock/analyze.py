@@ -71,7 +71,7 @@ def forecast_macd(macds):
     prev_macd = macds[1]
     diff_macd = this_macd - prev_macd
     next_macd = this_macd + diff_macd
-    return next_macd
+    return round(next_macd, 2)
 
 def score_by_pclose(total_score, p_close, l_close):
     if (p_close <= l_close):
