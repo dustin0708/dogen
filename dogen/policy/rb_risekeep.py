@@ -119,6 +119,9 @@ def exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_arg
 
     ### 特征五
     if pick_index+1 >= pick_start:
+        if kdata.iloc[0][dogen.MACD] < kdata.iloc[1][dogen.MACD]:
+            logger.debug("Invalid MACD at %s" % kdata.index[0])
+            return True
         macd = dogen.forecast_macd(kdata[dogen.MACD])
         if kdata.iloc[0][dogen.MACD] < -0.01 and macd < -0.01:
             logger.debug("Invalid MACD at %s" % kdata.index[0])
