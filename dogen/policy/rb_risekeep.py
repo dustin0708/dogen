@@ -182,14 +182,19 @@ def include_analyze(basic, kdata, policy_args):
             if take_index is None or take_index > max_index:
                 take_index = max_index 
             pass
-        temp_index = dogen.get_last_column_max(kdata, dogen.R_CLOSE, eIdx=pick_index+1)
-        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 3:
-            if take_index is None or take_index > temp_index:
-                take_index = temp_index
+        for temp_index in range(pick_index, -1, -1):
+            if kdata.iloc[temp_index][dogen.R_CLOSE] >= 3:
+                if take_index is None or take_index > temp_index:
+                    take_index = temp_index
+                pass
+            if kdata.iloc[temp_index][dogen.R_AMP] >= 5 and kdata.iloc[temp_index][dogen.R_CLOSE] >= 0:
+                if take_index is None or take_index > temp_index:
+                    take_index = temp_index
+                pass
             pass
         ### MACD点校验
         temp_index = 0
-        if (kdata.iloc[temp_index][dogen.MACD]<=-0.01) and (dogen.forecast_macd(kdata[temp_index:-1][dogen.MACD])>=-0.01):
+        if (kdata.iloc[temp_index][dogen.MACD]<-0.01) and (dogen.forecast_macd(kdata[temp_index:-1][dogen.MACD])>=-0.01):
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass
