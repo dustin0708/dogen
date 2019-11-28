@@ -193,8 +193,10 @@ def include_analyze(basic, kdata, policy_args):
         pass
 
     if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0 or kdata.iloc[pick_index-1][dogen.VOLUME] < kdata.iloc[pick_index][dogen.VOLUME]:
+        ### 涨停后缩量下跌
         list_index = trade_analyze1(basic, kdata, pick_index, policy_args)
     else:
+        ### 涨停后首日放量下跌
         list_index = trade_analyze2(basic, kdata, pick_index, policy_args)
 
     if list_index is not None:
