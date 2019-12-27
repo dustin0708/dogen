@@ -150,7 +150,7 @@ def trade_analyze2(basic, kdata, pick_index, policy_args):
     if (kdata.iloc[pick_index][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index-1][dogen.VOLUME]:
         logger.debug("Too small volume at %s" % kdata.index[pick_index-1])
         return None
-    if dogen.caculate_incr_percentage(kdata.iloc[pick_index-1][dogen.P_OPEN], kdata.iloc[pick_index][dogen.P_CLOSE]) > 3:
+    if dogen.caculate_incr_percentage(kdata.iloc[pick_index-1][dogen.P_OPEN], kdata.iloc[pick_index][dogen.P_CLOSE]) > 5:
         logger.debug("Too high open price at %s" % kdata.index[pick_index-1])
         return None
 
@@ -242,7 +242,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             一 仅有一个涨停在hl_valid交易日内；
             二 两种情况买入信号(take-trade)，有效期由take_valid限定:
                 1) 涨停后限一个交易日放量上涨，放量限制最小volume_scale倍，且接着连续缩量下跌幅度达min_falls，不低于涨停前一交易日收盘价；
-                2) 涨停后限一个交易日放量下跌，放量限制最小volume_scale倍，且接着连续缩量下跌幅度达min_falls，开盘价不高于涨停价3%；
+                2) 涨停后限一个交易日放量下跌，放量限制最小volume_scale倍，且接着连续缩量下跌幅度达min_falls，开盘价不高于涨停价5%；
         
         >>> 排它条件
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
