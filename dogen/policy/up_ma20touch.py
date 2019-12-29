@@ -111,6 +111,22 @@ def include_analyze(basic, kdata, policy_args):
     else:
         pick_index = 7
         take_index = 0
+    if take_index is not None:
+        ### take_index之后缩量下跌(限一个交易日)，也符合策略
+        if take_index == 1\
+        and kdata.iloc[take_index-1][dogen.R_CLOSE] < 0\
+        and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
+            take_index-= 1
+        ### 最近收盘价比take_index(不能取更新后值)高更新
+        elif take_index <= 3\
+        and kdata.iloc[0][dogen.R_CLOSE] > 0\
+        and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[0][dogen.P_OPEN]\
+        and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
+            take_index = 0
+        pass
+    if take_index is None or take_index > take_valid:
+        logger.debug("Don't get valid take-trade since %s" % kdata.index[pick_index])
+        return None
 
     return [pick_index, take_index]
 
