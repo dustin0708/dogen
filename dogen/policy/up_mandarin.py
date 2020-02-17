@@ -114,9 +114,13 @@ def include_analyze(basic, kdata, policy_args):
             continue
         if kdata.iloc[temp_index+1][dogen.R_CLOSE] - kdata.iloc[temp_index][dogen.R_CLOSE] < 8:
             continue
-        if kdata.iloc[temp_index+1][dogen.VOLUME]  < kdata.iloc[temp_index][dogen.VOLUME]:
+        if kdata.iloc[temp_index+1][dogen.P_CLOSE] < kdata.iloc[temp_index+1][dogen.P_OPEN]:
             continue
-        take_index = temp_index
+        if kdata.iloc[temp_index+1][dogen.VOLUME]  > kdata.iloc[temp_index][dogen.VOLUME]:
+            take_index = temp_index
+        elif kdata.iloc[temp_index+1][dogen.VOLUME]  < kdata.iloc[temp_index][dogen.VOLUME]\
+            and kdata.iloc[temp_index+1][dogen.P_CLOSE]  > kdata.iloc[temp_index][dogen.P_HIGH]:
+            take_index = temp_index
         pass
     if take_index is None or take_index > take_valid:
         logger.debug("Don't get valid take-trade since %s" % kdata.index[pick_index])
