@@ -70,6 +70,20 @@ beat_schedule = {
         'args': (None, None, None, True, 1000)
     },
 
+    ### 上涨鸳鸯策略
+    'exec-policy-up-mandarin': {
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_mandarin_match',
+        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'args': (None, None, None, True, 1000)
+    },
+
+    ### 上涨均线策略
+    'exec-policy-up-matouch': {
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_matouch_match',
+        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'args': (None, None, None, True, 1000)
+    },
+
     ### 新股开板策略
     'exec-policy-new-ipo': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_new_ipo_match',

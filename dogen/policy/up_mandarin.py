@@ -93,7 +93,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     if rise_range is not None:
         logger.debug("Too large rise-range")
         return True
-
+        
     return False
 
 def include_analyze(basic, kdata, policy_args):
