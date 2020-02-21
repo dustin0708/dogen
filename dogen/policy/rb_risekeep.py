@@ -36,8 +36,8 @@ ARGS_DEAULT_VALUE = {
     PICK_END: 10,
     MIN_FALLEN: 35,
     MAX_TAKE2LOW: 15,
-    MAX_PCLOSE: 30,
-    OUTSTANDING: 60,
+    MAX_PCLOSE: 20,
+    OUTSTANDING: 80,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -49,18 +49,17 @@ def __parse_policy_args(policy_args, arg_name):
 
 def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
-            * 股价估分，总计30分；
-            * 市值估分，总计30分；
+            * 股价估分，总计40分；
+            * 市值估分，总计40分；
             * 涨停估分，总分20分，一个涨停板10分；
-            * 区间估分，总分20分，以22*3为期限；
     """
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     pick_start  = __parse_policy_args(policy_args, PICK_START)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
-    score  = dogen.score_by_pclose(30, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
-    score += dogen.score_by_outstanding(30, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
+    score  = dogen.score_by_pclose(40, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
+    score += dogen.score_by_outstanding(40, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
 
     temp_score = 20
     temp_slice = 10
@@ -70,13 +69,6 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
         count = temp_score/temp_slice
     if (count > 0):
         score += temp_slice*count
-
-    temp_score = 20
-    temp_slice = 22*3
-    if high_index > temp_slice:
-        score += temp_score
-    else:
-        score += temp_score*(high_index/temp_slice)
 
     return (int)(score)
 
