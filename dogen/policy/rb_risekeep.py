@@ -37,7 +37,7 @@ ARGS_DEAULT_VALUE = {
     MIN_FALLEN: 35,
     MAX_TAKE2LOW: 15,
     MAX_PCLOSE: 30,
-    OUTSTANDING: 50,
+    OUTSTANDING: 40,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -49,19 +49,18 @@ def __parse_policy_args(policy_args, arg_name):
 
 def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
-            * 股价估分，总计20分；
-            * 市值估分，总计20分；
+            * 股价估分，总计30分；
+            * 市值估分，总计30分；
             * 涨停估分，总分20分，一个涨停板10分；
             * 区间估分，总分20分，以22*3为期限；
-            * MACD估分，总分20分；
     """
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     pick_start  = __parse_policy_args(policy_args, PICK_START)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
-    score  = dogen.score_by_pclose(20, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
-    score += dogen.score_by_outstanding(20, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
+    score  = dogen.score_by_pclose(30, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
+    score += dogen.score_by_outstanding(30, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
 
     temp_score = 20
     temp_slice = 10
@@ -78,16 +77,6 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
         score += temp_score
     else:
         score += temp_score*(high_index/temp_slice)
-
-    temp_score = 20
-    temp_slice = 4
-    score += temp_score
-    macds = [kdata.iloc[0][dogen.MACD], kdata.iloc[1][dogen.MACD]]
-    for temp_index in range(0, temp_slice):
-        if macds[0] >= -0.01:
-            break
-        score -= temp_score/temp_slice
-        macds.insert(0, dogen.forecast_macd(macds))
 
     return (int)(score)
 
