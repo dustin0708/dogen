@@ -118,7 +118,7 @@ def include_analyze(basic, kdata, policy_args):
         logger.debug("Don't get valid take-trade")
         return None
 
-    for temp_index in range(0, pick_valid+1)：
+    for temp_index in range(0, pick_valid+1):
         if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index][dogen.MA20]:
             return None
         pass
