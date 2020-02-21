@@ -36,8 +36,8 @@ ARGS_DEAULT_VALUE = {
     PICK_END: 10,
     MIN_FALLEN: 35,
     MAX_TAKE2LOW: 15,
-    MAX_PCLOSE: 50,
-    OUTSTANDING: 100,
+    MAX_PCLOSE: 30,
+    OUTSTANDING: 50,
 }
 
 def __parse_policy_args(policy_args, arg_name):
