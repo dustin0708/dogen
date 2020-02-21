@@ -38,7 +38,7 @@ ARGS_DEAULT_VALUE = {
     PICK_VALID: 10,
     MAX_FALLEN: 10,
     MIN_RISE: 6,
-    MAX_RISE: 36,   # 1%
+    MAX_RISE: 50,   # 1%
     MIN_LHIGH: 0,
     MAX_RCLOSE: 7,
     MIN_RAMP: 5,
@@ -105,28 +105,23 @@ def include_analyze(basic, kdata, policy_args):
     min_rise   = __parse_policy_args(policy_args, MIN_RISE)
     max_fallen = __parse_policy_args(policy_args, MAX_FALLEN)
 
-    tdata = kdata[0:8]
-    if tdata[tdata[dogen.P_CLOSE] < tdata[dogen.MA5]].index.size > 0:
-        return None
-    else:
-        pick_index = 7
-        take_index = 0
-    if take_index is not None:
-        ### take_index之后缩量下跌(限一个交易日)，也符合策略
-        if take_index == 1\
-        and kdata.iloc[take_index-1][dogen.R_CLOSE] < 0\
-        and kdata.iloc[take_index-1][dogen.VOLUME]  < kdata.iloc[take_index][dogen.VOLUME]:
-            take_index-= 1
-        ### 最近收盘价比take_index(不能取更新后值)高更新
-        elif take_index <= 3\
-        and kdata.iloc[0][dogen.R_CLOSE] > 0\
-        and kdata.iloc[0][dogen.P_CLOSE] > kdata.iloc[0][dogen.P_OPEN]\
-        and kdata.iloc[0][dogen.P_CLOSE] >= kdata.iloc[take_index][dogen.P_CLOSE]:
-            take_index = 0
+    pick_index = pick_valid
+    take_index = None
+    
+    for temp_index in range(0, take_valid+1):
+        if kdata.iloc[temp_index][dogen.P_LOW] <= kdata.iloc[temp_index][dogen.MA20]+0.01:
+            take_index = temp_index
+            break
         pass
-    if take_index is None or take_index > take_valid:
-        logger.debug("Don't get valid take-trade since %s" % kdata.index[pick_index])
+
+    if take_index is None:
+        logger.debug("Don't get valid take-trade")
         return None
+
+    for temp_index in range(0, pick_valid+1)：
+        if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index][dogen.MA20]:
+            return None
+        pass
 
     return [pick_index, take_index]
 
@@ -159,9 +154,12 @@ def stock_analyze(basic, kdata, policy_args):
     return result
 
 def match(codes, start=None, end=None, save_result=False, policy_args=None):
-    """ 上涨策略, 满足条件：
+    """ 上涨均线策略, 股价维持在某一均线之上，调整回踩均线：
         >>> 基本条件
-            一 10个交易日维持在5日均线之上；
+            一 ma5维持在ma20之上；
+            二 买入交易日take-trade，满足条件：
+                1) 最低价回踩ma20（如何精细定义???）；
+            
 
         >>> 排它条件
 
