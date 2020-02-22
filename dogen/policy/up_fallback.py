@@ -134,20 +134,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, rise_range, policy_arg
         logger.debug("Don't include %d hl-trade" % min_lhigh)
         return True
 
-    ### 特征六
-    for temp_index in range(from_index-1, high_index, -1):
-        ### 下跌
-        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
-            continue
-        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
-            continue
-        ### 放量下跌之后未被上涨突破
-        maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, sIdx=high_index, eIdx=temp_index)
-        if maxi_index is None or kdata.iloc[temp_index][dogen.P_OPEN] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
-            logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
-            return True
-        pass
-
     ### 特征七
     if pick_index+1 >= pick_valid:
         macd = dogen.forecast_macd(kdata[dogen.MACD])
@@ -301,8 +287,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             五 涨停检查
                 1) 上涨区间排除连板
                 2) 三个月内有涨停
-            六 上涨区间放量下跌必须突破
-            七 
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
