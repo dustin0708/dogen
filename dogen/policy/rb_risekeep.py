@@ -216,7 +216,7 @@ def stock_analyze(basic, kdata, policy_args):
 
     ### 统计下跌区间最低价一个月内涨停数
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-    tdata = kdata[pick_index: pick_index+22]
+    tdata = kdata[pick_index: pick_index+22*2]
     ldata = tdata[tdata[dogen.L_HIGH]<=tdata[dogen.P_CLOSE]].index.size
 
     ### 构造结果
