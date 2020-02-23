@@ -51,7 +51,7 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计40分；
             * 市值估分，总计40分；
-            * 涨停估分，总分20分，一个涨停板10分；
+            * 涨停估分，总分20分，两个月内一个涨停板10分；
     """
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
@@ -63,7 +63,7 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
 
     temp_score = 10
     temp_slice = 10
-    tdata = kdata[pick_index: pick_index+22]
+    tdata = kdata[pick_index: pick_index+22*2]
     count = tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size
     if (count > temp_score/temp_slice):
         count = temp_score/temp_slice
