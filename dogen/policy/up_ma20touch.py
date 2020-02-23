@@ -105,7 +105,7 @@ def include_analyze(basic, kdata, policy_args):
     min_rise   = __parse_policy_args(policy_args, MIN_RISE)
     max_fallen = __parse_policy_args(policy_args, MAX_FALLEN)
 
-    pick_index = pick_valid
+    pick_index = 0
     take_index = None
     
     for temp_index in range(0, take_valid+1):
