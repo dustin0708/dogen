@@ -58,12 +58,12 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     pick_start  = __parse_policy_args(policy_args, PICK_START)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
-    score  = dogen.score_by_pclose(40, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
-    score += dogen.score_by_outstanding(40, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
+    score  = dogen.score_by_pclose(45, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
+    score += dogen.score_by_outstanding(45, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
 
-    temp_score = 20
+    temp_score = 10
     temp_slice = 10
-    tdata = kdata[pick_index: high_index+1]
+    tdata = kdata[pick_index: pick_index+22]
     count = tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size
     if (count > temp_score/temp_slice):
         count = temp_score/temp_slice
@@ -214,9 +214,9 @@ def stock_analyze(basic, kdata, policy_args):
         logger.debug("exclude_analyze() return True")
         return None
 
-    ### 统计下跌区间涨停数
+    ### 统计下跌区间最低价一个月内涨停数
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-    tdata = kdata[pick_index: high_index+1]
+    tdata = kdata[pick_index: pick_index+22]
     ldata = tdata[tdata[dogen.L_HIGH]<=tdata[dogen.P_CLOSE]].index.size
 
     ### 构造结果
@@ -224,6 +224,7 @@ def stock_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_CODE]        = basic.name # 股票代码
     result[dogen.RST_COL_NAME]        = basic[dogen.NAME] #  证券简写
     result[dogen.RST_COL_INDUSTRY]    = basic[dogen.INDUSTRY]
+    result[dogen.RST_COL_START]       = kdata.index[high_index]
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
