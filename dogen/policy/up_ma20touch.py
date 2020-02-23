@@ -35,10 +35,10 @@ OUTSTANDING = 'market_value'
 ARGS_DEAULT_VALUE = {
     MAX_TRADES: 90,      # 天
     TAKE_VALID: 0,      # 
-    PICK_VALID: 10,
+    PICK_VALID: 9,
     MAX_FALLEN: 10,
     MIN_RISE: 6,
-    MAX_RISE: 50,   # 1%
+    MAX_RISE: 80,   # 1%
     MIN_LHIGH: 0,
     MAX_RCLOSE: 7,
     MIN_RAMP: 5,
@@ -118,10 +118,13 @@ def include_analyze(basic, kdata, policy_args):
         logger.debug("Don't get valid take-trade")
         return None
 
-    for temp_index in range(0, pick_valid+1):
+    for temp_index in range(take_index, kdata.index.size):
         if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index][dogen.MA20]:
-            return None
-        pass
+            break
+        pick_index = temp_index
+
+    if pick_index < pick_valid:
+        return None
 
     return [pick_index, take_index]
 
@@ -139,7 +142,7 @@ def stock_analyze(basic, kdata, policy_args):
         logger.debug("exclude_analyze() return True")
         return None
 
-    tdata = kdata[0: 22]
+    tdata = kdata[0: pick_index]
     ldata = tdata[tdata[dogen.L_HIGH]<=tdata[dogen.P_CLOSE]].index.size
 
     ### 构造结果
@@ -147,6 +150,7 @@ def stock_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_CODE]        = basic.name # 股票代码
     result[dogen.RST_COL_NAME]        = basic[dogen.NAME] #  证券简写
     result[dogen.RST_COL_INDUSTRY]    = basic[dogen.INDUSTRY]
+    result[dogen.RST_COL_START]       = kdata.index[pick_index]
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值

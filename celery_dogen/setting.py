@@ -77,16 +77,9 @@ beat_schedule = {
         'args': (None, None, None, True, 1000)
     },
 
-    ### 上涨ma5策略
-    'exec-policy-up-ma5upper': {
-        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_ma5upper_match',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
-        'args': (None, None, None, True, 1000)
-    },
-
-    ### 上涨均线策略
-    'exec-policy-up-matouch': {
-        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_matouch_match',
+    ### 上涨20日均线策略
+    'exec-policy-up-ma20touch': {
+        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_ma20touch_match',
         'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
         'args': (None, None, None, True, 1000)
     },
