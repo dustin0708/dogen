@@ -62,8 +62,17 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
 
-    score  = dogen.score_by_pclose(25, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
-    score += dogen.score_by_outstanding(25, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
+    score  = dogen.score_by_pclose(40, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
+    score += dogen.score_by_outstanding(40, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
+
+    temp_score = 20
+    temp_slice = 20
+    tdata = kdata[0: pick_index+1]
+    count = tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size
+    if (count > temp_score/temp_slice):
+        count = temp_score/temp_slice
+    if (count > 0):
+        score += temp_slice*count
 
     return (int)(score)
 
@@ -142,7 +151,7 @@ def stock_analyze(basic, kdata, policy_args):
         logger.debug("exclude_analyze() return True")
         return None
 
-    tdata = kdata[0: pick_index]
+    tdata = kdata[0: pick_index+1]
     ldata = tdata[tdata[dogen.L_HIGH]<=tdata[dogen.P_CLOSE]].index.size
 
     ### 构造结果

@@ -60,30 +60,17 @@ def score_analyze(basic, kdata, pick_index, take_index, rise_range, policy_args)
     outstanding = __parse_policy_args(policy_args, OUTSTANDING)
     [from_index, high_index, inc_close, get_lhigh, tmpId] = rise_range
 
-    score  = dogen.score_by_pclose(25, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
-    score += dogen.score_by_outstanding(25, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
+    score  = dogen.score_by_pclose(40, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
+    score += dogen.score_by_outstanding(40, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
 
-    temp_score = 25
-    temp_slice = 5
+    temp_score = 20
+    temp_slice = 20
     tdata = kdata[high_index: from_index]
     count = tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size
     if (count > temp_score/temp_slice):
         count = temp_score/temp_slice
     if (count > 0):
         score += temp_slice*count
-
-    temp_score = 25
-    if (pick_index+1)<5:
-        score += temp_score
-    else:
-        temp_slice = 5
-        for temp_index in range(0, (int)(temp_score/temp_slice)):
-            if kdata.iloc[temp_index][dogen.MACD] < -0.1:
-                continue
-            if kdata.iloc[temp_index][dogen.MACD] < kdata.iloc[temp_index+1][dogen.MACD]:
-                continue
-            score += temp_slice
-        pass
 
     return (int)(score)
 

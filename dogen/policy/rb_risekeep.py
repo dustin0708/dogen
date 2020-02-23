@@ -58,11 +58,11 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     pick_start  = __parse_policy_args(policy_args, PICK_START)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
-    score  = dogen.score_by_pclose(45, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
-    score += dogen.score_by_outstanding(45, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
+    score  = dogen.score_by_pclose(40, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
+    score += dogen.score_by_outstanding(40, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
 
-    temp_score = 10
-    temp_slice = 10
+    temp_score = 20
+    temp_slice = 20
     tdata = kdata[pick_index: pick_index+22*2]
     count = tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size
     if (count > temp_score/temp_slice):
