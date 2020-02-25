@@ -121,7 +121,7 @@ def include_analyze(basic, kdata, policy_args):
     if kdata.iloc[0][dogen.MA5] > kdata.iloc[0][dogen.MA20]:
         logger.debug("Invalid MA5&MA20 at %s" % kdata.index[0])
         return None
-    if dogen.get_last_column_min(kdata, dogen.P_CLOSE, eIdx=30) >= pick_end:
+    if dogen.get_last_column_min(kdata, dogen.P_CLOSE, eIdx=30) > pick_end:
         logger.debug("Invalid pick-trade")
         return None
 

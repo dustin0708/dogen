@@ -101,6 +101,25 @@ def caculate_incr_percentage(nd, od, fraction=2):
     """
     return caculate_percentage(nd-od, od, fraction=fraction)
     
+def caculate_upper_shadow(kdata, start, end, max_rise=2):
+    """计算上影线
+    """
+    if end >= kdata.index.size:
+        end = kdata.index.size-1
+
+    count = 0
+    for temp_index in range(start, end):
+        if kdata.iloc[temp_index][dogen.P_OPEN] < kdata.iloc[temp_index][dogen.P_CLOSE]:
+            diff = kdata.iloc[temp_index][dogen.P_HIGH] - kdata.iloc[temp_index][dogen.P_CLOSE]
+        else:
+            diff = kdata.iloc[temp_index][dogen.P_HIGH] - kdata.iloc[temp_index][dogen.P_OPEN]
+        diff_rise = caculate_percentage(diff, kdata.iloc[temp_index+1][dogen.P_CLOSE])
+        if diff_rise >= max_rise:
+            count += 1
+        pass
+
+    return count
+
 def get_last_column_min(kdata, column, sIdx=0, eIdx=None):
     """获取K线column值最小交易日
         column: K线列参数
