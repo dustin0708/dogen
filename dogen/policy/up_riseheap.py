@@ -159,6 +159,10 @@ def include_analyze(basic, kdata, policy_args):
         if pick_index < pick_valid:
             logger.debug("Invalid rise-range from %s" % kdata.index[pick_index])
             return None
+        tdata = kdata[0: pick_index]
+        if tdata[tdata[dogen.R_CLOSE]>=3].index.size <= 0:
+            logger.debug("Invlaid rise-range without close upper than 3")
+            return None
         pass
 
     ### 特征二
