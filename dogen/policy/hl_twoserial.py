@@ -139,7 +139,7 @@ def include_analyze(basic, kdata, policy_args):
     ### 特征二
     take_index = None
     for temp_index in range(low_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.R_CLOSE] <= 0 or kdata.iloc[temp_index][dogen.R_CLOSE] >= 7:
+        if kdata.iloc[temp_index][dogen.R_CLOSE] <= 0 or kdata.iloc[temp_index][dogen.R_CLOSE]:
             continue
         if kdata.iloc[temp_index][dogen.P_CLOSE] < kdata.iloc[temp_index][dogen.P_OPEN]:
             continue
