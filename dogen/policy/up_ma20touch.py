@@ -151,6 +151,10 @@ def stock_analyze(basic, kdata, policy_args):
         logger.debug("exclude_analyze() return True")
         return None
 
+    rise_range = dogen.get_last_rise_range(kdata, 0, start=pick_index)
+    if rise_range is not None:
+        [pick_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
+
     tdata = kdata[0: pick_index+1]
     ldata = tdata[tdata[dogen.L_HIGH]<=tdata[dogen.P_CLOSE]].index.size
 
