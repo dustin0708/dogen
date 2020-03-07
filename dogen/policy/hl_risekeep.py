@@ -45,7 +45,7 @@ ARGS_DEAULT_VALUE = {
     MIN_RAMP: 5,
     MIN_POLYF2: 0.008,
     MAX_PCLOSE: 50,
-    OUTSTANDING: 80,
+    OUTSTANDING: 100,
 }
 
 def __parse_policy_args(policy_args, arg_name):
@@ -144,7 +144,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         temp_falls = dogen.caculate_incr_percentage(kdata.iloc[mini_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE])
         if temp_falls > -min_falls:
             logger.debug("Get invalid lowest trade at %s" % kdata.index[mini_index])
-            return True
+            # return True
         tdata = kdata[take_index:pick_index+1].sort_index()
         polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
         if polyf[0] < min_polyf2:
