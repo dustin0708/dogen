@@ -4,7 +4,7 @@ from lxml import etree
 from dogen.stock.constant import *
 
 
-def parse_thsgn_file(filename='thsgn.html'):
+def parse_thsgn_file(filename):
 
     parser = etree.HTMLParser(encoding='utf-8')
     eledoc = etree.parse(filename, parser=parser)

@@ -93,8 +93,10 @@ def update_concept(filename='thsgn.html'):
         return None
 
     try:
-        cnpt = dogen.parse_thsgn_file(filename=filename)
+        cnpt = dogen.parse_thsgn_file(filename)
+        db.delete_stock_concept()
+        db.insert_stock_concept(cnpt)
     except Exception:
-        return None
+        pass
 
-    
+    return None
