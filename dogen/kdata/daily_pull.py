@@ -83,3 +83,18 @@ def update_kdata(codes, full=False, start=None, end=None):
         
     return success_list
     
+def update_concept(filename='thsgn.html'):
+    """ 更新概念
+    """
+    ### 数据库连接初始化
+    db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
+    if not db.connect():
+        logger.error("Cannot connect to mongo-server %s" % mongo_server)
+        return None
+
+    try:
+        cnpt = dogen.parse_thsgn_file(filename=filename)
+    except Exception:
+        return None
+
+    

@@ -1,5 +1,6 @@
 #-*-coding:utf-8-*-
 
+CODE        = 'code'
 NAME        = 'name'
 INDUSTRY    = 'industry'
 
@@ -22,6 +23,8 @@ MA20        = 'ma20'
 DIF         = 'dif'
 DEA         = 'dea'
 MACD        = 'macd'
+
+CONCEPT='concept'
 
 BVPS = 'bvps'
 INDUSTRY = 'industry'
