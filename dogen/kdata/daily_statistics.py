@@ -128,3 +128,13 @@ def find_largerise_range(codes, start=None, end=None, save_result=False, args=No
         db.insert_statistics_largerise_range(match_list, key_name=dogen.RST_COL_INDEX)
 
     return match_list
+
+def find_hot_concept(start=None, end=None):
+    """ 找近期热点概念
+
+        参数：
+            start：起始时间，None取end前10个交易日
+            end: 截止时间，None取最近交易日
+ 
+    """
+    return None
