@@ -152,7 +152,11 @@ def include_analyze(basic, kdata, policy_args):
         return None
     else:
         [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-        tdata = kdata[0:pick_index]
+        for temp_index in range(high_index, -1, -1):
+            if kdata.iloc[temp_index][dogen.MA5] > kdata.iloc[temp_index][dogen.MA20]:
+                continue
+            break
+        tdata = kdata[0:temp_index]
         if tdata[tdata[dogen.MA5] > tdata[dogen.MA20]].index.size > 0:
             logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
             return None
