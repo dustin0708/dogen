@@ -11,6 +11,8 @@ class DbMongo():
     TBL_BASICS = "basics" # 股票基本信息数据表
     TBL_ALL_CONCEPT = 'all_concept'
     TBL_HOT_CONCEPT = 'hot_concept'
+    TBL_HOT_DATE    = 'hot_date'
+    TBL_HOT_CNPT    = 'hot_cnpt'
     TBL_KDATA_PREFIX = "kdata" # 股票交易数据表前缀
     TBL_POLICY_PREFIX = "policy" # 策略结果表前缀
     TBL_STAT_LR_RANGE = "stat_lr_range" # 大涨统计表前缀
@@ -413,11 +415,13 @@ class DbMongo():
         if self.database is None:
             return False
                
-        cnpt[key_field] = date
+        cnpt = {}
+        cnpt[self.TBL_HOT_DATE] = date
+        cnpt[self.TBL_HOT_CNPT] = cnpt
 
         try:
             coll = self.database[self.TBL_HOT_CONCEPT]
-            coll.insert_many(copy.deepcopy(cnpt))
+            coll.insert_one(copy.deepcopy(cnpt))
             return True
         except Exception:
             pass
@@ -432,15 +436,30 @@ class DbMongo():
 
         if date is not None:
             cond = {key_field: date}
+            try:
+                date = None
+                cnpt = None
+                coll = self.database[self.TBL_HOT_CONCEPT]
+                for data in coll.find(cond):
+                    date = data[self.TBL_HOT_DATE]
+                    cnpt = data[self.TBL_HOT_CNPT]
+                    if date is not None and cnpt is not None:
+                        return [date, cnpt]
+                    pass
+            except Exception:
+                pass
         else:
             cond = {}
-
-        try:
-            coll = self.database[self.TBL_HOT_CONCEPT]
-            for data in coll.find(cond):
-                del data[key_field]
-            return data
-        except Exception:
-            pass
+            try:
+                recs = []
+                coll = self.database[self.TBL_HOT_CONCEPT]
+                for data in coll.find(cond):
+                    date = data[self.TBL_HOT_DATE]
+                    cnpt = data[self.TBL_HOT_CNPT]
+                    if date is not None and cnpt is not None:
+                        recs.append([date, cnpt])
+                    pass
+            except Exception:
+                pass
         
         return None
