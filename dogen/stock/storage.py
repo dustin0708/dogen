@@ -380,11 +380,11 @@ class DbMongo():
             return False
 
         try:
+            recs = []
             coll = self.database[self.TBL_ALL_CONCEPT]
-            recs = coll.find(cond)
-            if isinstance(recs, list):
-                for data in recs:
-                    del data[key_field]
+            for data in coll.find(cond):
+                del data[key_field]
+                recs.append(data)
             return recs
         except Exception:
             pass
@@ -400,7 +400,7 @@ class DbMongo():
 
         return None
 
-    def insert_hot_concept(self, date, cnpt, field='_id'):
+    def insert_hot_concept(self, date, cnpt, key_field='_id'):
         """ 概念数据
 
             参数说明：
@@ -413,7 +413,7 @@ class DbMongo():
         if self.database is None:
             return False
                
-        cnpt[field] = date
+        cnpt[key_field] = date
 
         try:
             coll = self.database[self.TBL_HOT_CONCEPT]
@@ -424,21 +424,21 @@ class DbMongo():
             
         return False
     
-    def lookup_hot_concept(self, date=None, field='_id'):
+    def lookup_hot_concept(self, date=None, key_field='_id'):
         """
         """
         if self.database is None:
             return False
 
         if date is not None:
-            cond = {field: date}
+            cond = {key_field: date}
         else:
             cond = {}
 
         try:
             coll = self.database[self.TBL_HOT_CONCEPT]
             for data in coll.find(cond):
-                del data[field]
+                del data[key_field]
             return data
         except Exception:
             pass
