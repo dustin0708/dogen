@@ -137,4 +137,12 @@ def find_hot_concept(start=None, end=None):
             end: 截止时间，None取最近交易日
  
     """
+    db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
+    if not db.connect():
+        logger.error("Cannot connect to mongo-server %s" % mongo_server)
+        return None
+
+    print(db.lookup_stock_concept(code='300227'))
+    print(db.lookup_stock_concept()
+
     return None

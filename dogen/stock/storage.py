@@ -9,7 +9,8 @@ import pymongo
 class DbMongo():
 
     TBL_BASICS = "basics" # 股票基本信息数据表
-    TBL_CONCEPT = 'concept'
+    TBL_ALL_CONCEPT = 'all_concept'
+    TBL_HOT_CONCEPT = 'hot_concept'
     TBL_KDATA_PREFIX = "kdata" # 股票交易数据表前缀
     TBL_POLICY_PREFIX = "policy" # 策略结果表前缀
     TBL_STAT_LR_RANGE = "stat_lr_range" # 大涨统计表前缀
@@ -345,7 +346,7 @@ class DbMongo():
         if self.database is None:
             return False
         
-        coll = self.database[self.TBL_CONCEPT]
+        coll = self.database[self.TBL_ALL_CONCEPT]
         coll.drop()
 
         return None
@@ -364,7 +365,7 @@ class DbMongo():
             return False
                
         try:
-            coll = self.database[self.TBL_CONCEPT]
+            coll = self.database[self.TBL_ALL_CONCEPT]
             coll.insert_many(copy.deepcopy(cnpt))
             return True
         except Exception:
@@ -384,7 +385,61 @@ class DbMongo():
             cond = {}
 
         try:
-            coll = self.database[self.TBL_CONCEPT]
+            coll = self.database[self.TBL_ALL_CONCEPT]
+            for data in coll.find(cond):
+                del data[field]
+            return data
+        except Exception:
+            pass
+        
+        return None
+
+    def delete_hot_concept(self):
+        if self.database is None:
+            return False
+        
+        coll = self.database[self.TBL_HOT_CONCEPT]
+        coll.drop()
+
+        return None
+
+    def insert_hot_concept(self, date, cnpt, field='_id'):
+        """ 概念数据
+
+            参数说明：
+                date - 日期
+                cnpt - 概念列表
+
+            返回值：
+                保存成功返回True，否则返回False
+        """
+        if self.database is None:
+            return False
+               
+        cnpt[field] = date
+
+        try:
+            coll = self.database[self.TBL_HOT_CONCEPT]
+            coll.insert_many(copy.deepcopy(cnpt))
+            return True
+        except Exception:
+            pass
+            
+        return False
+    
+    def lookup_hot_concept(self, date=None, field='_id'):
+        """
+        """
+        if self.database is None:
+            return False
+
+        if date is not None:
+            cond = {field: date}
+        else:
+            cond = {}
+
+        try:
+            coll = self.database[self.TBL_HOT_CONCEPT]
             for data in coll.find(cond):
                 del data[field]
             return data
