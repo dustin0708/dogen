@@ -142,7 +142,7 @@ def find_hot_concept(start=None, end=None):
         logger.error("Cannot connect to mongo-server %s" % mongo_server)
         return None
 
-    print(db.lookup_stock_concept(code='300227'))
+    print(db.lookup_stock_concept(cond={dogen.CODE:'300227'}))
     print(db.lookup_stock_concept())
 
     return None
