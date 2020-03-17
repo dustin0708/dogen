@@ -351,12 +351,12 @@ class DbMongo():
 
         return None
 
-    def insert_stock_concept(self, cnpt):
+    def insert_stock_concept(self, cnpt, key_field='_id'):
         """ 概念数据
 
             参数说明：
                 cnpt - 股票代码
-                field - 在数据中插入唯一键标识
+                key_field - 在数据中插入唯一键标识
 
             返回值：
                 保存成功返回True，否则返回False
@@ -373,22 +373,19 @@ class DbMongo():
             
         return False
     
-    def lookup_stock_concept(self, code=None, field='_id'):
+    def lookup_stock_concept(self, cond={}, key_field='_id'):
         """
         """
         if self.database is None:
             return False
 
-        if code is not None:
-            cond = {field: code}
-        else:
-            cond = {}
-
         try:
             coll = self.database[self.TBL_ALL_CONCEPT]
-            for data in coll.find(cond):
-                del data[field]
-            return data
+            recs = coll.find(cond)
+            if isinstance(recs, list):
+                for data in recs:
+                    del data[key_field]
+            return recs
         except Exception:
             pass
         
