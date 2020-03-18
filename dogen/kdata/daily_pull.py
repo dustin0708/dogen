@@ -82,8 +82,27 @@ def update_kdata(codes, full=False, start=None, end=None):
         pass
         
     return success_list
-    
-def update_concept(filename='thsgn.html'):
+
+
+def update_hot_concept(start=None, end=None):
+    """ 找近期热点概念
+
+        参数：
+            start：起始时间，None取end前10个交易日
+            end: 截止时间，None取最近交易日
+ 
+    """
+    db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
+    if not db.connect():
+        logger.error("Cannot connect to mongo-server %s" % mongo_server)
+        return None
+
+    print(db.lookup_stock_concept(cond={dogen.CODE:'300227'}))
+    print(db.lookup_stock_concept())
+
+    return None
+
+def update_all_concept_from_html(filename='thsgn.html'):
     """ 更新概念
     """
     ### 数据库连接初始化

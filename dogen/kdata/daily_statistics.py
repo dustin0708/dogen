@@ -128,21 +128,3 @@ def find_largerise_range(codes, start=None, end=None, save_result=False, args=No
         db.insert_statistics_largerise_range(match_list, key_name=dogen.RST_COL_INDEX)
 
     return match_list
-
-def find_hot_concept(start=None, end=None):
-    """ 找近期热点概念
-
-        参数：
-            start：起始时间，None取end前10个交易日
-            end: 截止时间，None取最近交易日
- 
-    """
-    db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
-    if not db.connect():
-        logger.error("Cannot connect to mongo-server %s" % mongo_server)
-        return None
-
-    print(db.lookup_stock_concept(cond={dogen.CODE:'300227'}))
-    print(db.lookup_stock_concept())
-
-    return None

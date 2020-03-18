@@ -31,63 +31,63 @@ beat_schedule = {
     ### 涨停回调策略
     'exec-policy-hl-fallheap': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_fallheap_match',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
         'args': (None, None, None, True, 1000)
     },
 
     ### 涨停上涨策略
     'exec-policy-hl-risekeep': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_risekeep_match',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
         'args': (None, None, None, True, 1000)
     },
 
     ### 两连板策略
     'exec-policy-hl-twoserial': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_twoserial_match',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
         'args': (None, None, None, True, 1000)
     },
 
     ### 反弹策略
     'exec-policy-rb-risekeep': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_rb_risekeep_match',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
         'args': (None, None, None, True, 1000)
     },
 
     ### 上涨回调策略
     'exec-policy-up-fallback': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_fallback_match',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
         'args': (None, None, None, True, 1000)
     },
 
     ### 蓄势上涨策略
     'exec-policy-up-riseheap': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_riseheap_match',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
         'args': (None, None, None, True, 1000)
     },
 
     ### 上涨鸳鸯策略
     'exec-policy-up-mandarin': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_mandarin_match',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
         'args': (None, None, None, True, 1000)
     },
 
     ### 上涨20日均线策略
     'exec-policy-up-ma20touch': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_ma20touch_match',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
         'args': (None, None, None, True, 1000)
     },
 
     ### 新股开板策略
     'exec-policy-new-ipo': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_new_ipo_match',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='21'),
+        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
         'args': (None, None, None, True, 1000)
     },
 }
