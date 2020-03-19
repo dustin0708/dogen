@@ -105,7 +105,7 @@ def update_hot_concept(start=None, end=None):
     return None
 
 def update_all_concept_from_html(filename='thsgn.html'):
-    """ 更新概念
+    """ 从同花顺文件更新概念
     """
     ### 数据库连接初始化
     db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
