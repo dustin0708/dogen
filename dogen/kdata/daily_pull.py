@@ -61,7 +61,7 @@ def update_kdata(codes, full=False, start=None, end=None):
         
             ### 下载日线数据
             logger.debug("Begin download %s's kdata from %s to %s." % (code, start, end))
-            kdata = dogen.download_kdata(basic, start=start, end=end)
+            kdata = dogen.download_kdata(basic.name, start=start, end=end)
             if kdata is None or kdata.index.size <= 0:
                 continue
 
@@ -83,12 +83,11 @@ def update_kdata(codes, full=False, start=None, end=None):
         
     return success_list
 
-
 def update_hot_concept(start=None, end=None):
-    """ 找近期热点概念
+    """ 找热点概念
 
         参数：
-            start：起始时间，None取end前10个交易日
+            start：起始时间，None取end前1个交易日
             end: 截止时间，None取最近交易日
  
     """
@@ -96,6 +95,9 @@ def update_hot_concept(start=None, end=None):
     if not db.connect():
         logger.error("Cannot connect to mongo-server %s" % mongo_server)
         return None
+
+    if end is None:
+        end = dogen.date_today()
 
     print(db.lookup_stock_concept(cond={dogen.CODE:'300227'}))
     print(db.lookup_stock_concept())

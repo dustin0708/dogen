@@ -8,11 +8,11 @@ import tushare
 
 from dogen.stock.constant import *
 
-def __process_kdata(basic, kdata):
+def __process_kdata(code, kdata):
     """ 加工交易数据, 计算涨停价、跌停价、涨幅、振幅、MA5、MA10、MA20等参数
 
         参数说明：
-            basic - 股票基本信息数据，Series类型
+            code  - 股票代码
             kdata - 股票交易日线数据
 
         返回结果：
@@ -64,7 +64,7 @@ def __process_kdata(basic, kdata):
         volume= kdata.iloc[ i ].loc[VOLUME]
         
         last_close = kdata.iloc[i+1].loc[P_CLOSE]
-        if basic.name.startswith('68',0):
+        if code.startswith('68',0):
             L_high = dogen.caculate_l_high(last_close, limit=20)
             L_low  = dogen.caculate_l_low(last_close, limit=20)
         else:
@@ -118,23 +118,28 @@ def download_basics():
         basics = None
     return basics
 
-def download_kdata(basic, start='', end=''):
+def download_kdata(code, start=None, end=None):
     """ 下载指定股票交易日线数据
 
         参数说明：
-            basic - 指定股票基本信息
+            code - 指定股票代码
             start - 起始交易日
             end - 截止交易日
 
         返回结果：
             加工后日线交易数据，失败返回None
     """
+    if start is None:
+        start = ''
+    if end is None:
+        end = ''
+
     try:
-        kdata = tushare.get_k_data(basic.name, start, end)
+        kdata = tushare.get_k_data(code, start, end)
         if (kdata is None) or (kdata.index.size <= 0):
             return None
     except Exception:
         return None
 
     kdata.set_index('date', inplace=True)
-    return __process_kdata(basic, kdata)
+    return __process_kdata(code, kdata)

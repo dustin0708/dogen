@@ -7,14 +7,17 @@
 源码目录下执行'make'命令即可。
 
 【运行】
-step1. 启动mongoDB：
+step. 启动mongoDB：
     systemctl enable mongod
     systemctl start mongod
 
-step2. 启动RabbitMQ：
+step  启动redis
+    docker run -d -p 6379:6379 redis
+
+step. 启动RabbitMQ：
     docker run --restart=always -d -p 5672:5672 rabbitmq
 
-step3. 启动后台任务：
+step. 启动后台任务：
     a. 若未安装可在源码顶层目录下执行下面命令：
         setsid  celery worker -B -A celery_dogen --autoscale=100,1 -l info
 
