@@ -143,13 +143,9 @@ def trade_analyze1(basic, kdata, pick_index, policy_args):
     return [pick_index, take_index]
 
 def trade_analyze2(basic, kdata, pick_index, policy_args):
-    volume_scale = __parse_policy_args(policy_args, VOLUME_SCALE)
     min_falls    = __parse_policy_args(policy_args, MIN_FALLS)
 
     ### 特征二
-    if (kdata.iloc[pick_index][dogen.VOLUME] * volume_scale) > kdata.iloc[pick_index-1][dogen.VOLUME]:
-        logger.debug("Too small volume at %s" % kdata.index[pick_index-1])
-        return None
     if dogen.caculate_incr_percentage(kdata.iloc[pick_index-1][dogen.P_OPEN], kdata.iloc[pick_index][dogen.P_CLOSE]) > 5:
         logger.debug("Too high open price at %s" % kdata.index[pick_index-1])
         return None
