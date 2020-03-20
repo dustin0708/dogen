@@ -123,9 +123,15 @@ def include_analyze(basic, kdata, policy_args):
             break
         pass
 
-    if take_index is None or kdata.iloc[take_index][dogen.MA20]<kdata.iloc[take_index+1][dogen.MA20]:
+    if take_index is None:
         logger.debug("Don't get valid take-trade")
         return None
+
+    for temp_index in range(take_index, take_index+5):
+        if kdata.iloc[temp_index][dogen.MA20]<kdata.iloc[temp_index+1][dogen.MA20]:
+            logger.debug("Invalid ma20 at %s" % kdata.index[temp_index])
+            return None
+        pass
 
     for temp_index in range(take_index, kdata.index.size):
         if kdata.iloc[temp_index][dogen.MA5] < kdata.iloc[temp_index][dogen.MA20]:
