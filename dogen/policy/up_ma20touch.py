@@ -123,7 +123,7 @@ def include_analyze(basic, kdata, policy_args):
             break
         pass
 
-    if take_index is None:
+    if take_index is None or kdata.iloc[take_index][dogen.MA20]<kdata.iloc[take_index+1][dogen.MA20]:
         logger.debug("Don't get valid take-trade")
         return None
 
