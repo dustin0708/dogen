@@ -2,10 +2,11 @@
 
 import sys
 import dogen
+import redis
 import traceback
 
 ### 导入日志句柄
-from dogen import logger, mongo_server, mongo_database
+from dogen import logger, mongo_server, mongo_database, redis_server
 
 def update_kdata(codes, full=False, start=None, end=None):
     """ 从网络侧更新股票数据
@@ -83,12 +84,13 @@ def update_kdata(codes, full=False, start=None, end=None):
         
     return success_list
 
-def update_hot_concept(start=None, end=None):
+def update_hot_concept(start=None, end=None, num=1, save_result=False):
     """ 找热点概念
 
         参数：
-            start：起始时间，None取end前1个交易日
+            start: 开始日期
             end: 截止时间，None取最近交易日
+            num: 计算日期数，0表示所有的
  
     """
     db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
@@ -96,11 +98,48 @@ def update_hot_concept(start=None, end=None):
         logger.error("Cannot connect to mongo-server %s" % mongo_server)
         return None
 
-    if end is None:
-        end = dogen.date_today()
+    rd = dogen.DbRedis()
+    if not rd.connect():
+        logger.error("Cannot connect to redis-server %s" % redis_server)
+        return None
 
-    print(db.lookup_stock_concept(cond={dogen.CODE:'300227'}))
-    print(db.lookup_stock_concept())
+    ### 修正日期
+    index = db.lookup_stock_kdata(dogen.get_index_of_sh(), start=start, end=end)
+
+    ### 修正num参数
+    if num==0 or num > index.index.size:
+        num = index.index.size
+
+    ### 读取代码
+    codes = db.lookup_stock_codes()
+
+    for code in codes:
+        kdata = db.lookup_stock_kdata(code, start=start,end=end)
+        if kdata.iloc[0][dogen.P_CLOSE] < kdata.iloc[0][dogen.L_HIGH]:
+            continue
+
+        ### 行业&概念
+        indt = dogen.lookup_industry(db, code)
+        cnpt = dogen.lookup_concept(db, code)
+        if indt is None or cnpt is None:
+            continue
+
+        ### 概念计数
+        for temp_trade in kdata.index:
+            rd.incry_hot_concept(kdata.loc[temp_trade], indt)
+            rd.incry_hot_concept(kdata.loc[temp_trade], cnpt)
+
+        pass
+
+    ### 排序获取结果&清除临时数据
+    for temp_index in range(0, num):
+        hots = rd.fetch_hot_concept(index.index[temp_index])
+
+        ### 写数据库
+        if save_result:
+            db.insert_hot_concept(index.index[temp_index], hots)
+
+        rd.clear_hot_concept(index.index[temp_index])
 
     return None
 

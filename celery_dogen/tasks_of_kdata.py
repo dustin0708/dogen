@@ -27,6 +27,10 @@ def dispatcher_of_daily_pull_update_kdata(codes=None, full=False, start=None, en
             basics = dogen.download_basics()
             codes = basics.index.tolist()
             codes.sort()
+
+            ### 添加指数
+            codes.append(dogen.get_index_of_sh())
+            codes.append(dogen.get_index_of_sz())
     except Exception:
         traceback.print_exc()
         return None

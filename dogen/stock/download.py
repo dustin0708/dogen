@@ -143,3 +143,9 @@ def download_kdata(code, start=None, end=None):
 
     kdata.set_index('date', inplace=True)
     return __process_kdata(code, kdata)
+
+def get_index_of_sh():
+    return 'sh'
+
+def get_index_of_sz():
+    return 'sz'

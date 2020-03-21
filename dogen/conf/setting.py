@@ -6,3 +6,5 @@ logger = get_task_logger(__name__)
 
 mongo_server = "mongodb://127.0.0.1:27017"
 mongo_database = "Dogen"
+
+redis_server = "redis://127.0.0.1:6379"

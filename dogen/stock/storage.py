@@ -5,6 +5,51 @@ import copy
 import pandas
 import traceback
 import pymongo
+import redis
+
+class DbRedis():
+    ZSET_HOT_CONCEPT = 'hot_concept'
+
+    def __init__(self, host='localhost', port=6379):
+        try:
+            self.redis = redis.Redis(host=host, port=6379)
+        except Exception:
+            self.redis = None
+        pass
+
+    def connect(self):
+        return self.redis
+
+    def keyof_hot_concept(self, date):
+        return self.ZSET_HOT_CONCEPT+'.'+date
+
+    def incry_hot_concept(self, date, cnpt_name):
+        if self.redis is None:
+            return None
+
+        rst = None
+        if isinstance(cnpt_name, str):
+            rst = self.redis.zincrby(self.keyof_hot_concept(date), 1, cnpt_name)
+        elif isinstance(cnpt_name, list):
+            for temp in cnpt_name:
+                rst = self.redis.zincrby(self.keyof_hot_concept(date), 1, temp)
+            pass
+        else:
+            pass
+        return rst
+
+    def fetch_hot_concept(self, date, num=0, ascending=False):
+        if self.redis is None:
+            return None
+        cnpt = self.redis.zrevrange(self.keyof_hot_concept(date), 0, -1, withscores=False)
+        if num <= 0:
+            num = len(cnpt)
+        return cnpt[0:num]
+
+    def clear_hot_concept(self, date):
+        if self.redis is None:
+            return None
+        return self.redis.zremrangebyrank(self.keyof_hot_concept(date), 0, -1)
 
 class DbMongo():
 

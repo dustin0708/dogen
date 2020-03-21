@@ -23,3 +23,12 @@ def parse_thsgn_file(filename):
         codelist.append(code)
 
     return codelist
+
+def lookup_cnpt(database, code):
+    return database.lookup_stock_concept(cond={dogen.CODE:code})
+
+def lookup_industry(database, code):
+    return database.lookup_stock_concept(cond={dogen.CODE:code})[INDUSTRY]
+
+def lookup_concept(database, code):
+    return database.lookup_stock_concept(cond={dogen.CODE:code})[CONCEPT]
