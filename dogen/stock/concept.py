@@ -1,5 +1,6 @@
 #-*-coding:utf-8-*-
 
+import dogen
 from lxml import etree
 from dogen.stock.constant import *
 
