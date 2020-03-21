@@ -28,6 +28,12 @@ beat_schedule = {
         'schedule': crontab(day_of_week='2-6', hour='0', minute='01')
     },
 
+    ### 更新热点
+    'exec-update-hot-concept':{
+        'task': 'celery_dogen.tasks_of_kdata.daily_update_hot_concept',
+        'schedule': crontab(day_of_week='2-6', hour='0', minute='20')
+    },
+
     ### 涨停回调策略
     'exec-policy-hl-fallheap': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_hl_fallheap_match',

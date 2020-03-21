@@ -131,6 +131,8 @@ def update_hot_concept(start=None, end=None, num=1, save_result=False):
 
         pass
 
+    rst = []
+
     ### 排序获取结果&清除临时数据
     for temp_index in range(0, num):
         hots = rd.fetch_hot_concept(index.index[temp_index])
@@ -138,10 +140,10 @@ def update_hot_concept(start=None, end=None, num=1, save_result=False):
         ### 写数据库
         if save_result:
             db.insert_hot_concept(index.index[temp_index], hots)
-
+        rst.append((index.index[temp_index], hots))
         rd.clear_hot_concept(index.index[temp_index])
 
-    return None
+    return rst
 
 def update_all_concept_from_html(filename='thsgn.html'):
     """ 从同花顺文件更新概念
