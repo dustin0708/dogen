@@ -56,13 +56,10 @@ def update_kdata(codes, full=False, start=None, end=None):
             else:
                 ### 增量下载需要保证数据处理加工的正确性（MA20/MACD）
                 start = dogen.date_delta(last_trade, -90)
-            
-            ### 取basic
-            basic = basics.loc[code]
         
             ### 下载日线数据
             logger.debug("Begin download %s's kdata from %s to %s." % (code, start, end))
-            kdata = dogen.download_kdata(basic.name, start=start, end=end)
+            kdata = dogen.download_kdata(code, start=start, end=end)
             if kdata is None or kdata.index.size <= 0:
                 continue
 
@@ -72,7 +69,10 @@ def update_kdata(codes, full=False, start=None, end=None):
             
             ### 写数据库
             if kdata is not None and kdata.index.size > 0:
-                db.insert_stock_basic(code, basic)
+                ### 非指数写基本信息
+                if code.isdigit():
+                    basic = basics.loc[code]
+                    db.insert_stock_basic(code, basic)
                 db.insert_stock_kdata(code, kdata, kdata.index)
                 success_list.append(code)
 
