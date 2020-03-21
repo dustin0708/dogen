@@ -1,5 +1,6 @@
 #-*-coding:utf-8-*-
 
+import dogen
 from lxml import etree
 from dogen.stock.constant import *
 
@@ -24,11 +25,12 @@ def parse_thsgn_file(filename):
 
     return codelist
 
+
 def lookup_cnpt(database, code):
-    return database.lookup_stock_concept(cond={dogen.CODE:code})
+    return database.lookup_stock_concept(cond={dogen.CODE:code})[0]
 
 def lookup_industry(database, code):
-    return database.lookup_stock_concept(cond={dogen.CODE:code})[INDUSTRY]
+    return database.lookup_stock_concept(cond={dogen.CODE:code})[0][INDUSTRY]
 
 def lookup_concept(database, code):
-    return database.lookup_stock_concept(cond={dogen.CODE:code})[CONCEPT]
+    return database.lookup_stock_concept(cond={dogen.CODE:code})[0][CONCEPT]

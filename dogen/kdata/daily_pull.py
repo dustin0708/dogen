@@ -105,6 +105,9 @@ def update_hot_concept(start=None, end=None, num=1, save_result=False):
 
     ### 修正日期
     index = db.lookup_stock_kdata(dogen.get_index_of_sh(), start=start, end=end)
+    if index is None:
+        logger.debug("Don't get valid index data")
+        return None
 
     ### 修正num参数
     if num==0 or num > index.index.size:
