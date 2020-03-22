@@ -31,7 +31,8 @@ beat_schedule = {
     ### 更新热点
     'exec-update-hot-concept':{
         'task': 'celery_dogen.tasks_of_kdata.daily_update_hot_concept',
-        'schedule': crontab(day_of_week='2-6', hour='0', minute='20')
+        'schedule': crontab(day_of_week='2-6', hour='0', minute='20'),
+        'args': (None, 1, True)
     },
 
     ### 涨停回调策略

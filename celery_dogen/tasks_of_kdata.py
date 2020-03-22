@@ -55,5 +55,5 @@ def dispatcher_of_daily_pull_update_kdata(codes=None, full=False, start=None, en
 
 
 @app.task
-def daily_update_hot_concept(start=None, end=None, save_result=False):
-    return dogen.daily_pull.update_hot_concept(start=start, end=end, save_result=save_result)
+def daily_update_hot_concept(end=None, num=1, save_result=False):
+    return dogen.daily_pull.update_hot_concept(end=end, num=num, save_result=save_result)

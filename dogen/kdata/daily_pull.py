@@ -84,7 +84,7 @@ def update_kdata(codes, full=False, start=None, end=None):
         
     return success_list
 
-def update_hot_concept(start=None, end=None, num=1, save_result=False):
+def update_hot_concept(end=None, num=1, save_result=False):
     """ 找热点概念
 
         参数：
@@ -103,19 +103,20 @@ def update_hot_concept(start=None, end=None, num=1, save_result=False):
         logger.error("Cannot connect to redis-server %s" % redis_server)
         return None
 
-    ### 修正日期
-    index = db.lookup_stock_kdata(dogen.get_index_of_sh(), start=start, end=end)
-    if index is None:
-        logger.debug("Don't get valid index data")
+    ### 获取指数
+    expon = db.lookup_stock_kdata(dogen.get_index_of_sh(), end=end)
+    if expon is None:
+        logger.debug("Don't get valid expon data")
         return None
 
-    ### 修正num参数
-    if num==0 or num > index.index.size:
-        num = index.index.size
+    ### 截取有效交易日
+    if num==0 or num > expon.index.size:
+        num = expon.index.size
+    expon = expon[0:num]
+    start = expon.index[-1]
 
-    ### 保证临时数据健康
-    for temp_index in range(0, num):
-        rd.clear_hot_concept(index.index[temp_index])
+    ### 清理临时缓存
+    rd.clear_hot_concept(expon.index.to_list())
 
     ### 读取代码
     codes = db.lookup_stock_codes()
@@ -135,7 +136,7 @@ def update_hot_concept(start=None, end=None, num=1, save_result=False):
             continue
 
         ### 概念计数
-        for temp_index in range(0, num):
+        for temp_index in range(0, kdata.index.size):
             rd.incry_hot_concept(kdata.index[temp_index], indt)
             rd.incry_hot_concept(kdata.index[temp_index], cnpt)
 
@@ -145,13 +146,13 @@ def update_hot_concept(start=None, end=None, num=1, save_result=False):
 
     ### 排序获取结果&清除临时数据
     for temp_index in range(0, num):
-        hots = rd.fetch_hot_concept(index.index[temp_index])
+        hots = rd.fetch_hot_concept(expon.index[temp_index])
 
         ### 写数据库
         if save_result:
-            db.insert_hot_concept(index.index[temp_index], hots)
-        rst.append((index.index[temp_index], hots))
-        rd.clear_hot_concept(index.index[temp_index])
+            db.insert_hot_concept(expon.index[temp_index], hots)
+        rst.append((expon.index[temp_index], hots))
+        rd.clear_hot_concept(expon.index[temp_index])
 
     return rst
 

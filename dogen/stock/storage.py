@@ -49,7 +49,13 @@ class DbRedis():
     def clear_hot_concept(self, date):
         if self.redis is None:
             return None
-        return self.redis.zremrangebyrank(self.keyof_hot_concept(date), 0, -1)
+        if isinstance(date, str):
+            self.redis.zremrangebyrank(self.keyof_hot_concept(date), 0, -1)
+        elif isinstance(date, list):
+            for temp in date:
+                self.redis.zremrangebyrank(self.keyof_hot_concept(temp), 0, -1)
+            pass
+        pass
 
 class DbMongo():
 
