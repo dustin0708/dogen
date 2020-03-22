@@ -44,7 +44,7 @@ class DbRedis():
         cnpt = self.redis.zrevrangebyscore(self.keyof_hot_concept(date), 5000, 0, start=0, num=num, withscores=True)
 
         hots = []
-        for temp in range(0, cnpt.index.size):
+        for temp in range(0, len(cnpt)):
             hots.append(cnpt[temp].decode('utf-8'))
         return hots
 
