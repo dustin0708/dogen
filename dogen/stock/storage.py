@@ -44,7 +44,10 @@ class DbRedis():
         cnpt = self.redis.zrevrange(self.keyof_hot_concept(date), 0, -1, withscores=False)
         if num <= 0:
             num = len(cnpt)
-        return cnpt[0:num]
+        hots = []
+        for temp in range(0, num):
+            hots.append(cnpt[temp].encode())
+        return hots
 
     def clear_hot_concept(self, date):
         if self.redis is None:
