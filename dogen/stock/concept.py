@@ -30,7 +30,19 @@ def lookup_cnpt(database, code):
     return database.lookup_stock_concept(cond={CODE:code})[0]
 
 def lookup_industry(database, code):
-    return database.lookup_stock_concept(cond={CODE:code})[0][INDUSTRY]
+    try:
+        indt = database.lookup_stock_concept(cond={CODE:code})
+        if len(indt)>0:
+            indt = indt[0][INDUSTRY]
+    except Exception:
+        indt = None
+    return indt
 
 def lookup_concept(database, code):
-    return database.lookup_stock_concept(cond={CODE:code})[0][CONCEPT]
+    try:
+        indt = database.lookup_stock_concept(cond={CODE:code})
+        if len(indt)>0:
+            indt = indt[0][CONCEPT]
+    except Exception:
+        indt = None
+    return indt
