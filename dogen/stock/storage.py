@@ -290,6 +290,7 @@ class DbMongo():
             ### 字典数据转换为DataFrame
             data = pandas.DataFrame.from_dict(data, orient='columns')
             data.set_index(key_field, inplace=True)
+            data.sort_index(ascending=False, inplace=True)
         except Exception:
             data = None            
             

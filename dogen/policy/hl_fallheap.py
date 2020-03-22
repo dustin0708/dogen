@@ -278,7 +278,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             if kdata is None:
                 continue
-            kdata.sort_index(ascending=False, inplace=True)
             dogen.drop_fresh_stock_trades(basic, kdata)
 
             ### 策略分析

@@ -131,7 +131,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             if kdata is None:
                 continue
-            kdata.sort_index(ascending=False, inplace=True)
 
             ### 策略分析
             if kdata is not None and kdata.index.size > 0:
