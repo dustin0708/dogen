@@ -138,7 +138,7 @@ def update_hot_concept(end=None, num=1, save_result=False):
         ### 概念计数
         for temp_index in range(0, kdata.index.size):
             rd.incry_hot_concept(kdata.index[temp_index], indt)
-            rd.incry_hot_concept(kdata.index[temp_index], cnpt)
+            #rd.incry_hot_concept(kdata.index[temp_index], cnpt)
 
         pass
 
