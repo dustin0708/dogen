@@ -46,7 +46,7 @@ class DbRedis():
             num = len(cnpt)
         hots = []
         for temp in range(0, num):
-            hots.append(cnpt[temp].encode())
+            hots.append(cnpt[temp].decode('utf-8'))
         return hots
 
     def clear_hot_concept(self, date):
