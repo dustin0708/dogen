@@ -5,7 +5,7 @@ from lxml import etree
 from dogen.stock.constant import *
 
 
-def parse_thsgn_file(filename, database):
+def parse_thsgn_file(filename):
 
     parser = etree.HTMLParser(encoding='utf-8')
     eledoc = etree.parse(filename, parser=parser)
@@ -17,9 +17,8 @@ def parse_thsgn_file(filename, database):
 
         code = tds[0].text.split('.')[0]
         name = tds[1].text
-        cnpt = tds[4].text.split(';')
-        #indt = tds[7].text.split('-')[0]
-        indt = database.lookup_stock_basic(code).loc[INDUSTRY]
+        cnpt = tds[4].text.strip().split(';')
+        indt = tds[7].text.split('-')[0]
 
         code = {CODE: code, NAME: name, CONCEPT: cnpt, INDUSTRY: indt}
         codelist.append(code)
