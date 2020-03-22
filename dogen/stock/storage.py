@@ -41,7 +41,7 @@ class DbRedis():
     def fetch_hot_concept(self, date, num=30, ascending=False):
         if self.redis is None:
             return None
-        cnpt = self.redis.zrevrangebyscore(self.keyof_hot_concept(date), 5000, 0, start=0, num=num, withscores=True)
+        cnpt = self.redis.zrevrangebyscore(self.keyof_hot_concept(date), 5000, 0, start=0, num=num, withscores=False)
 
         hots = []
         for temp in range(0, len(cnpt)):
