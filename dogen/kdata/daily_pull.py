@@ -124,7 +124,7 @@ def update_hot_concept(end=None, num=1, save_result=False):
     for code in codes:
         basic = db.lookup_stock_basic(code)
         kdata = db.lookup_stock_kdata(code, start=start,end=end)
-        if kdata.iloc[0][dogen.P_CLOSE] < kdata.iloc[0][dogen.L_HIGH]:
+        if kdata is None or kdata.iloc[0][dogen.P_CLOSE] < kdata.iloc[0][dogen.L_HIGH]:
             continue
         else:
             dogen.drop_fresh_stock_trades(basic, kdata)
