@@ -113,6 +113,10 @@ def update_hot_concept(start=None, end=None, num=1, save_result=False):
     if num==0 or num > index.index.size:
         num = index.index.size
 
+    ### 保证临时数据健康
+    for temp_index in range(0, num):
+        rd.clear_hot_concept(index.index[temp_index])
+
     ### 读取代码
     codes = db.lookup_stock_codes()
 
