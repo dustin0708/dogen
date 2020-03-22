@@ -128,9 +128,9 @@ def update_hot_concept(start=None, end=None, num=1, save_result=False):
             continue
 
         ### 概念计数
-        for temp_trade in kdata.index:
-            rd.incry_hot_concept(kdata.loc[temp_trade], indt)
-            rd.incry_hot_concept(kdata.loc[temp_trade], cnpt)
+        for temp_index in range(0, num):
+            rd.incry_hot_concept(kdata.index[temp_index], indt)
+            rd.incry_hot_concept(kdata.index[temp_index], cnpt)
 
         pass
 

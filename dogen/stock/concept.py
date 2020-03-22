@@ -27,10 +27,10 @@ def parse_thsgn_file(filename):
 
 
 def lookup_cnpt(database, code):
-    return database.lookup_stock_concept(cond={dogen.CODE:code})[0]
+    return database.lookup_stock_concept(cond={CODE:code})[0]
 
 def lookup_industry(database, code):
-    return database.lookup_stock_concept(cond={dogen.CODE:code})[0][INDUSTRY]
+    return database.lookup_stock_concept(cond={CODE:code})[0][INDUSTRY]
 
 def lookup_concept(database, code):
-    return database.lookup_stock_concept(cond={dogen.CODE:code})[0][CONCEPT]
+    return database.lookup_stock_concept(cond={CODE:code})[0][CONCEPT]
