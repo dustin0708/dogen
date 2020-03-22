@@ -38,14 +38,13 @@ class DbRedis():
             pass
         return rst
 
-    def fetch_hot_concept(self, date, num=0, ascending=False):
+    def fetch_hot_concept(self, date, num=30, ascending=False):
         if self.redis is None:
             return None
-        cnpt = self.redis.zrevrange(self.keyof_hot_concept(date), 0, -1, withscores=False)
-        if num <= 0:
-            num = len(cnpt)
+        cnpt = self.redis.zrevrangebyscore(self.keyof_hot_concept(date), 5000, 0, start=0, num=num, withscores=True)
+
         hots = []
-        for temp in range(0, num):
+        for temp in range(0, cnpt.index.size):
             hots.append(cnpt[temp].decode('utf-8'))
         return hots
 

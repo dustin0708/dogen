@@ -139,13 +139,13 @@ def update_hot_concept(end=None, num=1, save_result=False):
         for temp_index in range(0, kdata.index.size):
             #rd.incry_hot_concept(kdata.index[temp_index], indt)
             rd.incry_hot_concept(kdata.index[temp_index], cnpt)
-
+            
         pass
 
     rst = []
 
     ### 排序获取结果&清除临时数据
-    for temp_index in range(0, num):
+    for temp_index in range(0, expon.index.size):
         hots = rd.fetch_hot_concept(expon.index[temp_index])
 
         ### 写数据库
