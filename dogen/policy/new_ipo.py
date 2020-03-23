@@ -114,6 +114,15 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
         logger.error("Cannot connect to mongo-server %s" % mongo_server)
         return None
 
+    ### 截至日期修正
+    expon = db.lookup_stock_kdata(dogen.get_index_of_sh(), end=end)
+    if expon is None:
+        logger.error("Don't get expon data")
+        return None
+    else:
+        end = expon.index[0]
+        start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAX_TRADES))
+        
     ### 依次策略检查
     match_list = []
     for code in codes:
@@ -124,13 +133,14 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 continue
 
             ### 从数据库读取日线数据，必须按索引（日期）降序排列
-            if end is None:
-                end = dogen.date_today()
-            if start is None:
-                start = dogen.date_delta(end, -__parse_policy_args(policy_args, MAX_TRADES))
             kdata = db.lookup_stock_kdata(code, start=start, end=end)
             if kdata is None:
                 continue
+            elif kdata.index[0] != end:
+                logger.debug("End date don't match")
+                continue
+            else:
+                dogen.drop_fresh_stock_trades(basic, kdata)
 
             ### 策略分析
             if kdata is not None and kdata.index.size > 0:
