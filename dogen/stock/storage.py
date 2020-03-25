@@ -469,13 +469,13 @@ class DbMongo():
         if self.database is None:
             return False
                
-        cnpt = {}
-        cnpt[self.TBL_HOT_DATE] = date
-        cnpt[self.TBL_HOT_CNPT] = cnpt
+        item = {}
+        item[self.TBL_HOT_DATE] = date
+        item[self.TBL_HOT_CNPT] = cnpt
 
         try:
             coll = self.database[self.TBL_HOT_CONCEPT]
-            coll.insert_one(copy.deepcopy(cnpt))
+            coll.insert_one(copy.deepcopy(item))
             return True
         except Exception:
             pass
