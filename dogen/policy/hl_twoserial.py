@@ -31,7 +31,7 @@ OUTSTANDING = 'outstanding'
 ARGS_DEAULT_VALUE = {
     MAX_TRADES: 90,      # 天
     MINI_HL: 3,      # 
-    HL_VALID: 10,        #
+    HL_VALID: 7,        #
     TAKE_VALID: 0,  # 倍
     MAX_RISE: 50,   # 1%
     MAX_PCLOSE: 50,
@@ -109,7 +109,7 @@ def include_analyze(basic, kdata, policy_args):
     heap_trade = 0
     if kdata.index.size < hl_valid:
         hl_valid = kdata.index.size
-    for temp_index in range(2, hl_valid):
+    for temp_index in range(0, hl_valid):
         if kdata.iloc[temp_index][dogen.P_CLOSE] < kdata.iloc[temp_index][dogen.L_HIGH]:
             continue
         if kdata.iloc[temp_index+1][dogen.P_CLOSE] < kdata.iloc[temp_index+1][dogen.L_HIGH]:
@@ -119,21 +119,21 @@ def include_analyze(basic, kdata, policy_args):
     if heap_trade != 1:
         logger.debug("Don't include valid serial hl-trade")
         return None
-    low_index = dogen.get_last_column_min(kdata, dogen.P_CLOSE, eIdx=pick_index)
-    if kdata.iloc[low_index][dogen.P_CLOSE] >= kdata.iloc[pick_index][dogen.P_CLOSE]:
-        logger.debug("Don't include valid fallback trade")
-        return None
+    if pick_index == 0:
+        low_index = dogen.get_last_column_min(kdata, dogen.P_CLOSE, eIdx=pick_index+1)
+        if kdata.iloc[low_index][dogen.P_CLOSE] > kdata.iloc[pick_index][dogen.P_CLOSE]:
+            logger.debug("Don't include valid fallback trade")
+            return None
 
-    ### 特征二
-    take_index = None
-    for temp_index in range(low_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.R_CLOSE] <= 0:
-            continue
-        if kdata.iloc[temp_index][dogen.P_CLOSE] < kdata.iloc[temp_index][dogen.P_OPEN]:
-            continue
-        if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) < -3:
-            continue
-        take_index = temp_index
+        ### 特征二
+        take_index = None
+        for temp_index in range(low_index, -1, -1):
+            if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) < -3:
+                continue
+            take_index = temp_index
+    else:
+        ### 两连板
+        take_index = pick_index
     if take_index is None or take_index > take_valid:
         logger.debug("Don't match valid take trade")
         return None
