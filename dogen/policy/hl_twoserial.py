@@ -119,7 +119,7 @@ def include_analyze(basic, kdata, policy_args):
     if heap_trade != 1:
         logger.debug("Don't include valid serial hl-trade")
         return None
-    if pick_index == 0:
+    if pick_index != 0:
         low_index = dogen.get_last_column_min(kdata, dogen.P_CLOSE, eIdx=pick_index)
         if kdata.iloc[low_index][dogen.P_CLOSE] > kdata.iloc[pick_index][dogen.P_CLOSE]:
             logger.debug("Don't include valid fallback trade")
