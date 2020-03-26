@@ -185,16 +185,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             pass
         pass
 
-    ### 特征九
-    for mark_index in range(pick_index, -1, -1):
-        if kdata.iloc[mark_index][dogen.MACD] < 0:
-            continue
-        break
-    tdata = kdata[0:mark_index]
-    if tdata[tdata[dogen.MACD] < 0].index.size > 0:
-        logger.debug("Invalid MACD since %s" % kdata.index[mark_index])
-        return True
-
     return False
 
 def include_analyze(basic, kdata, policy_args):
@@ -323,7 +313,6 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
                 1) 没有超过7%的单日涨幅
                 2) 存在振幅5个点以上交易日
                 3) 每三日累积涨幅不超过前一日涨停价
-            九 macd无红绿交叉断
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
