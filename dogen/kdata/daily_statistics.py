@@ -42,16 +42,16 @@ def __statistics_analyze(basic, kdata, args):
     tmpId = 0
     match = []
     while True:
-        range = dogen.get_last_rise_range(kdata, mini_rise, max_fall=round(mini_rise/2, 2), sIdx=tmpId)
-        if range is None:
+        rise_range = dogen.get_last_rise_range(kdata, mini_rise, max_fall=round(mini_rise/2, 2), sIdx=tmpId)
+        if rise_range is None:
             break
         else:
-            [min_index, max_index, inc_close, get_hl, tmpId] = range
+            [min_index, max_index, inc_close, get_hl, tmpId] = rise_range
 
         ### 忽略不符合连板要求的区间
         max_hl_serial = 0
         tmp_hl_serial = 0
-        for temp_index in range(min_index, max_index, -1):
+        for temp_index in range(min_index, max_index-1, -1):
             if kdata.iloc[temp_index][dogen.P_CLOSE] < kdata.iloc[temp_index][dogen.L_HIGH]:
                 tmp_hl_serial = 0
                 continue
