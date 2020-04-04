@@ -125,11 +125,13 @@ def include_analyze(basic, kdata, policy_args):
             logger.debug("Don't include valid fallback trade")
             return None
 
-        ### 特征二
         take_index = None
         for temp_index in range(low_index, -1, -1):
-            if dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE]) < -3:
+            temp_close = dogen.caculate_incr_percentage(kdata.iloc[temp_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE])
+            if temp_close < -3:
                 continue
+            elif temp_close > 7:
+                break
             take_index = temp_index
     else:
         ### 两连板

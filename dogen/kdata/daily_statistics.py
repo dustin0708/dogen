@@ -13,8 +13,8 @@ MINI_HL = 'mini_hl'
 
 ### 策略参数经验值(默认值)
 ARGS_DEAULT_VALUE = {
-    MINI_RISE: 30,      # 天
-    MINI_HL: 2, # 最少涨停数
+    MINI_RISE: 50,      # 天
+    MINI_HL: 3, # 最少涨停数
 }
 
 def __parse_policy_args(policy_args, arg_name):
