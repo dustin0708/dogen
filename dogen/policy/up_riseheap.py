@@ -108,6 +108,10 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Invalid serial-fall trade")
             return True
         pass
+    tdata = kdata[0:5]
+    if tdata[tdata[dogen.R_CLOSE]>0].index.size <= tdata.index.size/2:
+        logger.debug("Don't contain enough up trades in last week")
+        return True
 
     ### 特征六
     for temp_index in range(pick_index, -1, -1):
@@ -254,7 +258,7 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制； 
-            五 排除三连跌
+            五 排除三连跌,且最后5交易日收阳多于收阴
             六 pick-trade之后若放量下跌必须突破开盘价
             八 涨停检查：
                 1) 限制最多涨停数

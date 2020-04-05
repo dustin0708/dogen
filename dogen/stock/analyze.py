@@ -109,11 +109,11 @@ def caculate_upper_shadow(kdata, start, end, max_rise=2):
 
     count = 0
     for temp_index in range(start, end):
-        if kdata.iloc[temp_index][dogen.P_OPEN] < kdata.iloc[temp_index][dogen.P_CLOSE]:
-            diff = kdata.iloc[temp_index][dogen.P_HIGH] - kdata.iloc[temp_index][dogen.P_CLOSE]
+        if kdata.iloc[temp_index][P_OPEN] < kdata.iloc[temp_index][P_CLOSE]:
+            diff = kdata.iloc[temp_index][P_HIGH] - kdata.iloc[temp_index][P_CLOSE]
         else:
-            diff = kdata.iloc[temp_index][dogen.P_HIGH] - kdata.iloc[temp_index][dogen.P_OPEN]
-        diff_rise = caculate_percentage(diff, kdata.iloc[temp_index+1][dogen.P_CLOSE])
+            diff = kdata.iloc[temp_index][P_HIGH] - kdata.iloc[temp_index][P_OPEN]
+        diff_rise = caculate_percentage(diff, kdata.iloc[temp_index+1][P_CLOSE])
         if diff_rise >= max_rise:
             count += 1
         pass
