@@ -4,6 +4,24 @@ import dogen
 from lxml import etree
 from dogen.stock.constant import *
 
+def filter_from_black_list(cnpt):
+    black = ["转融券标的",\
+             "融资融券",\
+             "标普道琼斯A股",\
+             "年报预增",\
+             "富时罗素概念股",\
+             "股权转让",\
+             "深股通",\
+             "参股券商",\
+             "沪股通",\
+             "机构重仓",\
+             "MSCI概念",\
+             "创业板重组松绑"]
+
+    for temp in range(0, len(black)):
+        cnpt.remove(black[temp])
+    
+    return temp
 
 def parse_thsgn_file(filename):
 
@@ -20,7 +38,7 @@ def parse_thsgn_file(filename):
         cnpt = tds[4].text.strip().split(';-')
         indt = tds[7].text.split('-')[0]
 
-        code = {CODE: code, NAME: name, CONCEPT: cnpt, INDUSTRY: indt}
+        code = {CODE: code, NAME: name, CONCEPT: filter_from_black_list(cnpt), INDUSTRY: indt}
         codelist.append(code)
 
     return codelist
