@@ -38,7 +38,7 @@ def parse_thsgn_file(filename):
 
         code = tds[0].text.split('.')[0]
         name = tds[1].text
-        cnpt = tds[4].text.strip().split(';-')
+        cnpt = tds[4].text.strip().split(';')
         indt = tds[7].text.split('-')[0]
 
         code = {CODE: code, NAME: name, CONCEPT: filter_from_black_list(cnpt), INDUSTRY: indt}
