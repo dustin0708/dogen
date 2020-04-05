@@ -376,8 +376,26 @@ class DbMongo():
     def _return_stat_lr_range_collection(self):
         return self.TBL_STAT_LR_RANGE
 
-    def lookup_statistics_largerise_range(self, code=None, descending_by=None):
-        return None
+    def lookup_statistics_largerise_range(self, cond={}, descending_by=None, key_field='_id'):
+        if self.database is None:
+            return False
+
+        coll = self.database[self._return_stat_lr_range_collection()]
+
+        result = []
+        try:
+            if descending_by is not None:
+                for data in coll.find(cond).sort({descending_by:-1}):
+                    del data[key_field]
+                    result.append(data)
+            else:
+                for data in coll.find(cond):
+                    del data[key_field]
+                    result.append(data)
+        except Exception:
+            result = None
+
+        return result
 
     def insert_statistics_largerise_range(self, result, key_name=None):
         """ 保存大涨区间统计结果
