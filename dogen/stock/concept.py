@@ -19,7 +19,10 @@ def filter_from_black_list(cnpt):
              "创业板重组松绑"]
 
     for temp in range(0, len(black)):
-        cnpt.remove(black[temp])
+        try:
+            cnpt.remove(black[temp])
+        except Exception:
+            pass
     
     return temp
 
