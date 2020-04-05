@@ -34,7 +34,7 @@ ARGS_DEAULT_VALUE = {
     HL_VALID: 4,        #
     VOLUME_SCALE: 1.5,  # 倍
     MIN_FALLS: 3.99,   # 1%
-    MAX_RISE: 36,   # 1%
+    MAX_RISE: 42,   # 1%
     MAX_PCLOSE: 50,
     OUTSTANDING: 100,
 }
@@ -90,7 +90,7 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     rise_range = dogen.get_last_rise_range(kdata, max_rise, max_fall=max_rise/2, eIdx=22)
     if rise_range is not None:
         [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
-        if pick_index <= min_index and pick_index >= max_index:
+        if max_rise < dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[min_index][dogen.P_CLOSE]):
             logger.debug("Too large rise-range")
             return True
         pass

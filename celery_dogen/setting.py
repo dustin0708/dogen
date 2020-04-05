@@ -77,13 +77,6 @@ beat_schedule = {
         'args': (None, None, None, True, 1000)
     },
 
-    ### 上涨鸳鸯策略
-    'exec-policy-up-mandarin': {
-        'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_mandarin_match',
-        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
-        'args': (None, None, None, True, 1000)
-    },
-
     ### 上涨20日均线策略
     'exec-policy-up-ma20touch': {
         'task': 'celery_dogen.tasks_of_policy.dispatcher_of_up_ma20touch_match',

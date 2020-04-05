@@ -37,7 +37,7 @@ ARGS_DEAULT_VALUE = {
     PICK_VALID: 10,
     MAX_FALLEN: 10,
     MIN_RISE: 6,
-    MAX_RISE: 36,   # 1%
+    MAX_RISE: 42,   # 1%
     MAX_RCLOSE: 7,
     MIN_RAMP: 5,
     MAX_PCLOSE: 50,
@@ -88,13 +88,19 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     ### 特征四
     rise_range = dogen.get_last_rise_range(kdata, max_rise, max_fall=max_rise/2, eIdx=22)
     if rise_range is not None:
-        logger.debug("Too large rise-range")
-        return True
+        [min_index, max_index, inc_close, get_lhigh, tmp_index] = rise_range
+        if max_rise < dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[min_index][dogen.P_CLOSE]):
+            logger.debug("Too large rise-range")
+            return True
+        pass
 
     ### 特征五
     tdata = kdata[0:5]
     if tdata[tdata[dogen.R_CLOSE]>0].index.size <= tdata.index.size/2:
         logger.debug("Don't contain enough up trades in last week")
+        return True
+    if dogen.get_highlimit_trades(tdata).size > 0:
+        logger.debug("There is hl trade in last week")
         return True
 
     ### 特征六
@@ -108,18 +114,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=temp_index)
         if maxi_index is None or kdata.iloc[temp_index][dogen.P_OPEN] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
             logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
-            return True
-        pass
-
-    ### 特征七
-    heap_lhigh = 0
-    for temp_index in range(0, pick_index):
-        if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
-            heap_lhigh+= 1
-        else:
-            heap_lhigh = 0
-        if heap_lhigh > 1:
-            logger.debug("Shouldn't include serial hl-trade")
             return True
         pass
 
@@ -236,11 +230,10 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制； 
-            五 最后5交易日收阳多于收阴
+            五 最后5交易日检查：
+                1) 收阳多于收阴
+                2) 无涨停
             六 pick-trade之后若放量下跌必须突破开盘价
-            七 涨停检查：
-                1) 限制最多涨停数
-                2) 排除连板
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日

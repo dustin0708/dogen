@@ -101,7 +101,7 @@ def caculate_incr_percentage(nd, od, fraction=2):
     """
     return caculate_percentage(nd-od, od, fraction=fraction)
     
-def caculate_upper_shadow(kdata, start, end, max_rise=2):
+def caculate_upper_shadow(kdata, start, end, max_rise=3):
     """计算上影线
     """
     if end >= kdata.index.size:
