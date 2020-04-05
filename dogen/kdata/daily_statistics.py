@@ -81,7 +81,7 @@ def __statistics_analyze(db, basic, kdata, save_result, args):
         ### 保存结果
         if save_result:
             rdata = db.lookup_statistics_largerise_range(cond={dogen.RST_COL_CODE:basic.name}, descending_by=dogen.RST_COL_START)
-            if rdata is None or len(rdata):
+            if rdata is None or len(rdata)<=0:
                 db.insert_statistics_largerise_range([result], key_name=dogen.RST_COL_INDEX)
                 continue
             rlast = rdata[0]
