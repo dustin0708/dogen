@@ -91,7 +91,7 @@ def __statistics_analyze(db, basic, kdata, save_result, args):
             ### 重叠合并
             tdata = kdata[(kdata.index > rlast[dogen.RST_COL_END])&(kdata.index <= result[dogen.RST_COL_END])]
 
-            rlast[dogen.RST_COL_INC_HL] = rlast[dogen.RST_COL_INC_HL] + tdata.index.size
+            rlast[dogen.RST_COL_INC_HL] = rlast[dogen.RST_COL_INC_HL] + tdata[tdata[dogen.P_CLOSE]>=tdata[dogen.L_HIGH]].index.size
             rlast[dogen.RST_COL_END] = result[dogen.RST_COL_END]
             rlast[dogen.RST_COL_LAST_CLOSE] = result[dogen.RST_COL_LAST_CLOSE]
             rlast[dogen.RST_COL_RISE_RATE] = dogen.caculate_incr_percentage(rlast[dogen.RST_COL_LAST_CLOSE], rlast[dogen.RST_COL_START_CLOSE])

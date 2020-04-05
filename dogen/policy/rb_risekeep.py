@@ -208,16 +208,12 @@ def stock_analyze(basic, kdata, policy_args):
         return None
     else:
         [pick_index, take_index, fall_range] = get_index
+        [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
     ### 排它条件过滤
     if exclude_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
         logger.debug("exclude_analyze() return True")
         return None
-
-    ### 统计下跌区间最低价一个月内涨停数
-    [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
-    tdata = kdata[0: high_index+1]
-    ldata = tdata[tdata[dogen.L_HIGH]<=tdata[dogen.P_CLOSE]].index.size
 
     ### 构造结果
     result = {}
@@ -228,7 +224,7 @@ def stock_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_TAKE_TRADE]  = kdata.index[take_index] # 命中交易日
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
-    result[dogen.RST_COL_INC_HL]      = ldata
+    result[dogen.RST_COL_INC_HL]      = dogen.get_highlimit_trades(kdata, eIdx=high_index+1).size
     result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
