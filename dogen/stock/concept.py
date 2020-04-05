@@ -24,7 +24,7 @@ def filter_from_black_list(cnpt):
         except Exception:
             pass
     
-    return temp
+    return cnpt
 
 def parse_thsgn_file(filename):
 
