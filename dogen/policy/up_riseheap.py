@@ -67,7 +67,6 @@ def score_analyze(basic, kdata, pick_index, take_index, policy_args):
 
 def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     max_rclose  = __parse_policy_args(policy_args, MAX_RCLOSE)
-    min_lhigh   = __parse_policy_args(policy_args, MIN_LHIGH)
     min_ramp    = __parse_policy_args(policy_args, MIN_RAMP)
     max_rise    = __parse_policy_args(policy_args, MAX_RISE)
     max_pclose  = __parse_policy_args(policy_args, MAX_PCLOSE)
