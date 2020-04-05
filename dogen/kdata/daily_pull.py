@@ -124,14 +124,13 @@ def update_hot_concept(end=None, num=1, save_result=False):
     for code in codes:
         basic = db.lookup_stock_basic(code)
         kdata = db.lookup_stock_kdata(code, start=start,end=end)
+        dogen.drop_fresh_stock_trades(basic, kdata)
         if kdata is None or kdata.index.size < 2:
             continue
         elif kdata.iloc[0][dogen.P_CLOSE] < kdata.iloc[0][dogen.L_HIGH]:
             continue
         elif kdata.iloc[1][dogen.P_CLOSE] < kdata.iloc[1][dogen.L_HIGH]:
-            continue
-        else:
-            dogen.drop_fresh_stock_trades(basic, kdata)
+            continue            
 
         ### 行业&概念
         indt = dogen.lookup_industry(db, code)

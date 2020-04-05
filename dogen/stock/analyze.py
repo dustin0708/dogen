@@ -48,7 +48,7 @@ def drop_fresh_stock_trades(basic, kdata, inplace=True):
     if not inplace:
         kdata = kdata.copy()
 
-    if kdata.index.size <= 0:
+    if kdata is None or kdata.index.size <= 0:
         return kdata
         
     ## 校验合法性
