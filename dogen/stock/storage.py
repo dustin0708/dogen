@@ -385,7 +385,7 @@ class DbMongo():
         result = []
         try:
             if descending_by is not None:
-                for data in coll.find(cond).sort({descending_by:-1}):
+                for data in coll.find(cond).sort([(descending_by, pymongo.DESCENDING)]):
                     del data[key_field]
                     result.append(data)
             else:
