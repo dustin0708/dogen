@@ -114,6 +114,20 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征六
+    for temp_index in range(pick_index, -1, -1):
+        ### 下跌
+        if kdata.iloc[temp_index][dogen.R_CLOSE] >= 0 or kdata.iloc[temp_index+1][dogen.R_CLOSE] <= 0:
+            continue
+        if kdata.iloc[temp_index][dogen.VOLUME] <= kdata.iloc[temp_index+1][dogen.VOLUME]:
+            continue
+        ### 放量下跌之后未被上涨突破
+        maxi_index = dogen.get_last_column_max(kdata, dogen.P_CLOSE, eIdx=temp_index)
+        if maxi_index is None or kdata.iloc[temp_index][dogen.P_OPEN] > kdata.iloc[maxi_index][dogen.P_CLOSE]:
+            logger.debug("Invalid fall-trade at %s" % kdata.index[temp_index])
+            return True
+        pass
+
+    ### 特征七
     heap_lhigh = 0
     for temp_index in range(0, pick_index):
         if kdata.iloc[temp_index][dogen.P_CLOSE] >= kdata.iloc[temp_index][dogen.L_HIGH]:
@@ -250,7 +264,8 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制； 
             五 排除三连跌,且最后5交易日收阳多于收阴
-            六 涨停检查：
+            六 pick-trade之后若放量下跌必须突破开盘价
+            七 涨停检查：
                 1) 限制最多涨停数
                 2) 排除连板
                 3) 三个月内有涨停
