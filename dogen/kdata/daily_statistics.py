@@ -24,8 +24,7 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-
-def __statistics_analyze(basic, kdata, args):
+def __statistics_analyze(db, basic, kdata, save_result, args):
     """ 统计单只股票上涨区间
 
         参数说明：
@@ -69,14 +68,35 @@ def __statistics_analyze(basic, kdata, args):
         result[dogen.RST_COL_INDUSTRY]    = basic[dogen.INDUSTRY]
         result[dogen.RST_COL_START]       = kdata.index[min_index]
         result[dogen.RST_COL_END]         = kdata.index[max_index]
-        result[dogen.RST_COL_RISE_RATE]   = inc_close
-        result[dogen.RST_COL_INC_HL]      = get_hl
         result[dogen.RST_COL_START_CLOSE] = kdata.iloc[min_index][dogen.P_CLOSE] # 起始收盘价
-        result[dogen.RST_COL_OUTSTANDING] = round(result['start-close'] * basic[dogen.OUTSTANDING], 2) # 流通市值
+        result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[max_index][dogen.P_CLOSE] # 最高收盘价
+        result[dogen.RST_COL_RISE_RATE]   = dogen.caculate_incr_percentage(result[dogen.RST_COL_LAST_CLOSE], result[dogen.RST_COL_START_CLOSE])
+        result[dogen.RST_COL_INC_HL]      = get_hl
+        result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[min_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
         result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
-        result[dogen.RST_COL_INDEX]       = '%s_%s_%s' % (basic.name, kdata.index[min_index], kdata.index[max_index])
+        result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[min_index])
 
         match.append(result)
+
+        ### 保存结果
+        if save_result:
+            rdata = db.lookup_statistics_largerise_range(code=basic.name, descending_by=dogen.RST_COL_START)
+            if rdata is None or len(rdata):
+                db.insert_statistics_largerise_range([result], key_name=dogen.RST_COL_INDEX)
+                continue
+            rlast = rdata[0]
+            if rlast[dogen.RST_COL_END] < result[dogen.RST_COL_START]:
+                db.insert_statistics_largerise_range([result], key_name=dogen.RST_COL_INDEX)
+                continue
+            ### 重叠合并
+            tdata = kdata[(kdata.index > rlast[dogen.RST_COL_END])&(kdata.index <= result[dogen.RST_COL_END])]
+            
+            rlast[dogen.RST_COL_INC_HL] = rlast[dogen.RST_COL_INC_HL] + tdata.index.size
+            rlast[dogen.RST_COL_END] = result[dogen.RST_COL_END]
+            rlast[dogen.RST_COL_LAST_CLOSE] = result[dogen.RST_COL_LAST_CLOSE]
+            rlast[dogen.RST_COL_RISE_RATE] = dogen.caculate_incr_percentage(rlast[dogen.RST_COL_LAST_CLOSE], rlast[dogen.RST_COL_START_CLOSE])
+            rlast[dogen.RST_COL_MATCH_TIME] = result[dogen.RST_COL_MATCH_TIME]
+            db.insert_statistics_largerise_range([rlast], key_name=dogen.RST_COL_INDEX)
 
     return match
 
@@ -121,7 +141,7 @@ def find_largerise_range(codes, start=None, end=None, save_result=False, args=No
             ### 统计分析
             if kdata is not None and kdata.index.size > 0:
                 logger.debug("Begin in analyzing %s from %s to %s" % (code, start, end))
-                match = __statistics_analyze(basic, kdata, args)
+                match = __statistics_analyze(db, basic, kdata, save_result, args)
                 if match is None:
                     continue            
                 ### 输出结果
@@ -131,9 +151,5 @@ def find_largerise_range(codes, start=None, end=None, save_result=False, args=No
             logger.error('Trggered in handling code %s: %s' % (code, traceback.format_exc()))
             continue
         pass
-    
-    ### 保存结果到数据库
-    if save_result and len(match_list) > 0:
-        db.insert_statistics_largerise_range(match_list, key_name=dogen.RST_COL_INDEX)
 
     return match_list
