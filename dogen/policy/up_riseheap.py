@@ -25,7 +25,6 @@ PICK_VALID  = 'pick_valid'
 MAX_FALLEN  = 'max_fallen'
 MIN_RISE    = 'min_rise'
 MAX_RISE    = 'max_rise'
-MIN_LHIGH   = 'min_lhigh'
 MAX_RCLOSE  = 'max_rclose'
 MIN_RAMP    = 'min_ramp'
 MAX_PCLOSE  = 'max_pclose'
@@ -39,7 +38,6 @@ ARGS_DEAULT_VALUE = {
     MAX_FALLEN: 10,
     MIN_RISE: 6,
     MAX_RISE: 36,   # 1%
-    MIN_LHIGH: 0,
     MAX_RCLOSE: 7,
     MIN_RAMP: 5,
     MAX_PCLOSE: 50,
@@ -95,19 +93,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         return True
 
     ### 特征五
-    heap_trade = 0
-    for temp_index in range(pick_index, -1, -1):
-        if kdata.iloc[temp_index][dogen.R_CLOSE] > 0:
-            heap_trade = 0
-            continue
-        elif kdata.iloc[temp_index][dogen.R_CLOSE] == 0 and kdata.iloc[temp_index+1][dogen.R_CLOSE]>=0:
-            heap_trade = 0
-            continue
-        heap_trade += 1
-        if heap_trade >= 3:
-            logger.debug("Invalid serial-fall trade")
-            return True
-        pass
     tdata = kdata[0:5]
     if tdata[tdata[dogen.R_CLOSE]>0].index.size <= tdata.index.size/2:
         logger.debug("Don't contain enough up trades in last week")
@@ -138,9 +123,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             logger.debug("Shouldn't include serial hl-trade")
             return True
         pass
-    if kdata[kdata[dogen.P_CLOSE] >= kdata[dogen.L_HIGH]].index.size < min_lhigh:
-        logger.debug("Don't include %d hl-trade" % min_lhigh)
-        return True
 
     return False
 
@@ -162,10 +144,6 @@ def include_analyze(basic, kdata, policy_args):
         [pick_index, high_index, inc_close, get_lhigh, tmpId] = rise_range
         if pick_index < pick_valid:
             logger.debug("Invalid rise-range from %s" % kdata.index[pick_index])
-            return None
-        tdata = kdata[0: pick_index]
-        if tdata[tdata[dogen.R_CLOSE]>=3].index.size <= 0:
-            logger.debug("Invlaid rise-range without close upper than 3")
             return None
         pass
 
@@ -263,12 +241,11 @@ def match(codes, start=None, end=None, save_result=False, policy_args=None):
             三 股价市值在outstanding(100亿)和maxi_close(50以下)限制范围内
             四 股价成本合理：
                 1) 在最近一个月内，最高涨幅由maxi_rise限制； 
-            五 排除三连跌,且最后5交易日收阳多于收阴
+            五 最后5交易日收阳多于收阴
             六 pick-trade之后若放量下跌必须突破开盘价
             七 涨停检查：
                 1) 限制最多涨停数
                 2) 排除连板
-                3) 三个月内有涨停
 
         参数说明：
             start - 样本起始交易日(数据库样本可能晚于该日期, 如更新不全)；若未指定默认取end-$max_days做起始日
