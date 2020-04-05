@@ -48,6 +48,7 @@ def __statistics_analyze(db, basic, kdata, save_result, args):
             [min_index, max_index, inc_close, get_hl, tmpId] = rise_range
 
         ### 忽略不符合连板要求的区间
+        outstanding   = None
         max_hl_serial = 0
         tmp_hl_serial = 0
         for temp_index in range(min_index, max_index-1, -1):
@@ -57,6 +58,8 @@ def __statistics_analyze(db, basic, kdata, save_result, args):
             tmp_hl_serial += 1
             if tmp_hl_serial > max_hl_serial:
                 max_hl_serial = tmp_hl_serial
+            if tmp_hl_serial > 2 and outstanding is None:
+                outstanding = round(kdata.iloc[temp_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2)
             pass
         if max_hl_serial < mini_hl:
             continue
@@ -72,7 +75,7 @@ def __statistics_analyze(db, basic, kdata, save_result, args):
         result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[max_index][dogen.P_CLOSE] # 最高收盘价
         result[dogen.RST_COL_RISE_RATE]   = dogen.caculate_incr_percentage(result[dogen.RST_COL_LAST_CLOSE], result[dogen.RST_COL_START_CLOSE])
         result[dogen.RST_COL_INC_HL]      = get_hl
-        result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[min_index][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
+        result[dogen.RST_COL_OUTSTANDING] = outstanding # 流通市值
         result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
         result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[min_index])
 
