@@ -141,7 +141,7 @@ def update_hot_concept(end=None, num=1, save_result=False):
     rst = []
 
     ### 排序获取结果&清除临时数据
-    for temp_index in range(0, expon.index.size):
+    for temp_index in range(0, num):
         hots = rd.fetch_hot_concept(expon.index[temp_index])
 
         ### 写数据库
