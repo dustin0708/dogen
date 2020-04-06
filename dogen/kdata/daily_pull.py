@@ -112,37 +112,30 @@ def update_hot_concept(end=None, num=1, save_result=False):
     ### 截取有效交易日
     if num==0 or num > expon.index.size:
         num = expon.index.size
-    expon = expon[0:num]
-    start = expon.index[-1]
 
     ### 清理临时缓存
-    rd.clear_hot_concept(expon.index.to_list())
+    rd.clear_hot_concept(expon.index[0:num].to_list())
 
     ### 读取代码
     codes = db.lookup_stock_codes()
 
     for code in codes:
         basic = db.lookup_stock_basic(code)
-        kdata = db.lookup_stock_kdata(code, start=start,end=end)
+        kdata = db.lookup_stock_kdata(code, end=end)
+        indt = dogen.lookup_industry(db, code) # 行业
+        cnpt = dogen.lookup_concept(db, code)  # 概念
+        if kdata is None or indt is None or cnpt is None:
+            continue
         dogen.drop_fresh_stock_trades(basic, kdata)
-        if kdata is None or kdata.index.size < 2:
-            continue
-        elif kdata.iloc[0][dogen.P_CLOSE] < kdata.iloc[0][dogen.L_HIGH]:
-            continue
-        elif kdata.iloc[1][dogen.P_CLOSE] < kdata.iloc[1][dogen.L_HIGH]:
-            continue            
+        for temp_index in range(0, num):
+            if (temp_index >= kdata.index.size)\
+            or (kdata.iloc[temp_index][dogen.P_CLOSE] < kdata.iloc[temp_index][dogen.L_HIGH]):
+                continue
+            if (temp_index+1 >= kdata.index.size)\
+            or (kdata.iloc[temp_index+1][dogen.P_CLOSE] < kdata.iloc[temp_index+1][dogen.L_HIGH]):
+                continue
 
-        ### 行业&概念
-        indt = dogen.lookup_industry(db, code)
-        cnpt = dogen.lookup_concept(db, code)
-        if indt is None or cnpt is None:
-            continue
-
-        ### 概念计数
-        for temp_index in range(0, kdata.index.size):
-            #rd.incry_hot_concept(kdata.index[temp_index], indt)
             rd.incry_hot_concept(kdata.index[temp_index], cnpt)
-            
         pass
 
     rst = []
