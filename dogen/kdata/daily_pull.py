@@ -166,6 +166,6 @@ def update_all_concept_from_html(filename='thsgn_total_cnpt.html', blackfile='th
         db.delete_stock_concept()
         db.insert_stock_concept(cnpt)
     except Exception:
-        pass
+        traceback.print_exc()
 
     return None
