@@ -47,7 +47,7 @@ def __parse_policy_args(policy_args, arg_name):
         arg_value = ARGS_DEAULT_VALUE[arg_name]
     return arg_value
 
-def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args):
+def score_analyze(basic, kdata, high_index, pick_index, take_index, fall_range, policy_args):
     """ 根据股票股价、市值、成交量等方面给股票打分:
             * 股价估分，总计40分；
             * 市值估分，总计40分；
@@ -58,17 +58,28 @@ def score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
     pick_start  = __parse_policy_args(policy_args, PICK_START)
     [high_index, pick_index, dec_close, get_llow, tmpId] = fall_range
 
-    score  = dogen.score_by_pclose(40, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
-    score += dogen.score_by_outstanding(40, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
+    score  = dogen.score_by_pclose(30, kdata.iloc[take_index][dogen.P_CLOSE], max_pclose)
+    score += dogen.score_by_outstanding(30, kdata.iloc[take_index][dogen.P_CLOSE]*basic[dogen.OUTSTANDING], outstanding)
 
     temp_score = 20
     temp_slice = 20
-    tdata = kdata[pick_index: pick_index+22*2]
+    tdata = kdata[0: high_index+1]
     count = tdata[tdata[dogen.P_CLOSE] >= tdata[dogen.L_HIGH]].index.size
     if (count > temp_score/temp_slice):
         count = temp_score/temp_slice
     if (count > 0):
         score += temp_slice*count
+
+    temp_score = 20
+    temp_slice = 10
+    temp_index = pick_index
+    for i in range(0, (int)(temp_score/temp_slice)):
+        rise_range = dogen.get_last_rise_range(kdata, 10, sIdx=temp_index)
+        if rise_range is None:
+            break
+        else:
+            [min_index, max_index, inc_close, get_hl, tmpId] = rise_range
+        score += temp_slice
 
     return (int)(score)
 
@@ -225,7 +236,7 @@ def stock_analyze(basic, kdata, policy_args):
     result[dogen.RST_COL_LAST_CLOSE]  = kdata.iloc[0][dogen.P_CLOSE] # 最后一日收盘价
     result[dogen.RST_COL_OUTSTANDING] = round(kdata.iloc[0][dogen.P_CLOSE] * basic[dogen.OUTSTANDING], 2) # 流通市值
     result[dogen.RST_COL_INC_HL]      = dogen.get_highlimit_trades(kdata, eIdx=high_index+1).size
-    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, pick_index, take_index, fall_range, policy_args)
+    result[dogen.RST_COL_SCORE]       = score_analyze(basic, kdata, high_index, pick_index, take_index, fall_range, policy_args)
     result[dogen.RST_COL_MATCH_TIME]  = dogen.datetime_now() # 选中时间
     result[dogen.RST_COL_INDEX]       = '%s_%s' % (basic.name, kdata.index[take_index]) # 唯一标识，用于持久化去重
 
