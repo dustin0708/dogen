@@ -4,35 +4,31 @@ import dogen
 from lxml import etree
 from dogen.stock.constant import *
 
-def filter_from_black_list(cnpt):
-    black =["转融券标的",\
-            "融资融券",\
-            "标普道琼斯A股",\
-            "年报预增",\
-            "富时罗素概念股",\
-            "股权转让",\
-            "深股通",\
-            "参股券商",\
-            "沪股通",\
-            "机构重仓",\
-            "MSCI概念",\
-            "证金持股",\
-            "创业板重组松绑"]
+def filter_from_black_list(cnpt, blacklist):
 
-    for temp in range(0, len(black)):
+    for temp in range(0, len(blacklist)):
         try:
-            cnpt.remove(black[temp])
+            cnpt.remove(blacklist[temp])
         except Exception:
             pass
     
     return cnpt
 
-def parse_thsgn_file(filename):
+def parse_thsgn_file(filename, blackfile):
 
+    ### 解析黑名单
+    blacklist = []
+    parser = etree.HTMLParser(encoding='utf-8')
+    eledoc = etree.parse(blackfile, parser=parser)
+    trecod = eledoc.xpath('//tr')
+    for i in range(1, len(trecod)):
+        tds  = trecod[i].findall('td')
+        blacklist.extend(tds[0].text.strip().split(';'))
+
+    ### 解析概念
+    codelist = []
     parser = etree.HTMLParser(encoding='utf-8')
     eledoc = etree.parse(filename, parser=parser)
-
-    codelist = []
     trecod = eledoc.xpath('//tr')
     for i in range(1, len(trecod)):
         tds  = trecod[i].findall('td')

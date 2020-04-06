@@ -152,7 +152,7 @@ def update_hot_concept(end=None, num=1, save_result=False):
 
     return rst
 
-def update_all_concept_from_html(filename='thsgn.html'):
+def update_all_concept_from_html(filename='thsgn_total_cnpt.html', blackfile='thsgn_black_list.html'):
     """ 从同花顺文件更新概念
     """
     ### 数据库连接初始化
@@ -162,7 +162,7 @@ def update_all_concept_from_html(filename='thsgn.html'):
         return None
 
     try:
-        cnpt = dogen.parse_thsgn_file(filename)
+        cnpt = dogen.parse_thsgn_file(filename, blackfile)
         db.delete_stock_concept()
         db.insert_stock_concept(cnpt)
     except Exception:
