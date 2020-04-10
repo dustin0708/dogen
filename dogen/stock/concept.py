@@ -4,7 +4,7 @@ import dogen
 from lxml import etree
 from dogen.stock.constant import *
 
-def filter_from_black_list(cnpt, blacklist):
+def filter_thsgn_black_list(cnpt, blacklist):
 
     for temp in range(0, len(blacklist)):
         try:
@@ -38,7 +38,7 @@ def parse_thsgn_file(filename, blackfile):
         cnpt = tds[4].text.strip().split(';')
         indt = tds[7].text.split('-')[0]
 
-        code = {CODE: code, NAME: name, CONCEPT: filter_from_black_list(cnpt, blacklist), INDUSTRY: indt}
+        code = {CODE: code, NAME: name, CONCEPT: filter_thsgn_black_list(cnpt, blacklist), INDUSTRY: indt}
         codelist.append(code)
 
     return codelist

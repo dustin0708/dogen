@@ -94,7 +94,7 @@ beat_schedule = {
     ### 牛股统计
     'exec-statistics-find-largerise-range': {
         'task': 'celery_dogen.tasks_of_statistics.dispatcher_of_daily_statistics_find_largerise_range',
-        'schedule': crontab(day_of_week='6', hour='1', minute='0'),
+        'schedule': crontab(day_of_week='2-6', hour='1', minute='0'),
         'args': (None, None, None, True, 1000)
     },
 }
