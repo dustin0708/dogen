@@ -182,10 +182,6 @@ def include_analyze(basic, kdata, policy_args):
         if pick_index == 0:
             logger.debug("Fallback didn't occur")
             return None
-        ### 涨停振幅要求
-        if kdata.iloc[pick_index][dogen.R_AMP] < 3:
-            logger.debug("Invalid R_AMP at %s" % kdata.index[pick_index])
-            return None
         pass
 
     if kdata.iloc[pick_index-1][dogen.R_CLOSE] > 0 or kdata.iloc[pick_index-1][dogen.VOLUME] < kdata.iloc[pick_index][dogen.VOLUME]:
