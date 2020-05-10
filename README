@@ -11,15 +11,16 @@ step. 启动mongoDB：
     systemctl enable mongod
     systemctl start mongod
 
-step  启动redis
-    docker run --restart=always -d -p 6379:6379 redis
-
+step. 启动redis
+    docker run --restart=always -d -p 6379:6379 --name=redis_dogen redis
+      
 step. 启动RabbitMQ：
-    docker run --restart=always -d -p 5672:5672 rabbitmq
+    docker run --restart=always -d -p 5671:5671 -p 5672:5672 -p 4369:4369 --name=rabbitmq_dogen rabbitmq
 
 step. 启动后台任务：
     a. 若未安装可在源码顶层目录下执行下面命令：
-        setsid  celery worker -B -A celery_dogen --autoscale=100,1 -l info
+        mkdir -p /var/run/celery
+        celery multi start dogen -B -A celery_dogen --autoscale=8,1 -l info --pidfile=/var/run/celery/%n.pid --logfile=/var/log/celery/%n.log
 
     b. 若以安装在任意路径下执行上述命令即可。
 
