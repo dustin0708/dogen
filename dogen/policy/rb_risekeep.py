@@ -156,7 +156,7 @@ def include_analyze(basic, kdata, policy_args):
     heap_rises = 0
     take_index = None
     if pick_index+1 < pick_start:
-        if pick_index == 1 and kdata.iloc[pick_index][dogen.R_CLOSE]<-4 and kdata.iloc[pick_index-1][dogen.R_CLOSE]>0:
+        if pick_index == 1 and kdata.iloc[pick_index][dogen.R_CLOSE]<-3 and kdata.iloc[pick_index-1][dogen.R_CLOSE]>0:
             take_index = pick_index
         for temp_index in range(pick_index-1, -1, -1):
             if kdata.iloc[temp_index][dogen.P_CLOSE] >= dogen.caculate_l_high(kdata.iloc[pick_index][dogen.P_CLOSE]):
@@ -188,7 +188,11 @@ def include_analyze(basic, kdata, policy_args):
             pass
         ### MACD点校验
         temp_index = 0
-        if (kdata.iloc[temp_index][dogen.MACD]<-0.01) and (dogen.forecast_macd(kdata[temp_index:-1][dogen.MACD])>=-0.01):
+        if (kdata.iloc[temp_index][dogen.MACD]<=-0.01) and (dogen.forecast_macd(kdata[temp_index:-1][dogen.MACD])>=-0.01):
+            if take_index is None or take_index > temp_index:
+                take_index = temp_index
+            pass
+        if (kdata.iloc[temp_index][dogen.MACD]>= 0.01) and (dogen.forecast_macd(kdata[temp_index:-1][dogen.MACD])<= 0.01):
             if take_index is None or take_index > temp_index:
                 take_index = temp_index
             pass

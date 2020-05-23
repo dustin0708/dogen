@@ -20,7 +20,7 @@ step. 启动RabbitMQ：
 step. 启动后台任务：
     a. 若未安装可在源码顶层目录下执行下面命令：
         mkdir -p /var/run/celery
-        celery multi start dogen -B -A celery_dogen --autoscale=8,1 -l info --pidfile=/var/run/celery/%n.pid --logfile=/var/log/celery/%n.log
+        celery multi start dogen -B -A celery_dogen --autoscale=8,1 -l info --pidfile=/var/log/celery/%n.pid --logfile=/var/log/celery/%n.log
 
     b. 若以安装在任意路径下执行上述命令即可。
 
