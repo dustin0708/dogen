@@ -156,6 +156,8 @@ def include_analyze(basic, kdata, policy_args):
     heap_rises = 0
     take_index = None
     if pick_index+1 < pick_start:
+        if pick_index == 1 and kdata.iloc[pick_index][dogen.R_CLOSE]<-4 and kdata.iloc[pick_index-1][dogen.R_CLOSE]>0:
+            take_index = pick_index
         for temp_index in range(pick_index-1, -1, -1):
             if kdata.iloc[temp_index][dogen.P_CLOSE] >= dogen.caculate_l_high(kdata.iloc[pick_index][dogen.P_CLOSE]):
                 take_index = temp_index
