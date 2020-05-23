@@ -145,11 +145,6 @@ def include_analyze(basic, kdata, policy_args):
             if kdata.iloc[temp_index][dogen.MA5] > kdata.iloc[temp_index][dogen.MA20]:
                 continue
             break
-        tdata = kdata[0:temp_index]
-        if tdata[tdata[dogen.MA5] > tdata[dogen.MA20]].index.size > 0:
-            logger.debug("Invalid pick-trade at %s" % kdata.index[pick_index])
-            return None
-        pass
     rise_range = dogen.get_last_rise_range(kdata, min_rise, max_fall=min_fallen, sIdx=high_index)
     if rise_range is None:
         logger.debug("Don't get valid rise-range")
