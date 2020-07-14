@@ -139,18 +139,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
             pass
         pass
 
-    ### 特征六
-    if pick_index >= 5:
-        temp_falls = dogen.caculate_incr_percentage(kdata.iloc[mini_index][dogen.P_CLOSE], kdata.iloc[pick_index][dogen.P_CLOSE])
-        if temp_falls > -min_falls:
-            logger.debug("Get invalid lowest trade at %s" % kdata.index[mini_index])
-            # return True
-        tdata = kdata[take_index:pick_index+1].sort_index()
-        polyf = numpy.polyfit(range(0, tdata.index.size), tdata[dogen.P_CLOSE], 2)
-        if polyf[0] < min_polyf2:
-            logger.debug("Invalid polyfit(2) shape from %s to %s" % (kdata.index[pick_index], kdata.index[take_index]))
-            return True
-
     ### 特征七
     if pick_index >= 5:
         for temp_index in range(mini_index-1, -1, -1):
@@ -195,7 +183,7 @@ def include_analyze(basic, kdata, policy_args):
 
     ### 特征一
     index = dogen.get_highlimit_trades(kdata, eIdx=hl_valid+1)
-    if index.size != 1:
+    if index.size == 0:
         logger.debug("Don't match highlimit trades")
         return None
     else:

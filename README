@@ -22,6 +22,8 @@ step. 启动后台任务：
         mkdir -p /var/run/celery
         celery multi start dogen -B -A celery_dogen --autoscale=8,1 -l info --pidfile=/var/log/celery/%n.pid --logfile=/var/log/celery/%n.log
 
+        celery worker -B -A celery_dogen --autoscale=10,1 -l info
+
     b. 若以安装在任意路径下执行上述命令即可。
 
 【命令行操作】

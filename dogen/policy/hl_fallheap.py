@@ -172,7 +172,7 @@ def include_analyze(basic, kdata, policy_args):
 
     ### 特征一
     index = dogen.get_highlimit_trades(kdata, eIdx=hl_valid+1)
-    if index.size != 1:
+    if index.size == 0:
         logger.debug("Don't match highlimit trades")
         return None
     else:
