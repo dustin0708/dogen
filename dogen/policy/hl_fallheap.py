@@ -36,7 +36,7 @@ ARGS_DEAULT_VALUE = {
     MIN_FALLS: 3.99,   # 1%
     MAX_RISE: 42,   # 1%
     MAX_PCLOSE: 50,
-    OUTSTANDING: 200,
+    OUTSTANDING: 300,
 }
 
 def __parse_policy_args(policy_args, arg_name):
