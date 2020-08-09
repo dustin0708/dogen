@@ -120,10 +120,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
         if dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[high_index][dogen.P_CLOSE]) < -min_falls:
             logger.debug("Too low P-CLOSE at take-trade %s" % kdata.index[take_index])
             return True
-        temp_rises = dogen.caculate_incr_percentage(kdata.iloc[take_index][dogen.P_CLOSE], kdata.iloc[mini_index][dogen.P_CLOSE])
-        if temp_rises > max_take2low:
-            logger.debug("Too high-close price at take-trade %s" % kdata.index[take_index])
-            return True
         if kdata.iloc[take_index][dogen.MA5] < kdata.iloc[take_index+1][dogen.MA5]:
             logger.debug("Invalid MA20 at %s" % kdata.index[take_index])
             return True
