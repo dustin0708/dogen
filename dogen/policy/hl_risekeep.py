@@ -154,9 +154,6 @@ def exclude_analyze(basic, kdata, pick_index, take_index, policy_args):
     ### 特征八
     if pick_index >= 5:
         tdata = kdata[0: mini_index]
-        if tdata[tdata[dogen.R_CLOSE] >= max_rclose].index.size > 0:
-            logger.debug("Do include trade with 7 percentage R-CLOSE since %s" % kdata.index[mini_index])
-            return True
         if tdata[tdata[dogen.R_AMP] >= min_ramp].index.size <= 0:
             logger.debug("Don't include trade with 5 percentage R-AMP since %s" % kdata.index[mini_index])
             return True
