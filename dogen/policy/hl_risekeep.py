@@ -214,9 +214,6 @@ def include_analyze(basic, kdata, policy_args):
     else:
         heap_rises = 0
         for temp_index in range(pick_index-1, -1, -1):
-            if kdata.iloc[temp_index][dogen.P_CLOSE] < mini_close:
-                logger.debug("Get invalid fall trade at %s" % kdata.index[temp_index])
-                return None
             temp_close = kdata.iloc[temp_index][dogen.R_CLOSE]
             if temp_close < 0:
                 heap_rises = 0
