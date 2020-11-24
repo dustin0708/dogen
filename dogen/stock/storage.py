@@ -208,7 +208,9 @@ class DbMongo():
                 del row[field]
                 array.append(row)
 
-            return pandas.DataFrame.from_dict(array, orient="columns")
+            basics = pandas.DataFrame.from_dict(array, orient="columns")
+            basics.set_index('code', inplace=True)
+            return basics
         except Exception:
             pass
         return None
