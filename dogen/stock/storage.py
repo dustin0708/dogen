@@ -188,6 +188,31 @@ class DbMongo():
             pass
         return None
     
+    def lookup_stock_basics(self, field='_id'):
+        """ 获取股票元数据
+
+            参数说明：
+                field - 键值标识，必须与保存时一致
+            
+            返回值：
+                若查询成功，返回基本信息（Series类型）；否则返回None
+        """
+        if self.database is None:
+            return None
+        
+        try:
+            base = self.database[self.TBL_BASICS]
+            array = []
+            for row in base.find():
+                row['code'] = row[field]
+                del row[field]
+                array.append(row)
+
+            return pandas.DataFrame.from_dict(array, orient="columns")
+        except Exception:
+            pass
+        return None
+
     def lookup_stock_codes(self, field='_id'):
         """ 返回数据库中股票代码列表
 

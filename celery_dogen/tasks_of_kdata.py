@@ -25,6 +25,9 @@ def dispatcher_of_daily_pull_update_kdata(codes=None, full=False, start=None, en
         if codes is None:
             ### 下载股票代码数据
             basics = dogen.download_basics()
+            if basics is None:
+                db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
+                basics = db.lookup_stock_basics()
             codes = basics.index.tolist()
             codes.sort()
 

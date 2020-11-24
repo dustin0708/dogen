@@ -32,6 +32,9 @@ def update_kdata(codes, full=False, start=None, end=None):
     
     ### 下载basic数据
     basics = dogen.download_basics()
+    if basics is None:
+        db = dogen.DbMongo(uri=mongo_server, database=mongo_database)
+        basics = db.lookup_stock_basics()
     
     ### 下载参数指定股票数据
     success_list = []
