@@ -105,6 +105,45 @@ def __process_kdata(code, kdata):
     ndata.set_index('date', inplace=True)
     return ndata
 
+def convertDataFrameWithMapping(mapping, dataframe, inplace=True):
+    """Convert source data 'dataframe' with rules defined by 'mapping'
+    Args:
+        mapping: a dict mapping of DataFrame columns
+        dataframe: source data
+    Returns:
+        A DataFrame table defined by mapping.keys().
+    """
+    import copy
+    import math
+    if not inplace:
+        result = pandas.DataFrame(columns=mapping.keys())
+        for column in mapping.keys():
+            if mapping[column] is not None:
+                result[column] = copy.deepcopy(dataframe[mapping[column]])
+            else:
+                result[column] = math.nan
+        ### copy index
+        result.index = copy.deepcopy(dataframe.index)
+    else:
+        result = dataframe
+        for column in mapping.keys():
+            if mapping[column] is not None:
+                result.rename(columns={mapping[column]:column}, inplace=True)
+            else:
+                result[column] = math.nan
+        ### drop extra columns
+        extra_columns = result.columns.difference(mapping.keys())
+        result.drop(columns=extra_columns, inplace=True)
+    return result
+
+mapping_of_basic_pro = {
+    "code": 'symbol',
+    "name": 'name',
+    "industry": 'industry',
+    "area": 'area',
+    "timeToMarket": "list_date",
+}
+
 def download_basics():
     """ 下载A股股票基本信息
         
@@ -115,7 +154,33 @@ def download_basics():
         basics = tushare.get_stock_basics()
         return basics.astype({'timeToMarket': 'str'})
     except Exception:
-        basics = None
+        try:
+            tushare.set_token("f20cfbaf7091119f273290c999b72b10241cbf7602957d03c34d2c60")
+            pro_tushare = tushare.pro_api()
+            field_list = 'ts_code,symbol,name,area,industry,fullname,enname,market,exchange,curr_type,list_date,delist_date,is_hs'
+            basics = pro_tushare.query('stock_basic', fields=field_list).astype({'list_date': 'int'})
+            basics = convertDataFrameWithMapping(mapping_of_basic_pro, basics)
+            basics["pe"] = 0
+            basics["outstanding"] = 0
+            basics["totals"] = 0
+            basics["totalAssets"] = 0
+            basics["liquidAssets"] = 0
+            basics["fixedAssets"] = 0
+            basics["reserved"] = 0
+            basics["reservedPerShare"] = 0
+            basics["esp"] = 0
+            basics["bvps"] = 0
+            basics["pb"] = 0
+            basics["undp"] = 0
+            basics["perundp"] = 0
+            basics["rev"] = 0
+            basics["profit"] = 0
+            basics["gpr"] = 0
+            basics["npr"] = 0
+            basics["holders"] = 0
+            return basics.astype({'timeToMarket': 'str'})
+        except Exception:
+            basics = None
     return basics
 
 def download_kdata(code, start=None, end=None):

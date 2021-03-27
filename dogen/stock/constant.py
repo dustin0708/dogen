@@ -26,7 +26,6 @@ MACD        = 'macd'
 
 CONCEPT='concept'
 
-BVPS = 'bvps'
 INDUSTRY = 'industry'
 OUTSTANDING = 'outstanding'
 TIMETOMARKET='timeToMarket'
